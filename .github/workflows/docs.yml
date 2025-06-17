@@ -1,0 +1,32 @@
+name: docs
+
+on:
+  push:
+    branches: [main]  # or 'master' or whichever branch you use
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install project with dev dependencies
+        run: pip install .[dev]
+
+      - name: Build HTML
+        run: |
+          sphinx-build -b html docs _build/html
+
+      - name: Deploy to GitHub pages
+        if: github.event.repository.private == false
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GH_PAT }}
+          publish_dir: ./public
