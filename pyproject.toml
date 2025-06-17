@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blayers"
+version = "0.1.0a1"
+description = "Bayesian layers for NumPyro and Jax"
+authors = [{ name = "George Berry", email = "george.e.berry@gmail.com" }]
+readme = "README.md"
+license = { file = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "jax",
+    "numpyro",
+]
+
+[project.urls]
+Homepage = "https://github.com/georgeberry/blayers"
+Documentation = "https://georgeberry.github.io/blayers/"
+
+[project.optional-dependencies]
+dev = [
+    "optax",
+    "pytest",
+    "pytest-check",
+    "mypy",
+    "black",
+    "isort",
+    "autoflake",
+    "sphinx",
+    "sphinx-book-theme",
+    "furo",
+    "coverage",
+    "pytest-cov",
+    "pre-commit",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+explicit_package_bases = true
+disable_error_code = ["misc"]
+
+[tool.isort]
+profile = "black"
+line_length = 80
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+
+[tool.black]
+line-length = 80
+target-version = ["py311"]

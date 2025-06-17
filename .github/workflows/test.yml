@@ -1,0 +1,27 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install deps
+        run: |
+          pip install -e .[dev]  # or whatever installs pytest + pytest-cov
+          pip install codecov
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=blayers --cov-report=xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: georgeberry/blayers
