@@ -22,7 +22,7 @@ jobs:
 
       - name: Build HTML
         run: |
-          sphinx-build -b html docs _build/html
+          sphinx-build -b html docs ./public
 
       - name: Deploy to GitHub pages
         if: github.event.repository.private == false

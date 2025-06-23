@@ -37,7 +37,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["blayers"]
+where = ["."]
 
 [tool.mypy]
 strict = true
