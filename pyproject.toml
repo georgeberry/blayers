@@ -30,6 +30,7 @@ dev = [
     "isort",
     "autoflake",
     "sphinx",
+    "sphinx-book-theme",
     "furo",
     "coverage",
     "pytest-cov",
