@@ -1,21 +1,33 @@
-.. blayers documentation master file, created by
-   sphinx-quickstart on Sun Jun 22 11:31:40 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive. B
-
 blayers documentation
 =====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+Bayesian Layers for NumPyro: Modular building blocks for flexible, adaptive probabilistic modeling.
 
+This library provides a collection of layers and inference tools for building Bayesian models on top of Numpyro and Jax.
+
+Quickstart
+----------
+
+.. code-block:: python
+
+   import blayers as bl
+   layer = bl.AdaptiveLayer(...)
+   ...
+
+Resources
+---------
+
+- `GitHub <https://github.com/georgeberry/blayers>`_
+- `PyPI <https://pypi.org/project/blayers/>`_
+
+
+Detailed API
+------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-.. automodule:: blayers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   api/layers
+   api/infer
+   api/fit_tools
+   api/links

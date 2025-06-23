@@ -1,3 +1,4 @@
+from .infer import Batched_Trace_ELBO, svi_run_batched
 from .layers import (
     AdaptiveLayer,
     EmbeddingLayer,
@@ -10,7 +11,8 @@ __all__ = [
     "FMLayer",
     "AdaptiveLayer",
     "EmbeddingLayer",
-    "InteractionLayer",
     "FixedPriorLayer",
     "LowRankInteractionLayer",
+    "Batched_Trace_ELBO",
+    "svi_run_batched",
 ]
