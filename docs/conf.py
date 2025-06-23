@@ -10,17 +10,23 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../blayers"))
+sys.path.insert(0, os.path.abspath(".."))
 
 project = "blayers"
 copyright = "2025, George Berry"
 author = "George Berry"
-release = "0.5.0"
+release = "v0.1.0a1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+]
+
+autosummary_generate = True
 
 templates_path = ["_templates"]
 exclude_patterns = []
