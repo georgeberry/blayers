@@ -10,16 +10,19 @@ authors = [{ name = "George Berry", email = "george.e.berry@gmail.com" }]
 readme = "README.md"
 license = { file = "MIT" }
 requires-python = ">=3.9"
-
 dependencies = [
     "numpy",
     "jax",
     "numpyro",
-    "optax",
 ]
+
+[project.urls]
+Homepage = "https://github.com/georgeberry/blayers"
+Documentation = "https://georgeberry.github.io/blayers/"
 
 [project.optional-dependencies]
 dev = [
+    "optax",
     "pytest",
     "pytest-check",
     "mypy",
@@ -34,7 +37,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["blayers"]
+where = ["."]
 
 [tool.mypy]
 strict = true
