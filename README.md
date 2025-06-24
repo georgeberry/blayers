@@ -4,6 +4,16 @@
 
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 
+## write code immediately
+
+```
+pip install blayers
+```
+
+deps are: `numpy`, `numpyro` and `jax`. `optax` is recommended.
+
+## concept
+
 The missing layers package for Bayesian inference. Inspiration from Keras and
 Tensorflow Probability, but made specifically for Numpyro + Jax.
 
@@ -39,6 +49,91 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
+### pure numpyro
+
+All BLayers is doing is writing Numpyro for you under the hood. This model is exacatly equivalent to writing the following, just using way less code.
+
+```python
+from numpyro import distributions, sample
+
+def model(x, y):
+    # Adaptive layer does all of this
+    input_shape = x.shape[1]
+    # adaptive prior
+    lmbda = sample(
+        name="lmbda",
+        fn=distributions.HalfNormal(1.),
+    )
+    # beta coefficients for regression
+    beta = sample(
+        name="beta",
+        fn=distributions.Normal(loc=0., scale=lmbda),
+        sample_shape=(input_shape,),
+    )
+    mu = jnp.einsum('ij,j->i', x, beta)
+
+    # the link function does this
+    sigma = sample(name='sigma', fn=distributions.Exponential(1.))
+    return sample('obs', distributions.Normal(mu, sigma), obs=y)
+```
+
+### mixing it up
+
+The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so let's say you wanted to change the model from
+
+```
+lmbda ~ HalfNormal(1)
+beta  ~ Normal(0, lmbda)
+y     ~ Normal(beta * x, 1)
+```
+
+to
+
+```
+lmbda ~ Exponential(1.)
+beta  ~ LogNormal(0, lmbda)
+y     ~ Normal(beta * x, 1)
+```
+
+you can just do this directly via arguments
+
+```python
+from numpyro import distributions,
+from blayers import AdaptiveLayer, gaussian_link_exp
+def model(x, y):
+    mu = AdaptiveLayer(
+        lmbda_dist=distributions.Exponential,
+        prior_dist=distributions.LogNormal,
+        lmbda_kwargs={'rate': 1.},
+        prior_kwargs={'loc': 0.}
+    )('mu', x)
+    return gaussian_link_exp(mu, y)
+```
+
+### "factories"
+
+Since Numpyro traces `sample` sites and doesn't record any paramters on the class, you can re-use with a particular generative model structure freely.
+
+```python
+from numpyro import distributions,
+from blayers import AdaptiveLayer, gaussian_link_exp
+
+my_lognormal_layer = AdaptiveLayer(
+    lmbda_dist=distributions.Exponential,
+    prior_dist=distributions.LogNormal,
+    lmbda_kwargs={'rate': 1.},
+    prior_kwargs={'loc': 0.}
+)
+
+def model(x, y):
+    mu = my_lognormal_layer('mu1', x) + my_lognormal_layer('mu2', x**2)
+    return gaussian_link_exp(mu, y)
+```
+
+## additional layers
+
+### fixed prior layers
+
 For you purists out there, we also provide a `FixedPriorLayer` for standard
 L1/L2 regression.
 
@@ -49,7 +144,7 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-## additional layers
+Very useful when you have an informative prior.
 
 ### factorization machines
 
@@ -82,6 +177,8 @@ def model(x, z, y):
     )
     return gaussian_link_exp(mu, y)
 ```
+
+### bayesian embeddings
 
 ## links
 
