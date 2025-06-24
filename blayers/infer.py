@@ -12,9 +12,15 @@ from blayers.fit_tools import get_dataset_size, yield_batches
 
 
 class Batched_Trace_ELBO(ELBO):
-    def __init__(self, n_obs: int, num_particles: int = 1):
+    def __init__(
+        self,
+        n_obs: int,
+        num_particles: int = 1,
+        batch_size: int | None = None,
+    ):
         self.n_obs = n_obs
         self.num_particles = num_particles
+        self.batch_size = batch_size
 
     def loss(
         self,
@@ -46,9 +52,20 @@ class Batched_Trace_ELBO(ELBO):
         rng_keys = random.split(rng_key, self.num_particles)
         llhs, kls = [], []
 
-        batch_size = kwargs[next(iter(kwargs.keys()))].shape[0]
+        batch_size = self.batch_size
+        if batch_size is None:
+            if kwargs is not None:
+                batch_size = kwargs[next(iter(kwargs.keys()))].shape[0]
+            elif args is not None:
+                batch_size = args[0].shape[0]
+            else:
+                raise ValueError("Cannot infer batch size from args or kwargs")
 
         for key in rng_keys:
+            # a key thing to realize is that this does sampling, so it samples
+            # z ~ q(z)
+            # mechanically this means we take expectations over q(z), since one
+            # random sample is the expectation (in expectation)
             guide_trace = trace(
                 substitute(
                     seed(
@@ -84,9 +101,9 @@ class Batched_Trace_ELBO(ELBO):
             )
 
             # log p(x | z)
-            # upscale here by N / M where N is the nubmer of observations and M is the
-            # batch size. This provides an estimator of the full dataset loss that
-            # scales approriately with the KL.
+            # upscale here by N / B where N is the nubmer of observations and B
+            # is the batch size. This provides an estimator of the full dataset
+            # loss that scales approriately with the KL.
             llhs.append(
                 self.n_obs
                 / batch_size
@@ -97,7 +114,10 @@ class Batched_Trace_ELBO(ELBO):
                 )
             )
 
-            # KL = log q(z) - log p(z)
+            # KL[q(z) || p(z)] = H(q, p) - H(p) => log q(z) - log p(z)
+            # implication comes from the fact that we draw one sample z ~ q(z)
+            # if you'd like, swap P and Q and work through the math here:
+            # wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Motivation
             log_pz = sum(
                 site["fn"].log_prob(site["value"]).sum()
                 for site in model_trace.values()
