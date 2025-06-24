@@ -47,11 +47,6 @@ def yield_batches(
             yield {k: v[start:end] for k, v in data.items()}
 
 
-"""
-So we 
-"""
-
-
 # ---- Helpers --------------------------------------------------------------- #
 
 
