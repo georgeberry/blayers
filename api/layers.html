@@ -372,6 +372,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.matmul"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.matmul()</span></code></a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -560,6 +564,33 @@ on the columns of the U/V matrices.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Exactly like the EmbeddingLayer but with <cite>embedding_dim=1</cite>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer.matmul" title="Link to this definition">#</a></dt>
+<dd><p>Index into the embedding table using the provided indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> – Embedding table of shape (num_embeddings, embedding_dim).</p></li>
+<li><p><strong>x</strong> – Indices array of shape (n,).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Looked-up embeddings of shape (n, embedding_dim).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 
@@ -629,6 +660,10 @@ on the columns of the U/V matrices.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.matmul"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 </ul>
