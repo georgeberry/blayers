@@ -27,6 +27,8 @@ import jax
 import jax.numpy as jnp
 from numpyro import distributions, sample
 
+from blayers.fit_tools import add_trailing_dim
+
 
 class BLayer(ABC):
     """Abstract base class for Bayesian layers. Lays out an interface."""
@@ -94,9 +96,7 @@ class FixedPriorLayer(BLayer):
             jax.Array: Output array of shape (n,).
         """
 
-        # get shapes and reshape if necessary
-        if len(x.shape) == 1:
-            x = jnp.reshape(x, (-1, 1))
+        x = add_trailing_dim(x)
         input_shape = x.shape[1]
 
         # sampling block
@@ -161,9 +161,7 @@ class AdaptiveLayer(BLayer):
             jax.Array: Output array of shape (n,).
         """
 
-        # get shapes and reshape if necessary
-        if len(x.shape) == 1:
-            x = jnp.reshape(x, (-1, 1))
+        x = add_trailing_dim(x)
         input_shape = x.shape[1]
 
         # sampling block
@@ -304,8 +302,7 @@ class FMLayer(BLayer):
             jax.Array: Output array of shape (n,).
         """
         # get shapes and reshape if necessary
-        if len(x.shape) == 1:
-            x = jnp.reshape(x, (-1, 1))
+        x = add_trailing_dim(x)
         input_shape = x.shape[1]
 
         # sampling block
@@ -365,11 +362,9 @@ class LowRankInteractionLayer(BLayer):
         z: jax.Array,
     ) -> jax.Array:
         # get shapes and reshape if necessary
-        if len(x.shape) == 1:
-            x = jnp.reshape(x, (-1, 1))
+        x = add_trailing_dim(x)
+        z = add_trailing_dim(z)
         input_shape1 = x.shape[1]
-        if len(z.shape) == 1:
-            z = jnp.reshape(z, (-1, 1))
         input_shape2 = z.shape[1]
 
         # sampling block
