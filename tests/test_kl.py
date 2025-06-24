@@ -48,7 +48,7 @@ def test_builtin_vs_batched_elbo_simple() -> None:
 
 
 def test_builtin_vs_batched_elbo_regression() -> None:
-    def model(x: jax.Array, y: jax.Array | None = None) -> jax.Array:
+    def model(x: jax.Array, y: jax.Array | None = None) -> None:
         beta = numpyro.sample("beta", dist.Normal(0.0, 1.0))
         mu = x * beta
         numpyro.sample("obs", dist.Normal(mu, 1.0), obs=y)
