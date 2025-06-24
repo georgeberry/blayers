@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/georgeberry/blayers/graph/badge.svg?token=ZDGT0C39QM)](https://codecov.io/gh/georgeberry/blayers) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) ![PyPI](https://img.shields.io/pypi/v/blayers)
+[![codecov](https://codecov.io/gh/georgeberry/blayers/graph/badge.svg?token=ZDGT0C39QM)](https://codecov.io/gh/georgeberry/blayers) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/)
 
 
 # BLayers
