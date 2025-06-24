@@ -211,7 +211,7 @@ svi_result = svi_run_batched(
 
 ## roadmap
 
-1. Categorical layer and fit helpers
+1. Fit helpers for models with categorical variables
 2. Multioutput models
 3. Examples
 4. More code re-use in `layers.py` (this will only become clear after more code is written)
