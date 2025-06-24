@@ -34,7 +34,9 @@ def get_steps_per_epoch(data: dict[str, jax.Array], batch_size: int) -> int:
 
 
 def yield_batches(
-    data: dict[str, jax.Array], batch_size: int, n_epochs: int
+    data: dict[str, jax.Array],
+    batch_size: int,
+    n_epochs: int,
 ) -> Generator[dict[str, jax.Array], None, None]:
     """Yields batches from a dict of arrays."""
     steps_per_epoch = get_steps_per_epoch(data, batch_size)
@@ -43,6 +45,11 @@ def yield_batches(
             start = i * batch_size
             end = start + batch_size
             yield {k: v[start:end] for k, v in data.items()}
+
+
+"""
+So we 
+"""
 
 
 # ---- Helpers --------------------------------------------------------------- #
