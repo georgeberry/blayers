@@ -54,9 +54,9 @@ class Batched_Trace_ELBO(ELBO):
 
         batch_size = self.batch_size
         if batch_size is None:
-            if kwargs is not None:
+            if len(kwargs) != 0:
                 batch_size = kwargs[next(iter(kwargs.keys()))].shape[0]
-            elif args is not None:
+            elif len(args) != 0:
                 batch_size = args[0].shape[0]
             else:
                 raise ValueError("Cannot infer batch size from args or kwargs")
