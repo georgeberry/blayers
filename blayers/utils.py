@@ -61,3 +61,10 @@ outer_product_upper_tril_with_diag = lambda x: (x @ x.T)[
 ]
 
 outer_product = lambda x, z: (x @ z.T)
+
+
+def add_trailing_dim(x: jax.Array) -> jax.Array:
+    # get shapes and reshape if necessary
+    if len(x.shape) == 1:
+        x = jnp.reshape(x, (-1, 1))
+    return x

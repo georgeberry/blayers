@@ -8,7 +8,7 @@ from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
-from blayers.fit_tools import get_dataset_size, yield_batches
+from blayers.utils import get_dataset_size, yield_batches
 
 
 class Batched_Trace_ELBO(ELBO):
@@ -56,8 +56,6 @@ class Batched_Trace_ELBO(ELBO):
         if batch_size is None:
             if len(kwargs) != 0:
                 batch_size = kwargs[next(iter(kwargs.keys()))].shape[0]
-            elif len(args) != 0:
-                batch_size = args[0].shape[0]
             else:
                 raise ValueError("Cannot infer batch size from args or kwargs")
 
