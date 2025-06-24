@@ -4,6 +4,14 @@
 
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 
+## write code immediately
+
+```
+pip install blayers
+```
+
+## concept
+
 The missing layers package for Bayesian inference. Inspiration from Keras and
 Tensorflow Probability, but made specifically for Numpyro + Jax.
 
