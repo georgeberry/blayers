@@ -286,9 +286,15 @@ document.write(`
 <div class="viewcode-block" id="Batched_Trace_ELBO">
 <a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">ELBO</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_obs</span> <span class="o">=</span> <span class="n">n_obs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_particles</span> <span class="o">=</span> <span class="n">num_particles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.loss">
 <a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO.loss">[docs]</a>
@@ -325,9 +331,20 @@ document.write(`
         <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_particles</span><span class="p">)</span>
         <span class="n">llhs</span><span class="p">,</span> <span class="n">kls</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
 
-        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot infer batch size from args or kwargs&quot;</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">rng_keys</span><span class="p">:</span>
+            <span class="c1"># a key thing to realize is that this does sampling, so it samples</span>
+            <span class="c1"># z ~ q(z)</span>
+            <span class="c1"># mechanically this means we take expectations over q(z), since one</span>
+            <span class="c1"># random sample is the expectation (in expectation)</span>
             <span class="n">guide_trace</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span>
                 <span class="n">substitute</span><span class="p">(</span>
                     <span class="n">seed</span><span class="p">(</span>
@@ -363,9 +380,9 @@ document.write(`
             <span class="p">)</span>
 
             <span class="c1"># log p(x | z)</span>
-            <span class="c1"># upscale here by N / M where N is the nubmer of observations and M is the</span>
-            <span class="c1"># batch size. This provides an estimator of the full dataset loss that</span>
-            <span class="c1"># scales approriately with the KL.</span>
+            <span class="c1"># upscale here by N / B where N is the nubmer of observations and B</span>
+            <span class="c1"># is the batch size. This provides an estimator of the full dataset</span>
+            <span class="c1"># loss that scales approriately with the KL.</span>
             <span class="n">llhs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">n_obs</span>
                 <span class="o">/</span> <span class="n">batch_size</span>
@@ -376,7 +393,10 @@ document.write(`
                 <span class="p">)</span>
             <span class="p">)</span>
 
-            <span class="c1"># KL = log q(z) - log p(z)</span>
+            <span class="c1"># KL[q(z) || p(z)] = H(q, p) - H(p) =&gt; log q(z) - log p(z)</span>
+            <span class="c1"># implication comes from the fact that we draw one sample z ~ q(z)</span>
+            <span class="c1"># if you&#39;d like, swap P and Q and work through the math here:</span>
+            <span class="c1"># wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Motivation</span>
             <span class="n">log_pz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
