@@ -8,7 +8,7 @@ from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
-from blayers.fit_tools import get_dataset_size, yield_batches
+from blayers.utils import get_dataset_size, yield_batches
 
 
 class Batched_Trace_ELBO(ELBO):

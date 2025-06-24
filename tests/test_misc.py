@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import pytest_check
 
-from blayers.fit_tools import add_trailing_dim
+from blayers.utils import add_trailing_dim
 
 
 def test_add_trailing_dim() -> None:

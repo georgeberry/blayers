@@ -27,7 +27,7 @@ import jax
 import jax.numpy as jnp
 from numpyro import distributions, sample
 
-from blayers.fit_tools import add_trailing_dim
+from blayers.utils import add_trailing_dim
 
 
 class BLayer(ABC):
