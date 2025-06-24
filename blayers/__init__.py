@@ -5,6 +5,7 @@ from .layers import (
     FixedPriorLayer,
     FMLayer,
     LowRankInteractionLayer,
+    RandomEffectsLayer,
 )
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "LowRankInteractionLayer",
     "Batched_Trace_ELBO",
     "svi_run_batched",
+    "RandomEffectsLayer",
 ]

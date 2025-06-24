@@ -18,6 +18,7 @@ from blayers import (
     FixedPriorLayer,
     FMLayer,
     LowRankInteractionLayer,
+    RandomEffectsLayer,
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
@@ -237,6 +238,26 @@ def emb_model() -> (
 
 
 @pytest.fixture
+def re_model() -> (
+    tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
+):
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        beta = RandomEffectsLayer()(
+            "beta",
+            x1,
+            n_categories=N_EMB_CATEGORIES,
+        )
+        return gaussian_link_exp(beta, y)
+
+    return (
+        model,
+        [
+            (["RandomEffectsLayer_beta_beta"], identity),
+        ],
+    )
+
+
+@pytest.fixture
 def lowrank_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
@@ -318,6 +339,7 @@ def loss_instance(request: SubRequest) -> Any:
         ("linear_regression_fixed_model", "simulated_data_simple"),
         ("fm_regression_model", "simulated_data_fm"),
         ("emb_model", "simulated_data_emb"),
+        ("re_model", "simulated_data_emb"),
         ("lowrank_model", "simulated_data_lowrank"),
     ],
     indirect=True,
