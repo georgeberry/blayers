@@ -1,7 +1,7 @@
-Fit tools
-=========
+Utils
+=====
 
-.. automodule:: blayers.fit_tools
+.. automodule:: blayers.utils
    :members:
    :undoc-members:
    :show-inheritance:
