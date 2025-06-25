@@ -25,12 +25,27 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    'sphinx.ext.mathjax',
+
 ]
 
 autosummary_generate = True
 
 templates_path = ["_templates"]
 exclude_patterns = []
+
+autodoc_typehints = "description"
+#autodoc_type_aliases = {
+#    'Distribution': 'numpyro.distributions.Distribution',
+#    'HalfNormal': 'numpyro.distributions.HalfNormal',
+#    'Normal': 'numpyro.distributions.Normal',
+#}
+autodoc_default_options = {
+    'members': True,
+    'special-members': '__init__, __call__',
+    'undoc-members': True,
+    'no-value': True,
+}
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -44,4 +59,4 @@ html_theme_options = {
     "use_edit_page_button": True,
 }
 
-html_static_path = ["_static"]
+autodoc_member_order = 'bysource'

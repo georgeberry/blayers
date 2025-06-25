@@ -64,66 +64,18 @@ class BLayer(ABC):
         """
 
 
-class FixedPriorLayer(BLayer):
-    """Bayesian layer with a fixed prior distribution over coefficients."""
-
-    def __init__(
-        self,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
-    ):
-        """
-        Args:
-            prior_dist: NumPyro distribution class for the coefficients.
-            prior_kwargs: Parameters to initialize the prior distribution.
-        """
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-    ) -> jax.Array:
-        """
-        Forward pass with fixed prior.
-
-        Args:
-            name: Variable name prefix.
-            x: Input data array of shape (n, d).
-
-        Returns:
-            jax.Array: Output array of shape (n,).
-        """
-
-        x = add_trailing_dim(x)
-        input_shape = x.shape[1]
-
-        # sampling block
-        betas = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(**self.prior_kwargs),
-            sample_shape=(input_shape,),
-        )
-        # matmul and return
-        return self.matmul(x, betas)
-
-    @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
-        """A dot product.
-
-        Args:
-            beta: Model coefficients of shape (j,).
-            x: Input data array of shape (n, d).
-
-        Returns:
-            jax.Array: Output array of shape (n,).
-        """
-        return jnp.einsum("ij,j->i", beta, x)
-
 
 class AdaptiveLayer(BLayer):
-    """Bayesian layer with adaptive prior using hierarchical modeling."""
+    """Bayesian layer with adaptive prior using hierarchical modeling.
+    
+    Generates coefficients from the hierarchical model
+
+    .. math::
+        \lambda \sim HalfNormal(1.)
+
+    .. math::
+        \\beta \sim Normal(0., \lambda)
+    """
 
     def __init__(
         self,
@@ -192,8 +144,86 @@ class AdaptiveLayer(BLayer):
         return jnp.einsum("ij,j->i", beta, x)
 
 
+class FixedPriorLayer(BLayer):
+    """Bayesian layer with a fixed prior distribution over coefficients.
+    
+    Generates coefficients from the model
+
+    .. math::
+        \\beta \sim Normal(0., 1.)
+    """
+
+    def __init__(
+        self,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+    ):
+        """
+        Args:
+            prior_dist: NumPyro distribution class for the coefficients.
+            prior_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+    ) -> jax.Array:
+        """
+        Forward pass with fixed prior.
+
+        Args:
+            name: Variable name prefix.
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+
+        x = add_trailing_dim(x)
+        input_shape = x.shape[1]
+
+        # sampling block
+        betas = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(**self.prior_kwargs),
+            sample_shape=(input_shape,),
+        )
+        # matmul and return
+        return self.matmul(x, betas)
+
+    @staticmethod
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+        """A dot product.
+
+        Args:
+            beta: Model coefficients of shape (j,).
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+        return jnp.einsum("ij,j->i", beta, x)
+
+
 class FMLayer(BLayer):
-    """Bayesian factorization machine layer with adaptive priors."""
+    """Bayesian factorization machine layer with adaptive priors.
+    
+    Generates coefficients from the hierarchical model
+    
+    .. math::
+        \lambda \sim HalfNormal(1.)
+
+    .. math::
+        \\beta \sim Normal(0., \lambda)
+
+    The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
+    if input covariates and :math:`l` is the low rank dim.
+
+    Then performs matrix multiplication using the formula in `Rendle (2010) <https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf>`_.
+    """
 
     def __init__(
         self,
