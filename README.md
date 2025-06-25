@@ -3,6 +3,8 @@
 
 # BLayers
 
+The missing layers package for Bayesian inference. 
+
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 
 ## write code immediately
@@ -15,11 +17,8 @@ deps are: `numpy`, `numpyro` and `jax`. `optax` is recommended.
 
 ## concept
 
-The missing layers package for Bayesian inference. Inspiration from Keras and
-Tensorflow Probability, but made specifically for Numpyro + Jax.
-
 Easily build Bayesian models from parts, abstract away the boilerplate, and
-tweak priors as you wish.
+tweak priors as you wish. Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
 
 Fit models either using Variational Inference (VI) or your sampling method of
 choice. Use BLayer's ELBO implementation to do either batched VI or sampling
