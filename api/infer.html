@@ -43,7 +43,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/infer';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Fit tools" href="fit_tools.html" />
+    <link rel="next" title="Links" href="links.html" />
     <link rel="prev" title="Layers" href="layers.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -151,7 +151,6 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Infer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fit_tools.html">Fit tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
 </ul>
 
@@ -349,11 +348,13 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.elbo_components"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.elbo_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.__init__"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.loss"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.loss()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.elbo_components"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.elbo_components()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.yield_batches"><code class="docutils literal notranslate"><span class="pre">yield_batches()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -369,16 +370,34 @@ document.write(`
 <span id="infer"></span><h1>Infer<a class="headerlink" href="#module-blayers.infer" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.infer.Batched_Trace_ELBO">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">Batched_Trace_ELBO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_obs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">Batched_Trace_ELBO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ELBO</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_obs</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_particles</strong> (<em>int</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.infer.Batched_Trace_ELBO.elbo_components">
-<span class="sig-name descname"><span class="pre">elbo_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO.elbo_components"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO.elbo_components" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="blayers.infer.Batched_Trace_ELBO.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_obs</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_particles</strong> (<em>int</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.infer.Batched_Trace_ELBO.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Array</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO.loss" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO.loss" title="Link to this definition">#</a></dt>
 <dd><p>Evaluates the ELBO with an estimator that uses num_particles many samples/particles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -386,16 +405,39 @@ document.write(`
 <li><p><strong>rng_key</strong> (<em>jax.random.PRNGKey</em>) – random number generator seed.</p></li>
 <li><p><strong>param_map</strong> (<em>dict</em>) – dictionary of current parameter values keyed by site
 name.</p></li>
-<li><p><strong>model</strong> – Python callable with NumPyro primitives for the model.</p></li>
-<li><p><strong>guide</strong> – Python callable with NumPyro primitives for the guide.</p></li>
-<li><p><strong>args</strong> – arguments to the model / guide (these can possibly vary during
+<li><p><strong>model</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – Python callable with NumPyro primitives for the model.</p></li>
+<li><p><strong>guide</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – Python callable with NumPyro primitives for the guide.</p></li>
+<li><p><strong>args</strong> (<em>Any</em>) – arguments to the model / guide (these can possibly vary during
 the course of fitting).</p></li>
-<li><p><strong>kwargs</strong> – keyword arguments to the model / guide (these can possibly vary
+<li><p><strong>kwargs</strong> (<em>Any</em>) – keyword arguments to the model / guide (these can possibly vary
 during the course of fitting).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>negative of the Evidence Lower Bound (ELBO) to be minimized.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.infer.Batched_Trace_ELBO.elbo_components">
+<span class="sig-name descname"><span class="pre">elbo_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#Batched_Trace_ELBO.elbo_components"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.Batched_Trace_ELBO.elbo_components" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> (<em>Array</em>)</p></li>
+<li><p><strong>param_map</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+<li><p><strong>model</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>guide</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>args</strong> (<em>Any</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <em>Array</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -404,8 +446,40 @@ during the course of fitting).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.infer.svi_run_batched">
-<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SVI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Array</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SVIRunResult</span></span></span><a class="reference internal" href="../_modules/blayers/infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.svi_run_batched" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.svi_run_batched" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svi</strong> (<em>SVI</em>)</p></li>
+<li><p><strong>rng_key</strong> (<em>Array</em>)</p></li>
+<li><p><strong>num_steps</strong> (<em>int</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>SVIRunResult</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.infer.yield_batches">
+<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">yield_batches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#yield_batches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.yield_batches" title="Link to this definition">#</a></dt>
+<dd><p>Yields batches from a dict of arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>n_epochs</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Generator</em>[dict[str, <em>Array</em>], None, None]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 
@@ -430,11 +504,11 @@ during the course of fitting).</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="fit_tools.html"
+       href="links.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Fit tools</p>
+        <p class="prev-next-title">Links</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -455,11 +529,13 @@ during the course of fitting).</p></li>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.elbo_components"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.elbo_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.__init__"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.loss"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.loss()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.Batched_Trace_ELBO.elbo_components"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO.elbo_components()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.yield_batches"><code class="docutils literal notranslate"><span class="pre">yield_batches()</span></code></a></li>
 </ul>
   </nav></div>
 

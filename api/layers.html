@@ -40,6 +40,7 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/layers';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -151,7 +152,6 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Layers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="infer.html">Infer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fit_tools.html">Fit tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
 </ul>
 
@@ -348,32 +348,46 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.matmul"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.matmul()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__init__"><code class="docutils literal notranslate"><span class="pre">BLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__call__"><code class="docutils literal notranslate"><span class="pre">BLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.matmul"><code class="docutils literal notranslate"><span class="pre">BLayer.matmul()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.matmul"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.matmul()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FMLayer.matmul()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.__call__"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.matmul"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.matmul()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.__init__"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.__call__"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.matmul"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__init__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.matmul"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FMLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FMLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FMLayer.matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.__init__"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.__call__"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -413,23 +427,42 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 </dd>
 </dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">AdaptiveLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian layer with adaptive prior using hierarchical modeling.</p>
+<dt class="sig sig-object py" id="blayers.layers.BLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">BLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for Bayesian layers. Lays out an interface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>)</p>
+</dd>
+</dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer.matmul" title="Link to this definition">#</a></dt>
-<dd><p>Standard dot product between beta and x.</p>
+<dt class="sig sig-object py" id="blayers.layers.BLayer.__init__">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Initialize layer parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.BLayer.__call__">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Run the layer’s forward pass.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>beta</strong> – Coefficient vector of shape (d,).</p></li>
-<li><p><strong>x</strong> – Input matrix of shape (n, d).</p></li>
+<li><p><strong>name</strong> – Name scope for sampled variables.</p></li>
+<li><p><strong>*args</strong> (<em>Any</em>) – Inputs to the layer.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Output of shape (n,).</p>
+<dd class="field-even"><p>The result of the forward computation.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>jax.Array</p>
@@ -437,20 +470,13 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.BLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">BLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
-<p>Abstract base class for Bayesian layers. Lays out an interface.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.layers.BLayer.matmul">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer.matmul" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer.matmul" title="Link to this definition">#</a></dt>
 <dd><p>Abstract static method for matrix multiplication logic.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>*args</strong> – Parameters to multiply.</p>
+<dd class="field-odd"><p><strong>*args</strong> (<em>Any</em>) – Parameters to multiply.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The result of the matrix multiplication.</p>
@@ -464,23 +490,54 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">EmbeddingLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">AdaptiveLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian embedding layer for sparse categorical features.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer.matmul" title="Link to this definition">#</a></dt>
-<dd><p>Index into the embedding table using the provided indices.</p>
+<p>Bayesian layer with adaptive prior using hierarchical modeling.</p>
+<p>Generates coefficients from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\beta \sim Normal(0., \lambda)\]</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>beta</strong> – Embedding table of shape (num_embeddings, embedding_dim).</p></li>
-<li><p><strong>x</strong> – Indices array of shape (n,).</p></li>
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>) – NumPyro distribution class for the scale (λ) of the
+prior.</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>) – NumPyro distribution class for the coefficient prior.</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Parameters for the prior distribution.</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Parameters for the scale distribution.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass with adaptive prior on coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Variable name scope.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input data array of shape (n, d).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Looked-up embeddings of shape (n, embedding_dim).</p>
+<dd class="field-even"><p>Output array of shape (n,).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>jax.Array</p>
@@ -488,24 +545,15 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.FMLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FMLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian factorization machine layer with adaptive priors.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.FMLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer.matmul" title="Link to this definition">#</a></dt>
-<dd><p>Apply second-order factorization machine interaction.</p>
-<p>Based on Rendle (2010). Computes:
-0.5 * sum((xV)^2 - (x^2 V^2))</p>
+<dt class="sig sig-object py" id="blayers.layers.AdaptiveLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AdaptiveLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AdaptiveLayer.matmul" title="Link to this definition">#</a></dt>
+<dd><p>Standard dot product between beta and x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>theta</strong> – Weight matrix of shape (d, k).</p></li>
-<li><p><strong>x</strong> – Input data of shape (n, d).</p></li>
+<li><p><strong>beta</strong> (<em>Array</em>) – Coefficient vector of shape (d,).</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input matrix of shape (n, d).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -521,18 +569,62 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.layers.FixedPriorLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FixedPriorLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FixedPriorLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
 <p>Bayesian layer with a fixed prior distribution over coefficients.</p>
+<p>Generates coefficients from the model</p>
+<div class="math notranslate nohighlight">
+\[\beta \sim Normal(0., 1.)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.FixedPriorLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>) – NumPyro distribution class for the coefficients.</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Parameters to initialize the prior distribution.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.FixedPriorLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass with fixed prior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Variable name prefix.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input data array of shape (n, d).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output array of shape (n,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.layers.FixedPriorLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer.matmul" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedPriorLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedPriorLayer.matmul" title="Link to this definition">#</a></dt>
 <dd><p>A dot product.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>beta</strong> – Model coefficients of shape (j,).</p></li>
-<li><p><strong>x</strong> – Input data array of shape (n, d).</p></li>
+<li><p><strong>beta</strong> (<em>Array</em>) – Model coefficients of shape (j,).</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input data array of shape (n, d).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -547,37 +639,68 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">LowRankInteractionLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">EmbeddingLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Takes two sets of features and learns a low-rank interaction matrix.</p>
+<p>Bayesian embedding layer for sparse categorical features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer.matmul" title="Link to this definition">#</a></dt>
-<dd><p>Implements low rank multiplication.</p>
-<p>According to ChatGPT this is a “factorized bilinear interaction”.
-Basically, you just need to project x and z down to a common number of
-low rank terms and then just multiply those terms.</p>
-<p>This is equivalent to a UV decomposition where you use n=low_rank_dim
-on the columns of the U/V matrices.</p>
+<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_embeddings</strong> – Total number of discrete embedding entries.</p></li>
+<li><p><strong>embedding_dim</strong> – Dimensionality of each embedding vector.</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>) – Prior distribution for embedding weights.</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Parameters for the prior distribution.</p></li>
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_categories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass through embedding lookup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Variable name scope.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Integer indices of shape (n,) indicating embeddings to use.</p></li>
+<li><p><strong>n_categories</strong> (<em>int</em>) – The number of distinct things getting an embedding</p></li>
+<li><p><strong>embedding_dim</strong> (<em>int</em>) – The size of each embedding, e.g. 2, 4, 8, etc.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Embedding vectors of shape (n, embedding_dim).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist:</span> <span class="pre">~numpyro.distributions.distribution.Distribution</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span> <span class="pre">=</span> <span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Exactly like the EmbeddingLayer but with <cite>embedding_dim=1</cite>.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer.matmul">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Array</span></span></span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer.matmul" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blayers.layers.EmbeddingLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer.matmul" title="Link to this definition">#</a></dt>
 <dd><p>Index into the embedding table using the provided indices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>beta</strong> – Embedding table of shape (num_embeddings, embedding_dim).</p></li>
-<li><p><strong>x</strong> – Indices array of shape (n,).</p></li>
+<li><p><strong>beta</strong> (<em>Array</em>) – Embedding table of shape (num_embeddings, embedding_dim).</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Indices array of shape (n,).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -585,6 +708,246 @@ on the columns of the U/V matrices.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Exactly like the EmbeddingLayer but with <cite>embedding_dim=1</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_embeddings</strong> – Total number of discrete embedding entries.</p></li>
+<li><p><strong>embedding_dim</strong> – Dimensionality of each embedding vector.</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>) – Prior distribution for embedding weights.</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Parameters for the prior distribution.</p></li>
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_categories</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass through embedding lookup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Variable name scope.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Integer indices of shape (n,) indicating embeddings to use.</p></li>
+<li><p><strong>n_categories</strong> (<em>int</em>) – The number of distinct things getting an embedding</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Embedding vectors of shape (n, embedding_dim).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer.matmul" title="Link to this definition">#</a></dt>
+<dd><p>Index into the embedding table using the provided indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> (<em>Array</em>) – Embedding table of shape (num_embeddings, embedding_dim).</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Indices array of shape (n,).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Looked-up embeddings of shape (n, embedding_dim).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.FMLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FMLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim=3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Bayesian factorization machine layer with adaptive priors.</p>
+<p>Generates coefficients from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\beta \sim Normal(0., \lambda)\]</div>
+<p>The shape of <span class="math notranslate nohighlight">\(\beta\)</span> is <span class="math notranslate nohighlight">\((j, l)\)</span>, where <span class="math notranslate nohighlight">\(j\)</span> is the number
+if input covariates and <span class="math notranslate nohighlight">\(l\)</span> is the low rank dim.</p>
+<p>Then performs matrix multiplication using the formula in <a class="reference external" href="https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf">Rendle (2010)</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>low_rank_dim</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.FMLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim=3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>) – Distribution for scaling factor λ.</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>) – Prior for beta parameters.</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Arguments for prior distribution.</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Arguments for λ distribution.</p></li>
+<li><p><strong>low_rank_dim</strong> (<em>int</em>) – Dimensionality of low-rank approximation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.FMLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Forward pass through the factorization machine layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Variable name scope.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input matrix of shape (n, d).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output array of shape (n,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.FMLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FMLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FMLayer.matmul" title="Link to this definition">#</a></dt>
+<dd><p>Apply second-order factorization machine interaction.</p>
+<p>Based on Rendle (2010). Computes:
+0.5 * sum((xV)^2 - (x^2 V^2))</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>Array</em>) – Weight matrix of shape (d, k).</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Input data of shape (n, d).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output of shape (n,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">LowRankInteractionLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim=3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Takes two sets of features and learns a low-rank interaction matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>low_rank_dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_dim=3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Initialize layer parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lmbda_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>prior_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>low_rank_dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>prior_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>lmbda_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Run the layer’s forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name scope for sampled variables.</p></li>
+<li><p><strong>*args</strong> – Inputs to the layer.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>)</p></li>
+<li><p><strong>z</strong> (<em>Array</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The result of the forward computation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer.matmul">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer.matmul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer.matmul" title="Link to this definition">#</a></dt>
+<dd><p>Implements low rank multiplication.</p>
+<p>According to ChatGPT this is a “factorized bilinear interaction”.
+Basically, you just need to project x and z down to a common number of
+low rank terms and then just multiply those terms.</p>
+<p>This is equivalent to a UV decomposition where you use n=low_rank_dim
+on the columns of the U/V matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta1</strong> (<em>Array</em>)</p></li>
+<li><p><strong>theta2</strong> (<em>Array</em>)</p></li>
+<li><p><strong>x</strong> (<em>Array</em>)</p></li>
+<li><p><strong>z</strong> (<em>Array</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -638,32 +1001,46 @@ on the columns of the U/V matrices.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.matmul"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.matmul()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__init__"><code class="docutils literal notranslate"><span class="pre">BLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__call__"><code class="docutils literal notranslate"><span class="pre">BLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.matmul"><code class="docutils literal notranslate"><span class="pre">BLayer.matmul()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.matmul"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.matmul()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FMLayer.matmul()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.__call__"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AdaptiveLayer.matmul"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedPriorLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer.matmul()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.__init__"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.__call__"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.EmbeddingLayer.matmul"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__init__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__call__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.matmul"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FMLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FMLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FMLayer.matmul"><code class="docutils literal notranslate"><span class="pre">FMLayer.matmul()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.__init__"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.__call__"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.__call__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.LowRankInteractionLayer.matmul"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer.matmul()</span></code></a></li>
 </ul>
 </li>
 </ul>
