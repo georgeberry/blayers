@@ -78,6 +78,21 @@ def model(x, y):
     return sample('obs', distributions.Normal(mu, sigma), obs=y)
 ```
 
+### reparameterizing
+
+To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this.
+
+```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
+from blayers.hmc import autoreparam
+
+@autoreparam
+def model(x, y):
+    mu = AdaptiveLayer()('mu', x)
+    return gaussian_link_exp(mu, y)
+```
+
 ### mixing it up
 
 The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so let's say you wanted to change the model from

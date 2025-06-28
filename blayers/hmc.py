@@ -18,7 +18,7 @@ LocScaleDist = (
 )
 
 
-def reparam(centered=0.0):
+def autoreparam(centered=0.0):
     def decorator(model_fn):
         @wraps(model_fn)
         def wrapped_model(*args, **kwargs):

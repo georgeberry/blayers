@@ -23,7 +23,7 @@ from blayers.layers import (
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
-from blayers.reparam import reparam
+from blayers.hmc import autoreparam
 from blayers._utils import (
     identity,
     outer_product,
@@ -438,7 +438,7 @@ def test_models_hmc(
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
 
     if is_reparam:
-        model_fn = reparam()(model_fn)
+        model_fn = autoreparam()(model_fn)
 
     rng_key = random.PRNGKey(2)
 
