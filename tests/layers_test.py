@@ -426,7 +426,7 @@ def test_models_vi(
     "is_reparam",
     [
         True,
-        # False,
+        False,
     ],
 )
 def test_models_hmc(
