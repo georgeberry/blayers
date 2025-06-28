@@ -150,6 +150,34 @@ def model(x, y):
 
 Very useful when you have an informative prior.
 
+
+### bayesian embeddings
+
+We'll keep track of your lookup table for you.
+
+```python
+from blayers.layers import EmbeddingLayer
+from blayers.links import gaussian_link_exp
+EMB_DIM = 8
+def model(x, y, x_cat):
+    mu = EmbeddingLayer()('mu', x, x_cats, embedding_dim=EMB_DIM)
+    return gaussian_link_exp(mu, y)
+```
+
+### old school random effects
+
+A special case of the embedding layer, where `EMB_DIM = 1`, useful for super
+fast one-hot encodings (aka random effects)
+
+```python
+from blayers.layers import RandomEffectsLayer
+from blayers.links import gaussian_link_exp
+def model(x, y, x_cat):
+    mu = RandomEffectsLayer()('mu', x, x_cats)
+    return gaussian_link_exp(mu, y)
+```
+
+
 ### factorization machines
 
 Developed in [Rendle 2010](https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf) and [Rendle 2011](https://www.ismll.uni-hildesheim.de/pub/pdfs/FreudenthalerRendle_BayesianFactorizationMachines.pdf), FMs provide a low-rank approximation to the `x`-by-`x` interaction matrix. For those familiar with R syntax, it is an approximation to `y ~ x:x`, excluding the x^2 terms.
@@ -183,8 +211,6 @@ def model(x, z, y):
     )
     return gaussian_link_exp(mu, y)
 ```
-
-### bayesian embeddings
 
 ## links
 
@@ -224,3 +250,4 @@ svi_result = svi_run_batched(
 5. More link functions
 6. Can we have some r style syntax or brms style?
 7. Fit helpers for getting cols in/out, doing data science
+8. Better errors if you pass the wrong stuff
