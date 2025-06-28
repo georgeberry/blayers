@@ -30,3 +30,4 @@ Detailed API
    api/layers
    api/infer
    api/links
+   api/sampling
