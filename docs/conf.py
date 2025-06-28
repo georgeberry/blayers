@@ -26,8 +26,12 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     'sphinx.ext.mathjax',
-
 ]
+
+smv_branch_whitelist = None
+smv_tag_whitelist = r'v*'
+
+
 
 autosummary_generate = True
 
