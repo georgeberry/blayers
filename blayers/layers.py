@@ -27,7 +27,7 @@ import jax
 import jax.numpy as jnp
 from numpyro import distributions, sample
 
-from blayers.utils import add_trailing_dim
+from blayers._utils import add_trailing_dim
 
 
 class BLayer(ABC):
@@ -64,66 +64,17 @@ class BLayer(ABC):
         """
 
 
-class FixedPriorLayer(BLayer):
-    """Bayesian layer with a fixed prior distribution over coefficients."""
-
-    def __init__(
-        self,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
-    ):
-        """
-        Args:
-            prior_dist: NumPyro distribution class for the coefficients.
-            prior_kwargs: Parameters to initialize the prior distribution.
-        """
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-    ) -> jax.Array:
-        """
-        Forward pass with fixed prior.
-
-        Args:
-            name: Variable name prefix.
-            x: Input data array of shape (n, d).
-
-        Returns:
-            jax.Array: Output array of shape (n,).
-        """
-
-        x = add_trailing_dim(x)
-        input_shape = x.shape[1]
-
-        # sampling block
-        betas = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(**self.prior_kwargs),
-            sample_shape=(input_shape,),
-        )
-        # matmul and return
-        return self.matmul(x, betas)
-
-    @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
-        """A dot product.
-
-        Args:
-            beta: Model coefficients of shape (j,).
-            x: Input data array of shape (n, d).
-
-        Returns:
-            jax.Array: Output array of shape (n,).
-        """
-        return jnp.einsum("ij,j->i", beta, x)
-
-
 class AdaptiveLayer(BLayer):
-    """Bayesian layer with adaptive prior using hierarchical modeling."""
+    """Bayesian layer with adaptive prior using hierarchical modeling.
+
+    Generates coefficients from the hierarchical model
+
+    .. math::
+        \lambda \sim HalfNormal(1.)
+
+    .. math::
+        \\beta \sim Normal(0., \lambda)
+    """
 
     def __init__(
         self,
@@ -192,8 +143,224 @@ class AdaptiveLayer(BLayer):
         return jnp.einsum("ij,j->i", beta, x)
 
 
+class FixedPriorLayer(BLayer):
+    """Bayesian layer with a fixed prior distribution over coefficients.
+
+    Generates coefficients from the model
+
+    .. math::
+        \\beta \sim Normal(0., 1.)
+    """
+
+    def __init__(
+        self,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+    ):
+        """
+        Args:
+            prior_dist: NumPyro distribution class for the coefficients.
+            prior_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+    ) -> jax.Array:
+        """
+        Forward pass with fixed prior.
+
+        Args:
+            name: Variable name prefix.
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+
+        x = add_trailing_dim(x)
+        input_shape = x.shape[1]
+
+        # sampling block
+        betas = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(**self.prior_kwargs),
+            sample_shape=(input_shape,),
+        )
+        # matmul and return
+        return self.matmul(x, betas)
+
+    @staticmethod
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+        """A dot product.
+
+        Args:
+            beta: Model coefficients of shape (j,).
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+        return jnp.einsum("ij,j->i", beta, x)
+
+
+class EmbeddingLayer(BLayer):
+    """Bayesian embedding layer for sparse categorical features."""
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+    ):
+        """
+        Args:
+            num_embeddings: Total number of discrete embedding entries.
+            embedding_dim: Dimensionality of each embedding vector.
+            prior_dist: Prior distribution for embedding weights.
+            prior_kwargs: Parameters for the prior distribution.
+        """
+        self.lmbda_dist = lmbda_dist
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        n_categories: int,
+        embedding_dim: int,
+    ) -> jax.Array:
+        """
+        Forward pass through embedding lookup.
+
+        Args:
+            name: Variable name scope.
+            x: Integer indices of shape (n,) indicating embeddings to use.
+            n_categories: The number of distinct things getting an embedding
+            embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.
+
+        Returns:
+            jax.Array: Embedding vectors of shape (n, embedding_dim).
+        """
+        # sampling block
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs),
+        )
+        betas = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            sample_shape=(n_categories, embedding_dim),
+        )
+        # matmul and return
+        return self.matmul(betas, x)
+
+    @staticmethod
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+        """
+        Index into the embedding table using the provided indices.
+
+        Args:
+            beta: Embedding table of shape (num_embeddings, embedding_dim).
+            x: Indices array of shape (n,).
+
+        Returns:
+            jax.Array: Looked-up embeddings of shape (n, embedding_dim).
+        """
+        return beta[x.squeeze()].squeeze()
+
+
+class RandomEffectsLayer(BLayer):
+    """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+    ):
+        """
+        Args:
+            num_embeddings: Total number of discrete embedding entries.
+            embedding_dim: Dimensionality of each embedding vector.
+            prior_dist: Prior distribution for embedding weights.
+            prior_kwargs: Parameters for the prior distribution.
+        """
+        self.lmbda_dist = lmbda_dist
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        n_categories: int,
+    ) -> jax.Array:
+        """
+        Forward pass through embedding lookup.
+
+        Args:
+            name: Variable name scope.
+            x: Integer indices of shape (n,) indicating embeddings to use.
+            n_categories: The number of distinct things getting an embedding
+
+        Returns:
+            jax.Array: Embedding vectors of shape (n, embedding_dim).
+        """
+        embedding_dim = 1
+
+        # sampling block
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs),
+        )
+        betas = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            sample_shape=(n_categories, embedding_dim),
+        )
+        # matmul and return
+        return self.matmul(betas, x)
+
+    @staticmethod
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+        """
+        Index into the embedding table using the provided indices.
+
+        Args:
+            beta: Embedding table of shape (num_embeddings, embedding_dim).
+            x: Indices array of shape (n,).
+
+        Returns:
+            jax.Array: Looked-up embeddings of shape (n, embedding_dim).
+        """
+        return beta[x.squeeze()].squeeze()
+
+
 class FMLayer(BLayer):
-    """Bayesian factorization machine layer with adaptive priors."""
+    """Bayesian factorization machine layer with adaptive priors.
+
+    Generates coefficients from the hierarchical model
+
+    .. math::
+        \lambda \sim HalfNormal(1.)
+
+    .. math::
+        \\beta \sim Normal(0., \lambda)
+
+    The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
+    if input covariates and :math:`l` is the low rank dim.
+
+    Then performs matrix multiplication using the formula in `Rendle (2010) <https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf>`_.
+    """
 
     def __init__(
         self,
@@ -339,141 +506,3 @@ class LowRankInteractionLayer(BLayer):
         xb = jnp.einsum("ij,jk->ik", x, theta1)
         zb = jnp.einsum("ij,jk->ik", z, theta2)
         return jnp.einsum("ik->i", xb * zb)
-
-
-class EmbeddingLayer(BLayer):
-    """Bayesian embedding layer for sparse categorical features."""
-
-    def __init__(
-        self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-    ):
-        """
-        Args:
-            num_embeddings: Total number of discrete embedding entries.
-            embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
-        """
-        self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        n_categories: int,
-        embedding_dim: int,
-    ) -> jax.Array:
-        """
-        Forward pass through embedding lookup.
-
-        Args:
-            name: Variable name scope.
-            x: Integer indices of shape (n,) indicating embeddings to use.
-            n_categories: The number of distinct things getting an embedding
-            embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.
-
-        Returns:
-            jax.Array: Embedding vectors of shape (n, embedding_dim).
-        """
-        # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
-        )
-        betas = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(n_categories, embedding_dim),
-        )
-        # matmul and return
-        return self.matmul(betas, x)
-
-    @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
-        """
-        Index into the embedding table using the provided indices.
-
-        Args:
-            beta: Embedding table of shape (num_embeddings, embedding_dim).
-            x: Indices array of shape (n,).
-
-        Returns:
-            jax.Array: Looked-up embeddings of shape (n, embedding_dim).
-        """
-        return beta[x.squeeze()].squeeze()
-
-
-class RandomEffectsLayer(BLayer):
-    """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
-
-    def __init__(
-        self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-    ):
-        """
-        Args:
-            num_embeddings: Total number of discrete embedding entries.
-            embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
-        """
-        self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        n_categories: int,
-    ) -> jax.Array:
-        """
-        Forward pass through embedding lookup.
-
-        Args:
-            name: Variable name scope.
-            x: Integer indices of shape (n,) indicating embeddings to use.
-            n_categories: The number of distinct things getting an embedding
-
-        Returns:
-            jax.Array: Embedding vectors of shape (n, embedding_dim).
-        """
-        embedding_dim = 1
-
-        # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
-        )
-        betas = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(n_categories, embedding_dim),
-        )
-        # matmul and return
-        return self.matmul(betas, x)
-
-    @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
-        """
-        Index into the embedding table using the provided indices.
-
-        Args:
-            beta: Embedding table of shape (num_embeddings, embedding_dim).
-            x: Indices array of shape (n,).
-
-        Returns:
-            jax.Array: Looked-up embeddings of shape (n, embedding_dim).
-        """
-        return beta[x.squeeze()].squeeze()

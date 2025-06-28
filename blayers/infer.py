@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import jax
 import jax.numpy as jnp
@@ -8,7 +8,7 @@ from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
-from blayers.utils import get_dataset_size, yield_batches
+from blayers._utils import get_dataset_size, get_steps_per_epoch
 
 
 class Batched_Trace_ELBO(ELBO):
@@ -162,3 +162,16 @@ def svi_run_batched(
         svi_state, loss = update(svi_state, **batch)
         losses.append(loss)
     return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
+
+def yield_batches(
+    data: dict[str, jax.Array],
+    batch_size: int,
+    n_epochs: int,
+) -> Generator[dict[str, jax.Array], None, None]:
+    """Yields batches from a dict of arrays."""
+    steps_per_epoch = get_steps_per_epoch(data, batch_size)
+    for _ in range(n_epochs):
+        for i in range(steps_per_epoch):
+            start = i * batch_size
+            end = start + batch_size
+            yield {k: v[start:end] for k, v in data.items()}

@@ -12,7 +12,7 @@ from numpyro import sample
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers import (
+from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
     FixedPriorLayer,
@@ -22,7 +22,7 @@ from blayers import (
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
-from blayers.utils import (
+from blayers._utils import (
     identity,
     outer_product,
     outer_product_upper_tril_no_diag,
@@ -201,22 +201,6 @@ def linear_regression_fixed_model() -> (
 
 
 @pytest.fixture
-def fm_regression_model() -> (
-    tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
-):
-    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        theta = FMLayer(low_rank_dim=LOW_RANK_DIM)("theta", x1)
-        return gaussian_link_exp(theta, y)
-
-    return (
-        model,
-        [
-            (["FMLayer_theta_theta"], outer_product_upper_tril_no_diag),
-        ],
-    )
-
-
-@pytest.fixture
 def emb_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
@@ -253,6 +237,22 @@ def re_model() -> (
         model,
         [
             (["RandomEffectsLayer_beta_beta"], identity),
+        ],
+    )
+
+
+@pytest.fixture
+def fm_regression_model() -> (
+    tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
+):
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        theta = FMLayer(low_rank_dim=LOW_RANK_DIM)("theta", x1)
+        return gaussian_link_exp(theta, y)
+
+    return (
+        model,
+        [
+            (["FMLayer_theta_theta"], outer_product_upper_tril_no_diag),
         ],
     )
 
@@ -337,9 +337,9 @@ def loss_instance(request: SubRequest) -> Any:
     [
         ("linear_regression_adaptive_model", "simulated_data_simple"),
         ("linear_regression_fixed_model", "simulated_data_simple"),
-        ("fm_regression_model", "simulated_data_fm"),
         ("emb_model", "simulated_data_emb"),
         ("re_model", "simulated_data_emb"),
+        ("fm_regression_model", "simulated_data_fm"),
         ("lowrank_model", "simulated_data_lowrank"),
     ],
     indirect=True,

@@ -56,3 +56,6 @@ force_grid_wrap = 0
 [tool.black]
 line-length = 80
 target-version = ["py311"]
+
+[tool.ruff]
+ignore = ["E731"]
