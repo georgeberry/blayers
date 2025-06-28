@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import pytest
 import pytest_check
 
-from blayers.utils import (
+from blayers._utils import (
     add_trailing_dim,
     get_dataset_size,
     get_steps_per_epoch,

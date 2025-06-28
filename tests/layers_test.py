@@ -22,7 +22,7 @@ from blayers.layers import (
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
-from blayers.utils import (
+from blayers._utils import (
     identity,
     outer_product,
     outer_product_upper_tril_no_diag,
