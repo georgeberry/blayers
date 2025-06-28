@@ -454,4 +454,33 @@ def test_models_hmc(
         rng_key,
         **model_data,
     )
+    samples = mcmc.get_samples()
+    sample_means = {k: jnp.mean(v, axis=0) for k, v in samples.items()}
+
     mcmc.print_summary()
+
+    '''
+    predictive = Predictive(
+        model_fn,
+        samples,
+    )
+    rng_key, rng_key_ = random.split(rng_key)
+    predictions = predictive(rng_key_, **model_data)['obs']
+    '''
+
+    for coef_list, coef_fn in coef_groups:
+        with pytest_check.check:
+            val = rmse(
+                coef_fn(*[sample_means[x] for x in coef_list]),
+                coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
+            )
+            assert val < 0.1
+
+    with pytest_check.check:
+        assert (
+            rmse(
+                sample_means["sigma"],
+                data["sigma"],
+            )
+            < 0.03
+        )
