@@ -80,17 +80,45 @@ def model(x, y):
 
 ### reparameterizing
 
-To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this.
+To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
+
+```python
+LocScaleDist = (
+    dist.Normal
+    | dist.LogNormal
+    | dist.StudentT
+    | dist.Cauchy
+    | dist.Laplace
+    | dist.Gumbel
+)
+```
+
+Then, reparam these distributions automatically and fit with Numpyro's built in MCMC methods.
 
 ```python
 from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
 from blayers.hmc import autoreparam
 
+data = {...}
+
 @autoreparam
 def model(x, y):
     mu = AdaptiveLayer()('mu', x)
     return gaussian_link_exp(mu, y)
+
+kernel = NUTS(model)
+mcmc = MCMC(
+    kernel,
+    num_warmup=500,
+    num_samples=1000,
+    num_chains=1,
+    progress_bar=True,
+)
+    mcmc.run(
+        rng_key,
+        **data,
+    )
 ```
 
 ### mixing it up
