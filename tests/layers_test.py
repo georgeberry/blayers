@@ -11,6 +11,7 @@ from _pytest.fixtures import SubRequest
 from numpyro import sample
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
+from numpyro.infer import MCMC, NUTS
 
 from blayers.layers import (
     AdaptiveLayer,
@@ -22,6 +23,7 @@ from blayers.layers import (
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
+from blayers.sampling import autoreparam
 from blayers._utils import (
     identity,
     outer_product,
@@ -307,7 +309,7 @@ to pass to the ultimate test function.
 
 
 @pytest.fixture
-def model(request: SubRequest) -> Any:
+def model_bundle(request: SubRequest) -> Any:
     return request.getfixturevalue(request.param)
 
 
@@ -321,7 +323,7 @@ def loss_instance(request: SubRequest) -> Any:
     return request.getfixturevalue(request.param)
 
 
-# ---- Test functions -------------------------------------------------------- #
+# ---- VI -------------------------------------------------------------------- #
 
 
 @pytest.mark.parametrize(
@@ -333,7 +335,7 @@ def loss_instance(request: SubRequest) -> Any:
     indirect=True,
 )
 @pytest.mark.parametrize(
-    ("model", "data"),
+    ("model_bundle", "data"),
     [
         ("linear_regression_adaptive_model", "simulated_data_simple"),
         ("linear_regression_fixed_model", "simulated_data_simple"),
@@ -344,17 +346,17 @@ def loss_instance(request: SubRequest) -> Any:
     ],
     indirect=True,
 )
-def test_models(
+def test_models_vi(
     data: Any,
-    model: Any,
+    model_bundle: Any,
     loss_instance: Any,
 ) -> Any:
-    model_fn, coef_groups = model
+    model_fn, coef_groups = model_bundle
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
 
     guide = AutoDiagonalNormal(model_fn)
 
-    num_steps = 30000
+    num_steps = 20000
 
     schedule = optax.cosine_onecycle_schedule(
         transition_steps=num_steps,
@@ -404,6 +406,80 @@ def test_models(
         assert (
             rmse(
                 guide_means["sigma"],
+                data["sigma"],
+            )
+            < 0.03
+        )
+
+
+# ---- HMC ------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("model_bundle", "data"),
+    [
+        ("linear_regression_adaptive_model", "simulated_data_simple"),
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "is_reparam",
+    [
+        True,
+        False,
+    ],
+)
+def test_models_hmc(
+    data: Any,
+    model_bundle: Any,
+    is_reparam: bool,
+) -> Any:
+    model_fn, coef_groups = model_bundle
+    model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
+
+    if is_reparam:
+        model_fn = autoreparam()(model_fn)
+
+    rng_key = random.PRNGKey(2)
+
+    kernel = NUTS(model_fn)
+    mcmc = MCMC(
+        kernel,
+        num_warmup=500,
+        num_samples=1000,
+        num_chains=1,
+        progress_bar=True,
+    )
+    mcmc.run(
+        rng_key,
+        **model_data,
+    )
+    samples = mcmc.get_samples()
+    sample_means = {k: jnp.mean(v, axis=0) for k, v in samples.items()}
+
+    mcmc.print_summary()
+
+    '''
+    predictive = Predictive(
+        model_fn,
+        samples,
+    )
+    rng_key, rng_key_ = random.split(rng_key)
+    predictions = predictive(rng_key_, **model_data)['obs']
+    '''
+
+    for coef_list, coef_fn in coef_groups:
+        with pytest_check.check:
+            val = rmse(
+                coef_fn(*[sample_means[x] for x in coef_list]),
+                coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
+            )
+            assert val < 0.03
+
+    with pytest_check.check:
+        assert (
+            rmse(
+                sample_means["sigma"],
                 data["sigma"],
             )
             < 0.03

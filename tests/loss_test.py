@@ -11,8 +11,8 @@ from blayers.infer import Batched_Trace_ELBO
 
 
 def test_builtin_vs_batched_elbo_simple() -> None:
-    def model() -> None:
-        z = numpyro.sample("z", dist.Normal(0.0, 1.0))
+    def model() -> jax.Array:
+        return numpyro.sample("z", dist.Normal(0.0, 1.0))
 
     rng_key = jax.random.PRNGKey(0)
     guide = AutoDiagonalNormal(model)
@@ -100,8 +100,8 @@ def test_builtin_vs_batched_elbo_regression() -> None:
 
 
 def test_no_batch_error() -> None:
-    def model() -> None:
-        z = numpyro.sample("z", dist.Normal(0.0, 1.0))
+    def model() -> jax.Array:
+        return numpyro.sample("z", dist.Normal(0.0, 1.0))
 
     rng_key = jax.random.PRNGKey(0)
     guide = AutoDiagonalNormal(model)
