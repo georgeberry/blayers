@@ -98,7 +98,7 @@ Then, reparam these distributions automatically and fit with Numpyro's built in 
 ```python
 from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
-from blayers.hmc import autoreparam
+from blayers.sampling import autoreparam
 
 data = {...}
 
