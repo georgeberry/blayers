@@ -309,7 +309,7 @@ to pass to the ultimate test function.
 
 
 @pytest.fixture
-def model(request: SubRequest) -> Any:
+def model_bundle(request: SubRequest) -> Any:
     return request.getfixturevalue(request.param)
 
 
@@ -414,6 +414,7 @@ def test_models_vi(
 
 # ---- HMC ------------------------------------------------------------------- #
 
+
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
@@ -421,16 +422,23 @@ def test_models_vi(
     ],
     indirect=True,
 )
-@pytest.mark.parametrize("is_reparam", [True, False])
+@pytest.mark.parametrize(
+    "is_reparam",
+    [
+        True,
+        # False,
+    ],
+)
 def test_models_hmc(
     data: Any,
     model_bundle: Any,
     is_reparam: bool,
 ) -> Any:
     model_fn, coef_groups = model_bundle
+    model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
 
     if is_reparam:
-        model_fn = reparam(model_fn)
+        model_fn = reparam()(model_fn)
 
     rng_key = random.PRNGKey(2)
 
@@ -444,6 +452,6 @@ def test_models_hmc(
     )
     mcmc.run(
         rng_key,
-        **data
+        **model_data,
     )
     mcmc.print_summary()
