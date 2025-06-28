@@ -356,7 +356,7 @@ def test_models_vi(
 
     guide = AutoDiagonalNormal(model_fn)
 
-    num_steps = 30000
+    num_steps = 20000
 
     schedule = optax.cosine_onecycle_schedule(
         transition_steps=num_steps,
@@ -474,7 +474,7 @@ def test_models_hmc(
                 coef_fn(*[sample_means[x] for x in coef_list]),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
             )
-            assert val < 0.1
+            assert val < 0.03
 
     with pytest_check.check:
         assert (
@@ -484,5 +484,3 @@ def test_models_hmc(
             )
             < 0.03
         )
-
-    import ipdb; ipdb.set_trace()
