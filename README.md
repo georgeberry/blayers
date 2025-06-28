@@ -43,7 +43,8 @@ BLayers takes this as its starting point and most fundamental building block,
 providing the flexible `AdaptiveLayer`.
 
 ```python
-from blayers import AdaptiveLayer, gaussian_link_exp
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
 def model(x, y):
     mu = AdaptiveLayer()('mu', x)
     return gaussian_link_exp(mu, y)
@@ -99,7 +100,8 @@ you can just do this directly via arguments
 
 ```python
 from numpyro import distributions,
-from blayers import AdaptiveLayer, gaussian_link_exp
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
 def model(x, y):
     mu = AdaptiveLayer(
         lmbda_dist=distributions.Exponential,
@@ -115,8 +117,9 @@ def model(x, y):
 Since Numpyro traces `sample` sites and doesn't record any paramters on the class, you can re-use with a particular generative model structure freely.
 
 ```python
-from numpyro import distributions,
-from blayers import AdaptiveLayer, gaussian_link_exp
+from numpyro import distributions
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
 
 my_lognormal_layer = AdaptiveLayer(
     lmbda_dist=distributions.Exponential,
@@ -138,7 +141,8 @@ For you purists out there, we also provide a `FixedPriorLayer` for standard
 L1/L2 regression.
 
 ```python
-from blayers import FixedPriorLayer, gaussian_link_exp
+from blayers.layers import FixedPriorLayer
+from blayers.links import gaussian_link_exp
 def model(x, y):
     mu = FixedPriorLayer()('mu', x)
     return gaussian_link_exp(mu, y)
@@ -153,7 +157,8 @@ Developed in [Rendle 2010](https://jame-zhang.github.io/assets/algo/Factorizatio
 To fit the equivalent of an r model like `y ~ x*x` (all main effects, x^2 terms, and one-way interaction effects), you'd do
 
 ```python
-from blayers import FMLayer, gaussian_link_exp
+from blayers.layers import AdaptiveLayer, FMLayer
+from blayers.links import gaussian_link_exp
 def model(x, y):
     mu = (
         AdaptiveLayer('x', x) +
@@ -168,7 +173,8 @@ def model(x, y):
 We also provide a standard UV deccomp for low rank interaction terms
 
 ```python
-from blayers import LowRankInteractionLayer, gaussian_link_exp
+from blayers.layers import AdaptiveLayer, LowRankInteractionLayer
+from blayers.links import gaussian_link_exp
 def model(x, z, y):
     mu = (
         AdaptiveLayer('x', x) +
@@ -216,3 +222,5 @@ svi_result = svi_run_batched(
 3. Examples
 4. More code re-use in `layers.py` (this will only become clear after more code is written)
 5. More link functions
+6. Can we have some r style syntax or brms style?
+7. Fit helpers for getting cols in/out, doing data science

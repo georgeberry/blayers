@@ -12,7 +12,7 @@ from numpyro import sample
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers import (
+from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
     FixedPriorLayer,
