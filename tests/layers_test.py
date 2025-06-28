@@ -484,3 +484,5 @@ def test_models_hmc(
             )
             < 0.03
         )
+
+    import ipdb; ipdb.set_trace()
