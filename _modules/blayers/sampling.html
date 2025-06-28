@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.links &#8212; blayers v0.1.0a2 documentation</title>
+    <title>blayers.sampling &#8212; blayers v0.1.0a2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/links';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/sampling';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -269,19 +269,52 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for blayers.links</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+  <h1>Source code for blayers.sampling</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">We want to systematically reparam models</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">trace</span><span class="p">,</span> <span class="n">reparam</span> <span class="k">as</span> <span class="n">numpyro_reparam</span><span class="p">,</span> <span class="n">seed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.reparam</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocScaleReparam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">StudentT</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Cauchy</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Laplace</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gumbel</span>
+<span class="p">)</span>
 
 
-<div class="viewcode-block" id="gaussian_link_exp">
-<a class="viewcode-back" href="../../api/links.html#blayers.links.gaussian_link_exp">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_link_exp</span><span class="p">(</span><span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span></div>
+<div class="viewcode-block" id="autoreparam">
+<a class="viewcode-back" href="../../api/sampling.html#blayers.sampling.autoreparam">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span><span class="n">centered</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">model_fn</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">model_fn</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># Use a fixed dummy seed so trace doesn&#39;t trigger global name</span>
+            <span class="c1"># collisions</span>
+            <span class="n">dummy_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">seed</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">rng_seed</span><span class="o">=</span><span class="n">dummy_key</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">trace</span><span class="p">()</span> <span class="k">as</span> <span class="n">tr</span><span class="p">:</span>
+                    <span class="n">model_fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;sample&quot;</span> <span class="ow">or</span> <span class="n">site</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_observed&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">],</span> <span class="n">LocScaleDist</span><span class="p">):</span>
+                    <span class="n">config</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">LocScaleReparam</span><span class="p">(</span><span class="n">centered</span><span class="o">=</span><span class="n">centered</span><span class="p">)</span>
+
+            <span class="c1"># Wrap and return reparam&#39;d model</span>
+            <span class="k">return</span> <span class="n">numpyro_reparam</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)(</span><span class="n">model_fn</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapped_model</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
 
 </pre></div>
 
