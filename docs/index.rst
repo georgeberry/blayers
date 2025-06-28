@@ -29,5 +29,4 @@ Detailed API
 
    api/layers
    api/infer
-   api/utils
    api/links

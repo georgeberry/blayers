@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import jax
 import jax.numpy as jnp
@@ -8,7 +8,7 @@ from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
-from blayers._utils import get_dataset_size
+from blayers._utils import get_dataset_size, get_steps_per_epoch
 
 
 class Batched_Trace_ELBO(ELBO):
