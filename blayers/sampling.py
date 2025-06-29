@@ -1,5 +1,5 @@
 """
-We want to systematically reparam models
+Systematically reparamaterize models
 """
 
 from functools import wraps
