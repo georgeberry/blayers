@@ -3,10 +3,13 @@ Systematically reparamaterize models
 """
 
 from functools import wraps
-from numpyro.handlers import trace, reparam as numpyro_reparam, seed
-from numpyro.infer.reparam import LocScaleReparam
-from numpyro import distributions as dist
+from typing import Any
+
 import jax.random as random
+from numpyro import distributions as dist
+from numpyro.handlers import reparam as numpyro_reparam
+from numpyro.handlers import seed, trace
+from numpyro.infer.reparam import LocScaleReparam
 
 LocScaleDist = (
     dist.Normal
@@ -18,10 +21,10 @@ LocScaleDist = (
 )
 
 
-def autoreparam(centered=0.0):
-    def decorator(model_fn):
+def autoreparam(centered: float = 0.0) -> Any:
+    def decorator(model_fn: Any) -> Any:
         @wraps(model_fn)
-        def wrapped_model(*args, **kwargs):
+        def wrapped_model(*args: Any, **kwargs: Any) -> Any:
             # Use a fixed dummy seed so trace doesn't trigger global name
             # collisions
             dummy_key = random.PRNGKey(0)
@@ -40,4 +43,5 @@ def autoreparam(centered=0.0):
             return numpyro_reparam(config=config)(model_fn)
 
         return wrapped_model
+
     return decorator

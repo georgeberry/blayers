@@ -3,7 +3,7 @@
 
 # BLayers
 
-The missing layers package for Bayesian inference. 
+The missing layers package for Bayesian inference.
 
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 

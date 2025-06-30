@@ -1,3 +1,5 @@
+# type: ignore
+
 """Deferred computation for easier model building.
 
 The key insight here is that we build up a stored comptuation graph composed
@@ -39,7 +41,18 @@ deferred.__call__ --> now
 """
 
 import operator
+
 import jax.numpy as jnp
+import optax
+from jax import random
+from numpyro.infer import SVI, Predictive, Trace_ELBO
+from numpyro.infer.autoguide import AutoDiagonalNormal
+
+from blayers.links import gaussian_link_exp
+
+FOUR_SPACES = "    "
+
+# ---- Deferred ops ---------------------------------------------------------- #
 
 
 class DeferredBinaryOp:
@@ -62,10 +75,10 @@ class DeferredBinaryOp:
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
 
     def pretty(self, indent=0):
-        s = "    " * indent + f"{self.symbol}(\n"
+        s = FOUR_SPACES * indent + f"{self.symbol}(\n"
         s += self.left_deferred.pretty(indent + 1) + ",\n"
         s += self.right_deferred.pretty(indent + 1) + "\n"
-        s += "    " * indent + ")"
+        s += FOUR_SPACES * indent + ")"
         return s
 
 
@@ -89,6 +102,29 @@ class Concat(DeferredBinaryOp):
         super().__init__(left, right, jnp.concat, "Concat")
 
 
+# ---- Higher level deferred stuff ------------------------------------------- #
+
+
+class Formula:
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
+
+    def __call__(self, data, pred_only=False):
+        if pred_only:
+            gaussian_link_exp(
+                "obs",
+                y=None,
+                y_hat=self.rhs(data),
+            )
+
+        return gaussian_link_exp(
+            "obs",
+            y=self.lhs(data),
+            y_hat=self.rhs(data),
+        )
+
+
 class DeferredArray:
     def __init__(self, name):
         self.name = name
@@ -102,8 +138,14 @@ class DeferredArray:
     def __or__(self, other):
         return Concat(self, other)
 
+    def __eq__(self, other):
+        return Formula(lhs=self, rhs=other)
+
     def __repr__(self):
         return f"DeferredArray({self.name})"
+
+    def __str__(self):
+        return "".join(c for c in self.__repr__() if ord(c) < 128)
 
 
 class DeferredLayer:
@@ -111,14 +153,16 @@ class DeferredLayer:
         self.layer = layer
         self.deferred = deferred
 
-    def __call__(self, data, name_prefix=""):
-        return self.layer(self.deferred(data))
+    def __call__(self, data):
+        name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
+        dt = self.deferred(data)
+        return self.layer(name, dt)
 
     def __repr__(self):
         return f"{self.layer.__class__.__name__}({self.deferred})"
 
     def pretty(self, indent=0):
-        return "    " * indent + f"DeferredLayer({self.deferred})"
+        return FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
 
     def __add__(self, other):
         return Sum(self, other)
@@ -138,3 +182,46 @@ class SymbolicLayer:
 class SymbolFactory:
     def __getattr__(self, name: str):
         return DeferredArray(name)
+
+
+# ---- Public facing --------------------------------------------------------- #
+
+
+def bl(
+    formula,
+    data,
+    num_steps=20000,
+):
+    schedule = optax.cosine_onecycle_schedule(
+        transition_steps=num_steps,
+        peak_value=5e-2,
+        pct_start=0.1,
+        div_factor=25,
+    )
+
+    def model_fn(data):
+        return formula(data)
+
+    guide = AutoDiagonalNormal(model_fn)
+
+    svi = SVI(model_fn, guide, optax.adam(schedule), loss=Trace_ELBO())
+
+    rng_key = random.PRNGKey(2)
+
+    svi_result = svi.run(
+        rng_key,
+        num_steps=num_steps,
+        **data,
+    )
+    guide_predicitive = Predictive(
+        guide,
+        params=svi_result.params,
+        num_samples=1000,
+    )
+    guide_samples = guide_predicitive(
+        random.PRNGKey(1),
+        **{k: v for k, v in data.items() if k != "y"},
+    )
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    return guide_means
