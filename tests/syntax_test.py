@@ -4,6 +4,7 @@ from typing import Any
 
 import jax
 import pytest
+import pytest_check
 from numpyro.infer import Predictive
 
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
@@ -36,6 +37,21 @@ def test_ast() -> None:
     )
 )"""
     )
+
+
+def test_formula_fail() -> None:
+    class AdaptiveLayerMock:
+        def __call__(self, x):
+            return f"{x}"
+
+    f = SymbolFactory()
+    a = SymbolicLayer(AdaptiveLayerMock())
+
+    with pytest_check.check.raises(TypeError):
+        f.y % f.x1 % f.x2
+
+    with pytest_check.check.raises(TypeError):
+        f.y % a(f.x1 * f.x2) % f.x2
 
 
 @pytest.mark.parametrize(
@@ -76,7 +92,13 @@ def test_formula(
 
     _, coef_groups = model_bundle
 
-    formula = f.y % a(f.x1)  # + a(f.x2 + f.x1) * a(f.x3 | f.x1)
+    # all of the math operators get evaluted before the <= operator so
+    # the <= operator will always go last
+    # order is PEDM(Modulus)AS -> bitwise -> comparison
+    # so we want to keep our expression to the first group, then bitwise
+    # can concat arrays with |, then comparison does assignment and formula
+    # building
+    formula = f.y <= a(f.x1) + a(f.x1 + f.x1) * a(f.x1 | f.x1)
 
     def model(data):
         return formula(data)

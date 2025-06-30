@@ -288,7 +288,9 @@ svi_result = svi_run_batched(
 
 Blue sky
 
-1. Can we have some r style syntax or brms style?
+1. V0 syntax working
+2. Better layer and variable names
+3. Explicitly scope what we want here
 
 Normal science
 

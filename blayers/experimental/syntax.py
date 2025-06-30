@@ -64,11 +64,13 @@ class DeferredBinaryOp:
         self.op = op
         self.symbol = symbol
 
-    def __call__(self, data, name_prefix=""):
+    def __call__(self, data):
         # the results from left_deferred and right_deferred must be composable
         # via `op` or this fails
-        left_now = self.left_deferred(data, name_prefix + "l_")
-        right_now = self.right_deferred(data, name_prefix + "r_")
+
+        left_now = self.left_deferred(data)
+
+        right_now = self.right_deferred(data)
         return self.op(left_now, right_now)
 
     def __repr__(self):
@@ -99,7 +101,12 @@ class Power(DeferredBinaryOp):
 
 class Concat(DeferredBinaryOp):
     def __init__(self, left, right):
-        super().__init__(left, right, jnp.concat, "Concat")
+        super().__init__(
+            left,
+            right,
+            lambda x, y: jnp.concat([x, y], axis=1),
+            "Concat",
+        )
 
 
 # ---- Higher level deferred stuff ------------------------------------------- #
@@ -142,7 +149,7 @@ class DeferredArray:
     def __eq__(self, other):
         return Formula(lhs=self, rhs=other)
 
-    def __mod__(self, other):
+    def __le__(self, other):
         return Formula(lhs=self, rhs=other)
 
     def __repr__(self):
