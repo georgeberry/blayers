@@ -113,16 +113,17 @@ class Formula:
     def __call__(self, data, pred_only=False):
         if pred_only:
             gaussian_link_exp(
-                "obs",
                 y=None,
                 y_hat=self.rhs(data),
             )
 
         return gaussian_link_exp(
-            "obs",
             y=self.lhs(data),
             y_hat=self.rhs(data),
         )
+
+    def __repr__(self):
+        return f"{self.lhs} ~ {self.rhs}"
 
 
 class DeferredArray:
@@ -139,6 +140,9 @@ class DeferredArray:
         return Concat(self, other)
 
     def __eq__(self, other):
+        return Formula(lhs=self, rhs=other)
+
+    def __mod__(self, other):
         return Formula(lhs=self, rhs=other)
 
     def __repr__(self):

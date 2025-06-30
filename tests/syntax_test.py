@@ -2,10 +2,18 @@
 
 from typing import Any
 
+import jax
 import pytest
+from numpyro.infer import Predictive
 
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
 from blayers.layers import AdaptiveLayer
+from tests.layers_test import (  # noqa
+    data,
+    linear_regression_adaptive_model,
+    model_bundle,
+    simulated_data_simple,
+)
 
 
 def test_ast() -> None:
@@ -38,8 +46,8 @@ def test_ast() -> None:
     indirect=True,
 )
 def test_syntax_model(
-    data: Any,
-    model_bundle: Any,
+    data: Any,  # noqa
+    model_bundle: Any,  # noqa
 ) -> Any:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
@@ -60,15 +68,20 @@ def test_syntax_model(
     indirect=True,
 )
 def test_formula(
-    model_bundle: Any,
-    data: Any,
+    model_bundle: Any,  # noqa
+    data: Any,  # noqa
 ) -> None:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
 
     _, coef_groups = model_bundle
 
-    formula = f.y == a(f.x1)  #  + a(f.x2 + f.x1) * a(f.x3 | f.x1)
+    formula = f.y % a(f.x1)  # + a(f.x2 + f.x1) * a(f.x3 | f.x1)
 
     def model(data):
         return formula(data)
+
+    key = jax.random.PRNGKey(2)
+
+    predictive = Predictive(model, num_samples=1)
+    prior_samples = predictive(key, data=data)
