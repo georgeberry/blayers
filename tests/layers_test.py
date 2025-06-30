@@ -9,10 +9,16 @@ import pytest
 import pytest_check
 from _pytest.fixtures import SubRequest
 from numpyro import sample
-from numpyro.infer import SVI, Predictive, Trace_ELBO
+from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
-from numpyro.infer import MCMC, NUTS
 
+from blayers._utils import (
+    identity,
+    outer_product,
+    outer_product_upper_tril_no_diag,
+    rmse,
+)
+from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
@@ -21,15 +27,8 @@ from blayers.layers import (
     LowRankInteractionLayer,
     RandomEffectsLayer,
 )
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
 from blayers.sampling import autoreparam
-from blayers._utils import (
-    identity,
-    outer_product,
-    outer_product_upper_tril_no_diag,
-    rmse,
-)
 
 N_OBS = 10000
 LOW_RANK_DIM = 3
@@ -459,14 +458,14 @@ def test_models_hmc(
 
     mcmc.print_summary()
 
-    '''
+    """
     predictive = Predictive(
         model_fn,
         samples,
     )
     rng_key, rng_key_ = random.split(rng_key)
     predictions = predictive(rng_key_, **model_data)['obs']
-    '''
+    """
 
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:

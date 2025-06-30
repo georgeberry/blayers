@@ -3,7 +3,7 @@
 
 # BLayers
 
-The missing layers package for Bayesian inference. 
+The missing layers package for Bayesian inference.
 
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 
@@ -13,7 +13,7 @@ The missing layers package for Bayesian inference.
 pip install blayers
 ```
 
-deps are: `numpy`, `numpyro` and `jax`. `optax` is recommended.
+deps are: `numpyro` and `jax`. `optax` is recommended.
 
 ## concept
 
@@ -98,7 +98,7 @@ Then, reparam these distributions automatically and fit with Numpyro's built in 
 ```python
 from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
-from blayers.hmc import autoreparam
+from blayers.sampling import autoreparam
 
 data = {...}
 
@@ -286,11 +286,17 @@ svi_result = svi_run_batched(
 
 ## roadmap
 
+Blue sky
+
+1. Can we have some r style syntax or brms style?
+
+Normal science
+
 1. Fit helpers for models with categorical variables
 2. Multioutput models
 3. Examples
 4. More code re-use in `layers.py` (this will only become clear after more code is written)
 5. More link functions
-6. Can we have some r style syntax or brms style?
-7. Fit helpers for getting cols in/out, doing data science
-8. Better errors if you pass the wrong stuff
+6. Fit helpers for getting cols in/out, doing data science
+7. Better errors if you pass the wrong stuff
+8. Version the docs

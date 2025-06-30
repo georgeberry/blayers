@@ -163,6 +163,7 @@ def svi_run_batched(
         losses.append(loss)
     return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
 
+
 def yield_batches(
     data: dict[str, jax.Array],
     batch_size: int,
