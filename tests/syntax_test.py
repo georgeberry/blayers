@@ -8,7 +8,7 @@ import pytest_check
 from numpyro.infer import Predictive
 
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
-from blayers.layers import AdaptiveLayer, RandomEffectsLayer
+from blayers.layers import AdaptiveLayer
 from tests.layers_test import (  # noqa
     data,
     linear_regression_adaptive_model,
@@ -89,7 +89,6 @@ def test_formula(
 ) -> None:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
-    re = SymbolicLayer(RandomEffectsLayer())
 
     _, coef_groups = model_bundle
 
@@ -99,12 +98,17 @@ def test_formula(
     # so we want to keep our expression to the first group, then bitwise
     # can concat arrays with |, then comparison does assignment and formula
     # building
-    formula = f.y <= a(f.x1) + a(f.x1 + f.x1) * a(f.x1 | f.x1) + re(f.x1)
+    formula = f.y <= a(f.x1) + a(f.x1 + f.x1) * a(f.x1 | f.x1)
 
     def model(data):
         return formula(data)
 
     key = jax.random.PRNGKey(2)
-
     predictive = Predictive(model, num_samples=1)
     prior_samples = predictive(key, data=data)
+
+    assert len(prior_samples) == 8 and (
+        prior_samples[
+            "AdaptiveLayer_AdaptiveLayer_Add(DeferredArray(x1), DeferredArray(x1))_beta"
+        ]
+    ).shape == (1, 2)
