@@ -139,7 +139,7 @@ def test_fit(
     # building
 
     model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
-    formula = f.y <= a(f.x1)
+    formula = f.y <= a(f.x1) + a(f.x1)
 
     def model(data):
         return formula(data)
