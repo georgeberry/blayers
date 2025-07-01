@@ -42,6 +42,7 @@ deferred.__call__ --> now
 
 import operator
 
+import jax
 import jax.numpy as jnp
 import optax
 from jax import random
@@ -199,8 +200,8 @@ class SymbolFactory:
 
 
 def bl(
-    formula,
-    data,
+    formula: Formula,
+    data: dict[str, jax.Array],
     num_steps=20000,
 ):
     schedule = optax.cosine_onecycle_schedule(
@@ -213,6 +214,8 @@ def bl(
     def model_fn(data):
         return formula(data)
 
+    rng_key = random.PRNGKey(2)
+
     guide = AutoDiagonalNormal(model_fn)
 
     svi = SVI(model_fn, guide, optax.adam(schedule), loss=Trace_ELBO())
@@ -221,8 +224,8 @@ def bl(
 
     svi_result = svi.run(
         rng_key,
-        num_steps=num_steps,
-        **data,
+        num_steps,
+        data,
     )
     guide_predicitive = Predictive(
         guide,
@@ -231,8 +234,7 @@ def bl(
     )
     guide_samples = guide_predicitive(
         random.PRNGKey(1),
-        **{k: v for k, v in data.items() if k != "y"},
+        {k: v for k, v in data.items() if k != "y"},
     )
-    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
 
-    return guide_means
+    return guide_samples

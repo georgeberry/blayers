@@ -6,6 +6,7 @@ import jax
 import pytest
 import pytest_check
 from numpyro.infer import Predictive
+from numpyro.infer.autoguide import AutoDiagonalNormal
 
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
 from blayers.layers import AdaptiveLayer
@@ -112,3 +113,51 @@ def test_formula(
             "AdaptiveLayer_AdaptiveLayer_Add(DeferredArray(x1), DeferredArray(x1))_beta"
         ]
     ).shape == (1, 2)
+
+
+@pytest.mark.parametrize(
+    ("model_bundle", "data"),
+    [
+        ("linear_regression_adaptive_model", "simulated_data_simple"),
+    ],
+    indirect=True,
+)
+def test_fit(
+    model_bundle: Any,  # noqa
+    data: Any,  # noqa
+) -> None:
+    f = SymbolFactory()
+    a = SymbolicLayer(AdaptiveLayer())
+
+    _, coef_groups = model_bundle
+
+    # all of the math operators get evaluted before the <= operator so
+    # the <= operator will always go last
+    # order is PEDM(Modulus)AS -> bitwise -> comparison
+    # so we want to keep our expression to the first group, then bitwise
+    # can concat arrays with |, then comparison does assignment and formula
+    # building
+
+    model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
+    formula = f.y <= a(f.x1)
+
+    def model(data):
+        return formula(data)
+
+    guide = AutoDiagonalNormal(model)
+
+    key = jax.random.PRNGKey(2)
+    predictive = Predictive(guide, num_samples=1)
+    guide_samples = predictive(key, data=model_data)
+
+    predictive = Predictive(model, num_samples=1)
+    model_samples = predictive(key, data=model_data)
+
+    guide_samples = bl(
+        formula=formula,
+        data=model_data,
+    )
+
+    import ipdb
+
+    ipdb.set_trace()
