@@ -50,6 +50,7 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
+from blayers.layers import EmbeddingLayer, RandomEffectsLayer
 from blayers.links import gaussian_link_exp
 
 _uid_counter = itertools.count()
@@ -176,13 +177,32 @@ class DeferredArray:
 
 
 class DeferredLayer:
-    def __init__(self, layer, deferred):
+    def __init__(self, layer, deferred, metadata=None):
         self.layer = layer
         self.deferred = deferred
+        self.metadata = metadata or {}
 
     def __call__(self, data):
         name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
         dt = self.deferred(data)
+        # for random effects
+        if isinstance(self.layer, (RandomEffectsLayer, EmbeddingLayer)):
+            assert isinstance(
+                self.deferred, DeferredArray
+            ), f"{self.layer.__class__.__name__} only accepts a DeferredArray."
+            assert (
+                len(dt.shape) == 1 or dt.shape[1] == 1
+            ), f"Can only pass {self.layer.__class__.__name__} a one dimensional array, got {dt.shape}."
+            n_categories = int(jnp.unique(dt))
+            if isinstance(self.layer, RandomEffectsLayer):
+                return self.layer(name, dt, n_categories=n_categories)
+
+            if isinstance(self.layer, EmbeddingLayer):
+                metadata = self.metadata.copy()
+                return self.layer(
+                    name, dt, n_categories=n_categories, **metadata
+                )
+
         return self.layer(name, dt)
 
     def _mock_call(self):
@@ -208,8 +228,9 @@ class SymbolicLayer:
     def __init__(self, layer):
         self.layer = layer
 
-    def __call__(self, deferred):
-        return DeferredLayer(self.layer, deferred)
+    def __call__(self, deferred, **kwargs):
+        metadata = kwargs or {}
+        return DeferredLayer(self.layer, deferred, metadata=metadata)
 
 
 class SymbolFactory:

@@ -9,13 +9,35 @@ from numpyro.infer import Predictive
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
-from blayers.layers import AdaptiveLayer
+from blayers.layers import AdaptiveLayer, EmbeddingLayer, RandomEffectsLayer
 from tests.layers_test import (  # noqa
     data,
     linear_regression_adaptive_model,
     model_bundle,
     simulated_data_simple,
 )
+
+
+def test_re(simulated_data_simple: Any) -> Any:  # noqa
+    f = SymbolFactory()
+    re = SymbolicLayer(RandomEffectsLayer())
+
+    data = simulated_data_simple
+
+    formula = re(f.x1)
+
+    formula(data)
+
+
+def test_emb(simulated_data_simple: Any) -> Any:  # noqa
+    f = SymbolFactory()
+    emb = SymbolicLayer(EmbeddingLayer())
+
+    data = simulated_data_simple
+
+    formula = emb(f.x1, embedding_dim=8)
+
+    formula(data)
 
 
 def test_ast() -> None:
@@ -53,17 +75,6 @@ def test_formula_fail() -> None:
 
     with pytest_check.check.raises(TypeError):
         f.y <= a(f.x1 * f.x2) <= f.x2
-
-
-def test_syntax_model(simulated_data_simple: Any) -> Any:  # noqa
-    f = SymbolFactory()
-    a = SymbolicLayer(AdaptiveLayer())
-
-    data = simulated_data_simple
-
-    formula = a(f.x1) + a(f.x1)
-
-    formula(data)
 
 
 @pytest.mark.parametrize(
