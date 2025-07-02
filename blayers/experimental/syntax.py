@@ -129,6 +129,18 @@ class Concat(DeferredBinaryOp):
 class Formula:
     def __init__(self, lhs, rhs):
         logger.warning("Formulas are in alpha. Use with care!")
+        assert isinstance(
+            lhs, DeferredArray
+        ), f"LHS of Formula must be a DeferredArray, got {type(lhs)}."
+        assert isinstance(
+            rhs,
+            (
+                DeferredArray,
+                DeferredBinaryOp,
+                DeferredLayer,
+            ),
+        ), f"RHS of Formula must be a DeferredArray, got {type(rhs)}."
+
         self.lhs = lhs
         self.rhs = rhs
 
@@ -144,8 +156,30 @@ class Formula:
             y_hat=self.rhs(data),
         )
 
+    def _mock_call(self):
+        uid = _next_uid()
+        lhs_mock = self.lhs._mock_call()
+        rhs_mock = self.rhs._mock_call()
+        print(f"{uid}_{lhs_mock}<={rhs_mock}")
+
     def __repr__(self):
         return f"{self.lhs} <= {self.rhs}"
+
+    def __bool__(self):
+        raise ValueError(
+            "Formulas cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
+    def __le__(self, other):
+        if isinstance(other, Formula):
+            raise ValueError(
+                "Invalid chained formula: RHS is already a Formula. Use parentheses or break into separate formulas."
+            )
+        if isinstance(self, Formula):
+            raise ValueError(
+                "Invalid chained formula: LHS is already a Formula. Use parentheses or break into separate formulas."
+            )
+        return Formula(lhs=self, rhs=other)
 
 
 class DeferredArray:
@@ -166,9 +200,6 @@ class DeferredArray:
 
     def __or__(self, other):
         return Concat(self, other)
-
-    def __eq__(self, other):
-        return Formula(lhs=self, rhs=other)
 
     def __le__(self, other):
         return Formula(lhs=self, rhs=other)

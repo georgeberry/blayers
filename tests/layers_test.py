@@ -247,7 +247,7 @@ def fm_regression_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        theta = FMLayer(low_rank_dim=LOW_RANK_DIM)("theta", x1)
+        theta = FMLayer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
         return gaussian_link_exp(theta, y)
 
     return (
@@ -263,10 +263,8 @@ def lowrank_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, x2: jax.Array, y: jax.Array | None = None) -> Any:
-        beta1 = LowRankInteractionLayer(low_rank_dim=LOW_RANK_DIM)(
-            "lowrank",
-            x1,
-            x2,
+        beta1 = LowRankInteractionLayer()(
+            "lowrank", x1, x2, low_rank_dim=LOW_RANK_DIM
         )
         return gaussian_link_exp(beta1, y)
 

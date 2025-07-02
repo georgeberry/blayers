@@ -19,24 +19,17 @@ from tests.layers_test import (  # noqa
 )
 
 
-def test_re(simulated_data_simple: Any) -> Any:  # noqa
+def test_re() -> Any:  # noqa
     f = SymbolFactory()
     re = SymbolicLayer(RandomEffectsLayer())
 
     formula = re(f.x1)
 
-    formula(data)
 
-
-def test_emb(simulated_data_simple: Any) -> Any:  # noqa
+def test_emb() -> Any:  # noqa
     f = SymbolFactory()
     emb = SymbolicLayer(EmbeddingLayer())
-
-    data = simulated_data_simple
-
     formula = emb(f.x1, embedding_dim=8)
-
-    formula(data)
 
 
 def test_ast() -> None:
@@ -69,11 +62,11 @@ def test_formula_fail() -> None:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayerMock())
 
-    with pytest_check.check.raises(TypeError):
+    with pytest_check.check.raises(ValueError):
         f.y <= f.x1 <= f.x2
 
-    with pytest_check.check.raises(TypeError):
-        f.y <= a(f.x1 * f.x2) <= f.x2
+    with pytest_check.check.raises(ValueError):
+        f.y <= a(f.x1 + f.x2) <= f.x2
 
 
 @pytest.mark.parametrize(
