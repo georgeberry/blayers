@@ -63,6 +63,16 @@ class BLayer(ABC):
             jax.Array: The result of the matrix multiplication.
         """
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        """A list of attributes this class needs to be passed at call time
+        beyond data (x) and a string name.
+
+        Returns:
+            list[str]: A list of attributes as strings.
+        """
+        return []
+
 
 class AdaptiveLayer(BLayer):
     """Bayesian layer with adaptive prior using hierarchical modeling.
@@ -275,6 +285,10 @@ class EmbeddingLayer(BLayer):
         """
         return beta[x.squeeze()].squeeze()
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["n_categories", "embedding_dim"]
+
 
 class RandomEffectsLayer(BLayer):
     """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
@@ -343,6 +357,10 @@ class RandomEffectsLayer(BLayer):
             jax.Array: Looked-up embeddings of shape (n, embedding_dim).
         """
         return beta[x.squeeze()].squeeze()
+
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["n_categories"]
 
 
 class FMLayer(BLayer):

@@ -193,7 +193,7 @@ class DeferredLayer:
             assert (
                 len(dt.shape) == 1 or dt.shape[1] == 1
             ), f"Can only pass {self.layer.__class__.__name__} a one dimensional array, got {dt.shape}."
-            n_categories = int(jnp.unique(dt))
+            n_categories = int(jnp.unique(dt).shape[0])
             if isinstance(self.layer, RandomEffectsLayer):
                 return self.layer(name, dt, n_categories=n_categories)
 
