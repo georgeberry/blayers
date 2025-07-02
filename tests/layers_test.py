@@ -9,10 +9,16 @@ import pytest
 import pytest_check
 from _pytest.fixtures import SubRequest
 from numpyro import sample
-from numpyro.infer import SVI, Predictive, Trace_ELBO
+from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
-from numpyro.infer import MCMC, NUTS
 
+from blayers._utils import (
+    identity,
+    outer_product,
+    outer_product_upper_tril_no_diag,
+    rmse,
+)
+from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
@@ -21,15 +27,8 @@ from blayers.layers import (
     LowRankInteractionLayer,
     RandomEffectsLayer,
 )
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.links import gaussian_link_exp
 from blayers.sampling import autoreparam
-from blayers._utils import (
-    identity,
-    outer_product,
-    outer_product_upper_tril_no_diag,
-    rmse,
-)
 
 N_OBS = 10000
 LOW_RANK_DIM = 3
@@ -248,7 +247,7 @@ def fm_regression_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        theta = FMLayer(low_rank_dim=LOW_RANK_DIM)("theta", x1)
+        theta = FMLayer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
         return gaussian_link_exp(theta, y)
 
     return (
@@ -264,10 +263,8 @@ def lowrank_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, x2: jax.Array, y: jax.Array | None = None) -> Any:
-        beta1 = LowRankInteractionLayer(low_rank_dim=LOW_RANK_DIM)(
-            "lowrank",
-            x1,
-            x2,
+        beta1 = LowRankInteractionLayer()(
+            "lowrank", x1, x2, low_rank_dim=LOW_RANK_DIM
         )
         return gaussian_link_exp(beta1, y)
 
@@ -459,14 +456,14 @@ def test_models_hmc(
 
     mcmc.print_summary()
 
-    '''
+    """
     predictive = Predictive(
         model_fn,
         samples,
     )
     rng_key, rng_key_ = random.split(rng_key)
     predictions = predictive(rng_key_, **model_data)['obs']
-    '''
+    """
 
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
@@ -484,3 +481,26 @@ def test_models_hmc(
             )
             < 0.03
         )
+
+
+# ---- MISC ------------------------------------------------------------------ #
+
+
+def test_required_metadata() -> None:
+    with pytest_check.check:
+        assert AdaptiveLayer.required_metadata() == []
+
+    with pytest_check.check:
+        assert EmbeddingLayer.required_metadata() == [
+            "n_categories",
+            "embedding_dim",
+        ]
+
+    with pytest_check.check:
+        assert RandomEffectsLayer.required_metadata() == ["n_categories"]
+
+    with pytest_check.check:
+        assert FMLayer.required_metadata() == ["low_rank_dim"]
+
+    with pytest_check.check:
+        assert LowRankInteractionLayer.required_metadata() == ["low_rank_dim"]

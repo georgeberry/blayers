@@ -63,6 +63,16 @@ class BLayer(ABC):
             jax.Array: The result of the matrix multiplication.
         """
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        """A list of things this class needs to be passed at call time
+        beyond data (x) and a string name.
+
+        Returns:
+            list[str]: A list of things as strings.
+        """
+        return []
+
 
 class AdaptiveLayer(BLayer):
     """Bayesian layer with adaptive prior using hierarchical modeling.
@@ -275,6 +285,10 @@ class EmbeddingLayer(BLayer):
         """
         return beta[x.squeeze()].squeeze()
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["n_categories", "embedding_dim"]
+
 
 class RandomEffectsLayer(BLayer):
     """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
@@ -344,6 +358,10 @@ class RandomEffectsLayer(BLayer):
         """
         return beta[x.squeeze()].squeeze()
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["n_categories"]
+
 
 class FMLayer(BLayer):
     """Bayesian factorization machine layer with adaptive priors.
@@ -368,7 +386,6 @@ class FMLayer(BLayer):
         prior_dist: distributions.Distribution = distributions.Normal,
         prior_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        low_rank_dim: int = 3,
     ):
         """
         Args:
@@ -382,12 +399,12 @@ class FMLayer(BLayer):
         self.prior_dist = prior_dist
         self.prior_kwargs = prior_kwargs
         self.lmbda_kwargs = lmbda_kwargs
-        self.low_rank_dim = low_rank_dim
 
     def __call__(
         self,
         name: str,
         x: jax.Array,
+        low_rank_dim: int,
     ) -> jax.Array:
         """
         Forward pass through the factorization machine layer.
@@ -411,7 +428,7 @@ class FMLayer(BLayer):
         thetas = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
             fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(input_shape, self.low_rank_dim),
+            sample_shape=(input_shape, low_rank_dim),
         )
         # matmul and return
         return self.matmul(thetas, x)
@@ -435,6 +452,10 @@ class FMLayer(BLayer):
         v2x2 = jnp.einsum("ij,jk->ik", x**2, theta**2)
         return 0.5 * jnp.einsum("ik->i", vx2 - v2x2)
 
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["low_rank_dim"]
+
 
 class LowRankInteractionLayer(BLayer):
     """Takes two sets of features and learns a low-rank interaction matrix."""
@@ -443,13 +464,11 @@ class LowRankInteractionLayer(BLayer):
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
         prior_dist: distributions.Distribution = distributions.Normal,
-        low_rank_dim: int = 3,
         prior_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         self.lmbda_dist = lmbda_dist
         self.prior_dist = prior_dist
-        self.low_rank_dim = low_rank_dim
         self.prior_kwargs = prior_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
@@ -458,6 +477,7 @@ class LowRankInteractionLayer(BLayer):
         name: str,
         x: jax.Array,
         z: jax.Array,
+        low_rank_dim: int,
     ) -> jax.Array:
         # get shapes and reshape if necessary
         x = add_trailing_dim(x)
@@ -473,7 +493,7 @@ class LowRankInteractionLayer(BLayer):
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
             fn=self.prior_dist(scale=lmbda1, **self.prior_kwargs),
-            sample_shape=(input_shape1, self.low_rank_dim),
+            sample_shape=(input_shape1, low_rank_dim),
         )
         lmbda2 = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda2",
@@ -482,7 +502,7 @@ class LowRankInteractionLayer(BLayer):
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
             fn=self.prior_dist(scale=lmbda2, **self.prior_kwargs),
-            sample_shape=(input_shape2, self.low_rank_dim),
+            sample_shape=(input_shape2, low_rank_dim),
         )
         # matmul and return
         return self.matmul(theta1, theta2, x, z)
@@ -506,3 +526,7 @@ class LowRankInteractionLayer(BLayer):
         xb = jnp.einsum("ij,jk->ik", x, theta1)
         zb = jnp.einsum("ij,jk->ik", z, theta2)
         return jnp.einsum("ik->i", xb * zb)
+
+    @staticmethod
+    def required_metadata() -> list[str]:
+        return ["low_rank_dim"]
