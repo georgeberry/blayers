@@ -128,6 +128,7 @@ def test_fit(
 ) -> None:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
+    re = SymbolicLayer(RandomEffectsLayer())
 
     _, coef_groups = model_bundle
 
@@ -139,7 +140,7 @@ def test_fit(
     # building
 
     model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
-    formula = f.y <= a(f.x1)
+    formula = f.y <= a(f.x1) + re(f.x2)
 
     def model(data):
         return formula(data)
