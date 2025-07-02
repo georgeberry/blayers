@@ -284,15 +284,15 @@ svi_result = svi_run_batched(
 )
 ```
 
+## Formulas
+
+**NOTE: these are very much in alpha and are subject to bugs and changes. Use carefully! Feedback appreciated.**
+
+
+
 ## roadmap
 
-Blue sky
 
-1. V0 syntax working
-2. Better layer and variable names
-3. Explicitly scope what we want here
-
-Normal science
 
 1. Fit helpers for models with categorical variables
 2. Multioutput models

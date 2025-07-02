@@ -481,3 +481,26 @@ def test_models_hmc(
             )
             < 0.03
         )
+
+
+# ---- MISC ------------------------------------------------------------------ #
+
+
+def test_required_metadata() -> None:
+    with pytest_check.check:
+        assert AdaptiveLayer.required_metadata() == []
+
+    with pytest_check.check:
+        assert EmbeddingLayer.required_metadata() == [
+            "n_categories",
+            "embedding_dim",
+        ]
+
+    with pytest_check.check:
+        assert RandomEffectsLayer.required_metadata() == ["n_categories"]
+
+    with pytest_check.check:
+        assert FMLayer.required_metadata() == ["low_rank_dim"]
+
+    with pytest_check.check:
+        assert LowRankInteractionLayer.required_metadata() == ["low_rank_dim"]
