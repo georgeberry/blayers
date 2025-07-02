@@ -41,6 +41,7 @@ deferred.__call__ --> now
 """
 
 import itertools
+import logging
 import operator
 
 import jax
@@ -52,6 +53,8 @@ from numpyro.infer.autoguide import AutoDiagonalNormal
 
 from blayers.layers import EmbeddingLayer, RandomEffectsLayer
 from blayers.links import gaussian_link_exp
+
+logger = logging.getLogger("syntax")
 
 _uid_counter = itertools.count()
 
@@ -125,6 +128,7 @@ class Concat(DeferredBinaryOp):
 
 class Formula:
     def __init__(self, lhs, rhs):
+        logger.warning("Formulas are in alpha. Use with care!")
         self.lhs = lhs
         self.rhs = rhs
 
@@ -181,9 +185,6 @@ class DeferredLayer:
         self.layer = layer
         self.deferred = deferred
         self.metadata = metadata or {}
-        assert set(self.layer.required_metadata()) == set(
-            metadata.keys()
-        ), f"Layer must be passed correct metadata. Requires {self.layer.required_metadata()} and got {metadata.keys()}."
 
     def __call__(self, data):
         name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
@@ -197,14 +198,9 @@ class DeferredLayer:
                 len(dt.shape) == 1 or dt.shape[1] == 1
             ), f"Can only pass {self.layer.__class__.__name__} a one dimensional array, got {dt.shape}."
             n_categories = int(jnp.unique(dt).shape[0])
-            if isinstance(self.layer, RandomEffectsLayer):
-                return self.layer(name, dt, n_categories=n_categories)
-
-            if isinstance(self.layer, EmbeddingLayer):
-                metadata = self.metadata.copy()
-                return self.layer(
-                    name, dt, n_categories=n_categories, **metadata
-                )
+            metadata = self.metadata.copy()
+            metadata["n_categories"] = n_categories
+            return self.layer(name, dt, **metadata)
 
         return self.layer(name, dt)
 

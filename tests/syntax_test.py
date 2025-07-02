@@ -32,10 +32,15 @@ def test_re(simulated_data_simple: Any) -> Any:  # noqa
 def test_emb(simulated_data_simple: Any) -> Any:  # noqa
     f = SymbolFactory()
     emb = SymbolicLayer(EmbeddingLayer())
+    a = SymbolicLayer(AdaptiveLayer())
 
     data = simulated_data_simple
 
-    formula = emb(f.x1, embedding_dim=8)
+    formula = emb(f.x1, embedding_dim=8) + a(f.x1)
+
+    import ipdb
+
+    ipdb.set_trace()
 
     formula(data)
 
