@@ -304,10 +304,8 @@ data = {
     'x3': ...,
 }
 
-formula = f.y <= a(f.x1) + a(f.x1 + f.x2) + re(f.x3) + a(f.x1 | f.x2)
-
 posterior_samples = bl(
-    formula=formula,
+    formula=f.y <= a(f.x1) + a(f.x1 + f.x2) + re(f.x3) + a(f.x1 | f.x2),
     data=data,
 )
 ```
