@@ -10,8 +10,8 @@ Quickstart
 
 .. code-block:: python
 
-   import blayers as bl
-   layer = bl.AdaptiveLayer(...)
+   from blayers import layers
+   layer = layers.AdaptiveLayer(...)
    ...
 
 Resources

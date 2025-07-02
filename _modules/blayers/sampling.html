@@ -271,14 +271,17 @@ document.write(`
                   
   <h1>Source code for blayers.sampling</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">We want to systematically reparam models</span>
+<span class="sd">Systematically reparamaterize models</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">trace</span><span class="p">,</span> <span class="n">reparam</span> <span class="k">as</span> <span class="n">numpyro_reparam</span><span class="p">,</span> <span class="n">seed</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.reparam</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocScaleReparam</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">reparam</span> <span class="k">as</span> <span class="n">numpyro_reparam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">seed</span><span class="p">,</span> <span class="n">trace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.reparam</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocScaleReparam</span>
 
 <span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
@@ -292,10 +295,10 @@ document.write(`
 
 <div class="viewcode-block" id="autoreparam">
 <a class="viewcode-back" href="../../api/sampling.html#blayers.sampling.autoreparam">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span><span class="n">centered</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">model_fn</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span><span class="n">centered</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">model_fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">model_fn</span><span class="p">)</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="c1"># Use a fixed dummy seed so trace doesn&#39;t trigger global name</span>
             <span class="c1"># collisions</span>
             <span class="n">dummy_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -314,6 +317,7 @@ document.write(`
             <span class="k">return</span> <span class="n">numpyro_reparam</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)(</span><span class="n">model_fn</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">wrapped_model</span>
+
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 </pre></div>
