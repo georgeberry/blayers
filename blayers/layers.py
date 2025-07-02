@@ -65,11 +65,11 @@ class BLayer(ABC):
 
     @staticmethod
     def required_metadata() -> list[str]:
-        """A list of attributes this class needs to be passed at call time
+        """A list of things this class needs to be passed at call time
         beyond data (x) and a string name.
 
         Returns:
-            list[str]: A list of attributes as strings.
+            list[str]: A list of things as strings.
         """
         return []
 

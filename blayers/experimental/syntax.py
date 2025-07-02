@@ -181,6 +181,9 @@ class DeferredLayer:
         self.layer = layer
         self.deferred = deferred
         self.metadata = metadata or {}
+        assert set(self.layer.required_metadata()) == set(
+            metadata.keys()
+        ), f"Layer must be passed correct metadata. Requires {self.layer.required_metadata()} and got {metadata.keys()}."
 
     def __call__(self, data):
         name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
