@@ -49,32 +49,21 @@ def test_formula_fail() -> None:
     a = SymbolicLayer(AdaptiveLayerMock())
 
     with pytest_check.check.raises(TypeError):
-        f.y % f.x1 % f.x2
+        f.y <= f.x1 <= f.x2
 
     with pytest_check.check.raises(TypeError):
-        f.y % a(f.x1 * f.x2) % f.x2
+        f.y <= a(f.x1 * f.x2) <= f.x2
 
 
-@pytest.mark.parametrize(
-    ("model_bundle", "data"),
-    [
-        ("linear_regression_adaptive_model", "simulated_data_simple"),
-    ],
-    indirect=True,
-)
-def test_syntax_model(
-    data: Any,  # noqa
-    model_bundle: Any,  # noqa
-) -> Any:
+def test_syntax_model(simulated_data_simple: Any) -> Any:  # noqa
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
 
-    _, coef_groups = model_bundle
+    data = simulated_data_simple
 
-    bl(
-        f.y == a(f.x1) + a(f.x2 + f.x1) * a(f.x3 | f.x1),
-        data=data,
-    )
+    formula = a(f.x1) + a(f.x1)
+
+    formula(data)
 
 
 @pytest.mark.parametrize(

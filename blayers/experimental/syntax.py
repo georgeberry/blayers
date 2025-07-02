@@ -40,6 +40,7 @@ Prod(
 deferred.__call__ --> now
 """
 
+import itertools
 import operator
 
 import jax
@@ -51,7 +52,14 @@ from numpyro.infer.autoguide import AutoDiagonalNormal
 
 from blayers.links import gaussian_link_exp
 
-FOUR_SPACES = "    "
+_uid_counter = itertools.count()
+
+
+def _next_uid():
+    return next(_uid_counter)
+
+
+_FOUR_SPACES = "    "
 
 # ---- Deferred ops ---------------------------------------------------------- #
 
@@ -70,18 +78,24 @@ class DeferredBinaryOp:
         # via `op` or this fails
 
         left_now = self.left_deferred(data)
-
         right_now = self.right_deferred(data)
         return self.op(left_now, right_now)
+
+    def _mock_call(self):
+        uid = _next_uid()
+        left_now = self.left_deferred._mock_call()
+        right_now = self.right_deferred._mock_call()
+        call_stack = f"{uid}_{self.symbol}({left_now}, {right_now})"
+        return call_stack
 
     def __repr__(self):
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
 
     def pretty(self, indent=0):
-        s = FOUR_SPACES * indent + f"{self.symbol}(\n"
+        s = _FOUR_SPACES * indent + f"{self.symbol}(\n"
         s += self.left_deferred.pretty(indent + 1) + ",\n"
         s += self.right_deferred.pretty(indent + 1) + "\n"
-        s += FOUR_SPACES * indent + ")"
+        s += _FOUR_SPACES * indent + ")"
         return s
 
 
@@ -93,11 +107,6 @@ class Sum(DeferredBinaryOp):
 class Prod(DeferredBinaryOp):
     def __init__(self, left, right):
         super().__init__(left, right, operator.mul, "Prod")
-
-
-class Power(DeferredBinaryOp):
-    def __init__(self, left, right):
-        super().__init__(left, right, operator.pow, "Pow")
 
 
 class Concat(DeferredBinaryOp):
@@ -131,7 +140,7 @@ class Formula:
         )
 
     def __repr__(self):
-        return f"{self.lhs} ~ {self.rhs}"
+        return f"{self.lhs} <= {self.rhs}"
 
 
 class DeferredArray:
@@ -140,6 +149,12 @@ class DeferredArray:
 
     def __call__(self, data):
         return data[self.name]
+
+    def _mock_call(self):
+        uid = _next_uid()
+        call_stack = f"{uid}_{self.name}"
+        print(call_stack)
+        return call_stack
 
     def __add__(self, other):
         return Sum(self, other)
@@ -170,11 +185,17 @@ class DeferredLayer:
         dt = self.deferred(data)
         return self.layer(name, dt)
 
+    def _mock_call(self):
+        uid = _next_uid()
+        call_stack = f"{uid}_{self.layer.__class__.__name__}({self.deferred._mock_call()})"
+        print(call_stack)
+        return call_stack
+
     def __repr__(self):
         return f"{self.layer.__class__.__name__}({self.deferred})"
 
     def pretty(self, indent=0):
-        return FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
+        return _FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
 
     def __add__(self, other):
         return Sum(self, other)
