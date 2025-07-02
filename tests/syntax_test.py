@@ -3,11 +3,12 @@
 from typing import Any
 
 import jax
+import jax.numpy as jnp
 import pytest
 import pytest_check
 from numpyro.infer import Predictive
-from numpyro.infer.autoguide import AutoDiagonalNormal
 
+from blayers._utils import rmse
 from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
 from blayers.layers import AdaptiveLayer, EmbeddingLayer, RandomEffectsLayer
 from tests.layers_test import (  # noqa
@@ -22,8 +23,6 @@ def test_re(simulated_data_simple: Any) -> Any:  # noqa
     f = SymbolFactory()
     re = SymbolicLayer(RandomEffectsLayer())
 
-    data = simulated_data_simple
-
     formula = re(f.x1)
 
     formula(data)
@@ -32,15 +31,10 @@ def test_re(simulated_data_simple: Any) -> Any:  # noqa
 def test_emb(simulated_data_simple: Any) -> Any:  # noqa
     f = SymbolFactory()
     emb = SymbolicLayer(EmbeddingLayer())
-    a = SymbolicLayer(AdaptiveLayer())
 
     data = simulated_data_simple
 
-    formula = emb(f.x1, embedding_dim=8) + a(f.x1)
-
-    import ipdb
-
-    ipdb.set_trace()
+    formula = emb(f.x1, embedding_dim=8)
 
     formula(data)
 
@@ -133,7 +127,6 @@ def test_fit(
 ) -> None:
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
-    re = SymbolicLayer(RandomEffectsLayer())
 
     _, coef_groups = model_bundle
 
@@ -145,21 +138,29 @@ def test_fit(
     # building
 
     model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
-    formula = f.y <= a(f.x1) + re(f.x2)
-
-    def model(data):
-        return formula(data)
-
-    guide = AutoDiagonalNormal(model)
-
-    key = jax.random.PRNGKey(2)
-    predictive = Predictive(guide, num_samples=1)
-    guide_samples = predictive(key, data=model_data)
-
-    predictive = Predictive(model, num_samples=1)
-    model_samples = predictive(key, data=model_data)
+    formula = f.y <= a(f.x1)
 
     guide_samples = bl(
         formula=formula,
         data=model_data,
     )
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    for coef_list, coef_fn in coef_groups:
+        with pytest_check.check:
+            val = rmse(
+                guide_means[
+                    "AdaptiveLayer_AdaptiveLayer_DeferredArray(x1)_beta"
+                ],
+                data["beta"],
+            )
+            assert val < 0.1
+
+    with pytest_check.check:
+        assert (
+            rmse(
+                guide_means["sigma"],
+                data["sigma"],
+            )
+            < 0.03
+        )
