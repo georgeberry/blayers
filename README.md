@@ -314,6 +314,7 @@ The `<=` symbol indicates sampling like R's `~`. Arithemtic operations like `+` 
 
 The goal here is a minimal domain-specific language for writing formulas in Python.
 
+<!--
 ## Roadmap
 
 1. Multioutput models
@@ -323,3 +324,4 @@ The goal here is a minimal domain-specific language for writing formulas in Pyth
 1. More link functions
 1. Fit helpers for getting cols in/out, doing data science
 1. Better errors if you pass the wrong stuff
+-->
