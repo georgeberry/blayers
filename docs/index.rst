@@ -18,3 +18,4 @@ Detailed API
    api/infer
    api/links
    api/sampling
+   api/formulas

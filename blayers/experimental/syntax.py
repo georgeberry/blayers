@@ -22,6 +22,7 @@ a(f.x1 + f.x2) * a(f.x1 | f.x2)
 
 What's going to happen here is we go from right to left so
 
+```
 Prod(
   AdaptiveLayer(
     Sum(
@@ -35,7 +36,7 @@ Prod(
       f.x2
     )
   )
-
+```
 
 deferred.__call__ --> now
 """
