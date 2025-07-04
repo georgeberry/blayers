@@ -1,21 +1,5 @@
-blayers documentation
-=====================
-
-Bayesian Layers for NumPyro: Modular building blocks for flexible, adaptive probabilistic modeling.
-
-This library provides a collection of layers and inference tools for building Bayesian models on top of Numpyro and Jax.
-
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
-
-Quickstart
-----------
-
-.. code-block:: python
-
-   from blayers import layers
-   layer = layers.AdaptiveLayer(...)
-   ...
 
 Resources
 ---------
