@@ -316,12 +316,13 @@ The goal here is a minimal domain-specific language for writing formulas in Pyth
 
 ## roadmap
 
+1. Put this readme in docs by default
+1. Multioutput models
+
 
 1. Fit helpers for models with categorical variables
-2. Multioutput models
-3. Examples
-4. More code re-use in `layers.py` (this will only become clear after more code is written)
-5. More link functions
-6. Fit helpers for getting cols in/out, doing data science
-7. Better errors if you pass the wrong stuff
-8. Version the docs
+1. Examples
+1. More code re-use in `layers.py` (this will only become clear after more code is written)
+1. More link functions
+1. Fit helpers for getting cols in/out, doing data science
+1. Better errors if you pass the wrong stuff

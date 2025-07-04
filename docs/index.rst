@@ -5,6 +5,9 @@ Bayesian Layers for NumPyro: Modular building blocks for flexible, adaptive prob
 
 This library provides a collection of layers and inference tools for building Bayesian models on top of Numpyro and Jax.
 
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
+
 Quickstart
 ----------
 
