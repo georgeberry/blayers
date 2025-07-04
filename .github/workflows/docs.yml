@@ -2,7 +2,8 @@ name: docs
 
 on:
   push:
-    branches: [main]  # or 'master' or whichever branch you use
+    tags:
+      - 'v*'
 
 jobs:
   build-docs:
