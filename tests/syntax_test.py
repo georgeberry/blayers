@@ -20,10 +20,12 @@ from tests.layers_test import (  # noqa
 
 
 def test_str() -> Any:  # noqa
-    a = AdaptiveLayer()
-    import ipdb
+    f = SymbolFactory()
+    a = SymbolicLayer(AdaptiveLayer())
+    re = SymbolicLayer(RandomEffectsLayer())
+    formula = f.y <= a(f.x1) + re(f.x2)
 
-    ipdb.set_trace()
+    print(formula)
 
 
 def test_latex() -> Any:  # noqa

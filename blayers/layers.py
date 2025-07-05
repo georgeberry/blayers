@@ -43,7 +43,8 @@ class BLayer(ABC):
         Run the layer's forward pass.
 
         Args:
-            name: Name scope for sampled variables.
+            name: Name scope for sampled variables. Note due to mypy stuff we
+                  only write the `name` arg explicitly in subclass.
             *args: Inputs to the layer.
 
         Returns:
@@ -256,6 +257,16 @@ class FixedPriorLayer(BLayer):
         """
         return jnp.einsum("ij,j->i", beta, x)
 
+    def __str__(self) -> str:
+        return f"""
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
 
 class EmbeddingLayer(BLayer):
     """Bayesian embedding layer for sparse categorical features."""
@@ -329,6 +340,18 @@ class EmbeddingLayer(BLayer):
     def required_metadata() -> list[str]:
         return ["n_categories", "embedding_dim"]
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+"""
+
 
 class RandomEffectsLayer(BLayer):
     """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
@@ -401,6 +424,18 @@ class RandomEffectsLayer(BLayer):
     @staticmethod
     def required_metadata() -> list[str]:
         return ["n_categories"]
+
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+"""
 
 
 class FMLayer(BLayer):
@@ -496,6 +531,18 @@ class FMLayer(BLayer):
     def required_metadata() -> list[str]:
         return ["low_rank_dim"]
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+"""
+
 
 class LowRankInteractionLayer(BLayer):
     """Takes two sets of features and learns a low-rank interaction matrix."""
@@ -570,3 +617,15 @@ class LowRankInteractionLayer(BLayer):
     @staticmethod
     def required_metadata() -> list[str]:
         return ["low_rank_dim"]
+
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+"""
