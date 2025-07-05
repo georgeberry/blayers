@@ -73,6 +73,34 @@ class BLayer(ABC):
         """
         return []
 
+    @abstractmethod
+    def __str__(self, *args: Any) -> str:
+        """
+        Render the layer in str format. Takes the same arguments as `__call__`
+        except data.
+
+        Args:
+            name: Name scope for sampled variables.
+            *args: Inputs to the layer.
+
+        Returns:
+            str: A string representation of the layer.
+        """
+
+    @abstractmethod
+    def render_latex(self, *args: Any) -> str:
+        """
+        Render the layer in LaTeX format. Takes the same arguments as `__call__`
+        except data.
+
+        Args:
+            name: Name scope for sampled variables.
+            *args: Inputs to the layer.
+
+        Returns:
+            str: A string representation of the layer in LaTeX.
+        """
+
 
 class AdaptiveLayer(BLayer):
     """Bayesian layer with adaptive prior using hierarchical modeling.
@@ -151,6 +179,18 @@ class AdaptiveLayer(BLayer):
             jax.Array: Output of shape (n,).
         """
         return jnp.einsum("ij,j->i", beta, x)
+
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+"""
 
 
 class FixedPriorLayer(BLayer):
