@@ -112,7 +112,7 @@ class AdaptiveLayer(BLayer):
         \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \\lambda)
+        \\beta \\sim Normal(0., \\lambda)
     """
 
     def __init__(
@@ -200,7 +200,7 @@ class FixedPriorLayer(BLayer):
     Generates coefficients from the model
 
     .. math::
-        \\beta \sim Normal(0., 1.)
+        \\beta \\sim Normal(0., 1.)
     """
 
     def __init__(
@@ -444,10 +444,10 @@ class FMLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \\lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \\lambda)
+        \\beta \\sim Normal(0., \\lambda)
 
     The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
     if input covariates and :math:`l` is the low rank dim.
