@@ -109,10 +109,10 @@ class AdaptiveLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \sim Normal(0., \\lambda)
     """
 
     def __init__(
@@ -189,8 +189,8 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
 
     def render_latex(self) -> str:
         return f"""
-\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
-\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
 """
 
 
@@ -348,8 +348,8 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
 
     def render_latex(self) -> str:
         return f"""
-\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
-\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
 """
 
 
@@ -433,8 +433,8 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
 
     def render_latex(self) -> str:
         return f"""
-\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
-\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
 """
 
 
@@ -444,10 +444,10 @@ class FMLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \sim Normal(0., \\lambda)
 
     The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
     if input covariates and :math:`l` is the low rank dim.
@@ -539,8 +539,8 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
 
     def render_latex(self) -> str:
         return f"""
-\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
-\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
 """
 
 
@@ -626,6 +626,6 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
 
     def render_latex(self) -> str:
         return f"""
-\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
-\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \lambda)
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
 """
