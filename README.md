@@ -13,7 +13,7 @@ The missing layers package for Bayesian inference.
 pip install blayers
 ```
 
-deps are: `numpyro` and `jax`. `optax` is recommended.
+deps are: `numpyro`, `jax`, and `optax`.
 
 ## Concept
 

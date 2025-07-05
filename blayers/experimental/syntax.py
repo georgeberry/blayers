@@ -96,6 +96,11 @@ class DeferredBinaryOp:
     def __repr__(self):
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
 
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
     def pretty(self, indent=0):
         s = _FOUR_SPACES * indent + f"{self.symbol}(\n"
         s += self.left_deferred.pretty(indent + 1) + ",\n"
@@ -253,6 +258,11 @@ class DeferredLayer:
 
     def __mul__(self, other):
         return Prod(self, other)
+
+    def __bool__(self):
+        raise ValueError(
+            "DeferredLayers cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
 
 
 class SymbolicLayer:
