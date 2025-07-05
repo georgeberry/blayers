@@ -22,6 +22,7 @@ a(f.x1 + f.x2) * a(f.x1 | f.x2)
 
 What's going to happen here is we go from right to left so
 
+```
 Prod(
   AdaptiveLayer(
     Sum(
@@ -35,7 +36,7 @@ Prod(
       f.x2
     )
   )
-
+```
 
 deferred.__call__ --> now
 """
@@ -94,6 +95,11 @@ class DeferredBinaryOp:
 
     def __repr__(self):
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
+
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
 
     def pretty(self, indent=0):
         s = _FOUR_SPACES * indent + f"{self.symbol}(\n"
@@ -252,6 +258,11 @@ class DeferredLayer:
 
     def __mul__(self, other):
         return Prod(self, other)
+
+    def __bool__(self):
+        raise ValueError(
+            "DeferredLayers cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
 
 
 class SymbolicLayer:

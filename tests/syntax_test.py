@@ -19,6 +19,22 @@ from tests.layers_test import (  # noqa
 )
 
 
+def test_str() -> Any:  # noqa
+    f = SymbolFactory()
+    a = SymbolicLayer(AdaptiveLayer())
+    re = SymbolicLayer(RandomEffectsLayer())
+    formula = f.y <= a(f.x1) + re(f.x2)
+
+    print(formula)
+
+
+def test_latex() -> Any:  # noqa
+    a = AdaptiveLayer()
+    import ipdb
+
+    ipdb.set_trace()
+
+
 def test_re() -> Any:  # noqa
     f = SymbolFactory()
     re = SymbolicLayer(RandomEffectsLayer())
