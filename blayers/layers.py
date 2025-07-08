@@ -268,6 +268,76 @@ beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, {self.prior_kwar
 """
 
 
+class ConstantLayer(BLayer):
+    """Bayesian layer with a fixed prior distribution over coefficients.
+
+    Generates coefficients from the model
+
+    .. math::
+        \\beta \\sim Normal(0., 1.)
+    """
+
+    def __init__(
+        self,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+    ):
+        """
+        Args:
+            prior_dist: NumPyro distribution class for the coefficients.
+            prior_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+
+    def __call__(
+        self,
+        name: str,
+    ) -> jax.Array:
+        """
+        Forward pass with fixed prior.
+
+        Args:
+            name: Variable name prefix.
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+
+        # sampling block
+        beta = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(**self.prior_kwargs),
+            sample_shape=(1,),
+        )
+        # matmul and return
+        return self.matmul(beta)
+
+    @staticmethod
+    def matmul(beta: jax.Array) -> jax.Array:
+        """A dot product.
+
+        Args:
+            beta: Model coefficients of shape (j,).
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+        return beta
+
+    def __str__(self) -> str:
+        return f"""
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+
 class EmbeddingLayer(BLayer):
     """Bayesian embedding layer for sparse categorical features."""
 
