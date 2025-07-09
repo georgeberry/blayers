@@ -293,6 +293,7 @@ class ConstantLayer(BLayer):
     def __call__(
         self,
         name: str,
+        x: jax.Array,
     ) -> jax.Array:
         """
         Forward pass with fixed prior.
@@ -312,10 +313,10 @@ class ConstantLayer(BLayer):
             sample_shape=(1,),
         )
         # matmul and return
-        return self.matmul(beta)
+        return self.matmul(beta, x)
 
     @staticmethod
-    def matmul(beta: jax.Array) -> jax.Array:
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
         """A dot product.
 
         Args:
@@ -325,7 +326,8 @@ class ConstantLayer(BLayer):
         Returns:
             jax.Array: Output array of shape (n,).
         """
-        return beta
+
+        return beta * jnp.ones_like(x[:, 0:1])
 
     def __str__(self) -> str:
         return f"""

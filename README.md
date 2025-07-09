@@ -324,4 +324,5 @@ The goal here is a minimal domain-specific language for writing formulas in Pyth
 1. More link functions
 1. Fit helpers for getting cols in/out, doing data science
 1. Better errors if you pass the wrong stuff
+1. TQDM bar
 -->

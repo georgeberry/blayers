@@ -2,6 +2,7 @@ from typing import Any, Callable, Generator
 
 import jax
 import jax.numpy as jnp
+import tqdm
 from jax import random
 from numpyro.handlers import seed, substitute, trace
 from numpyro.infer import SVI
@@ -172,7 +173,15 @@ def svi_run_batched(
     num_epochs = num_steps / (n_obs / batch_size)
     svi_state = svi.init(rng_key, **data)
     losses = []
-    for batch in _yield_batches(data, int(batch_size), int(num_epochs)):
+    for i, batch in enumerate(
+        tqdm.tqdm(
+            _yield_batches(
+                data,
+                int(batch_size),
+                int(num_epochs),
+            )
+        )
+    ):
         svi_state, loss = update(svi_state, **batch)
         losses.append(loss)
     return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
