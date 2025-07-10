@@ -30,8 +30,7 @@ def get_steps_and_steps_per_epoch(
     ) // batch_size  # Ceiling division
     if num_epochs:
         return steps_per_epoch * num_epochs, steps_per_epoch
-    assert num_steps is not None
-    return num_steps, steps_per_epoch
+    return num_steps, steps_per_epoch  # type: ignore
 
 
 def yield_batches(
