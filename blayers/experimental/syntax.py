@@ -52,7 +52,12 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.layers import EmbeddingLayer, RandomEffectsLayer
+from blayers.layers import (
+    AdaptiveLayer,
+    ConstantLayer,
+    EmbeddingLayer,
+    RandomEffectsLayer,
+)
 from blayers.links import gaussian_link_exp
 
 logger = logging.getLogger("syntax")
@@ -321,3 +326,9 @@ def bl(
     )
 
     return guide_samples
+
+
+c = SymbolicLayer(ConstantLayer())
+a = SymbolicLayer(AdaptiveLayer())
+re = SymbolicLayer(RandomEffectsLayer())
+emb = SymbolicLayer(EmbeddingLayer())

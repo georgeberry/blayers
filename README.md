@@ -325,4 +325,5 @@ The goal here is a minimal domain-specific language for writing formulas in Pyth
 1. Fit helpers for getting cols in/out, doing data science
 1. Better errors if you pass the wrong stuff
 1. TQDM bar
+1. Settle on shapes, probably always having the trailing dim? Yes! Always output (n, u), and insist that all inputs follow this convention.
 -->

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 import jax
 import jax.numpy as jnp
@@ -9,7 +9,7 @@ from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
-from blayers._utils import get_dataset_size, get_steps_per_epoch
+from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
 
 
 class Batched_Trace_ELBO(ELBO):
@@ -144,43 +144,35 @@ class Batched_Trace_ELBO(ELBO):
 # ---------------------------------------------------------------------------- #
 
 
-def _yield_batches(
-    data: dict[str, jax.Array],
-    batch_size: int,
-    n_epochs: int,
-) -> Generator[dict[str, jax.Array], None, None]:
-    """Yields batches from a dict of arrays."""
-    steps_per_epoch = get_steps_per_epoch(data, batch_size)
-    for _ in range(n_epochs):
-        for i in range(steps_per_epoch):
-            start = i * batch_size
-            end = start + batch_size
-            yield {k: v[start:end] for k, v in data.items()}
-
-
 def svi_run_batched(
     svi: SVI,
     rng_key: jax.Array,
-    num_steps: int,
     batch_size: int,
+    num_steps: int | None = None,
+    num_epochs: int | None = None,
     **data: dict[str, jax.Array],
 ) -> SVIRunResult:
     @jax.jit
     def update(svi_state: SVIState, **kwargs: Any) -> SVIState:
         return svi.update(svi_state, **kwargs)
 
-    n_obs = get_dataset_size(data)
-    num_epochs = num_steps / (n_obs / batch_size)
+    total_steps_to_run, steps_per_epoch = get_steps_and_steps_per_epoch(
+        data,
+        batch_size,
+        num_steps,
+        num_epochs,
+    )
+
     svi_state = svi.init(rng_key, **data)
     losses = []
-    for i, batch in enumerate(
-        tqdm.tqdm(
-            _yield_batches(
-                data,
-                int(batch_size),
-                int(num_epochs),
-            )
-        )
+    for batch in tqdm.tqdm(
+        yield_batches(
+            data,
+            batch_size,
+            total_steps_to_run,
+            steps_per_epoch,
+        ),
+        total=total_steps_to_run,
     ):
         svi_state, loss = update(svi_state, **batch)
         losses.append(loss)

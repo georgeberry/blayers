@@ -327,7 +327,7 @@ class ConstantLayer(BLayer):
             jax.Array: Output array of shape (n,).
         """
 
-        return beta * jnp.ones_like(x[:, 0:1])
+        return beta * jnp.ones_like(x[:, 0])
 
     def __str__(self) -> str:
         return f"""

@@ -1,3 +1,6 @@
+import itertools
+from typing import Generator
+
 import jax
 import jax.numpy as jnp
 
@@ -10,25 +13,41 @@ def get_dataset_size(data: dict[str, jax.Array]) -> int:
     return int(lens[0])
 
 
-def get_steps_per_epoch(data: dict[str, jax.Array], batch_size: int) -> int:
-    """
-    Compute the number of update steps per epoch for a dataset and batch size.
-
-    Args:
-        data (dict): A dictionary of arrays (e.g., {'x': x_data, 'y': y_data}),
-                     where all arrays must have the same leading dimension.
-        batch_size (int): The batch size to use.
-
-    Returns:
-        int: The number of steps per full pass over the data (i.e. steps per epoch).
-    """
-    if not data:
-        raise ValueError("Empty data dict provided.")
+def get_steps_and_steps_per_epoch(
+    data: dict[str, jax.Array],
+    batch_size: int,
+    num_steps: int | None,
+    num_epochs: int | None,
+) -> tuple[int, int]:
+    assert (num_steps is None) != (
+        num_epochs is None
+    ), "Exactly one of num_steps and num_epochs must be specified."
 
     dataset_size = get_dataset_size(data)
     # Next line by ChatGPT, what a great idea
-    steps = (dataset_size + batch_size - 1) // batch_size  # Ceiling division
-    return int(steps)
+    steps_per_epoch = (
+        dataset_size + batch_size - 1
+    ) // batch_size  # Ceiling division
+    if num_epochs:
+        return steps_per_epoch * num_epochs, steps_per_epoch
+    assert num_steps is not None
+    return num_steps, steps_per_epoch
+
+
+def yield_batches(
+    data: dict[str, jax.Array],
+    batch_size: int,
+    num_batches: int,
+    steps_per_epoch: int,
+) -> Generator[dict[str, jax.Array], None, None]:
+    def batch_iter() -> Generator[dict[str, jax.Array], None, None]:
+        for i in range(steps_per_epoch):
+            start = i * batch_size
+            end = start + batch_size
+            yield {k: v[start:end] for k, v in data.items()}
+
+    for batch in itertools.islice(itertools.cycle(batch_iter()), num_batches):
+        yield batch
 
 
 # ---- Helpers --------------------------------------------------------------- #
