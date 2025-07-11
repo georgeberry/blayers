@@ -22,6 +22,7 @@ a(f.x1 + f.x2) * a(f.x1 | f.x2)
 
 What's going to happen here is we go from right to left so
 
+```
 Prod(
   AdaptiveLayer(
     Sum(
@@ -35,7 +36,7 @@ Prod(
       f.x2
     )
   )
-
+```
 
 deferred.__call__ --> now
 """
@@ -51,7 +52,12 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.layers import EmbeddingLayer, RandomEffectsLayer
+from blayers.layers import (
+    AdaptiveLayer,
+    ConstantLayer,
+    EmbeddingLayer,
+    RandomEffectsLayer,
+)
 from blayers.links import gaussian_link_exp
 
 logger = logging.getLogger("syntax")
@@ -95,12 +101,26 @@ class DeferredBinaryOp:
     def __repr__(self):
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
 
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
     def pretty(self, indent=0):
         s = _FOUR_SPACES * indent + f"{self.symbol}(\n"
         s += self.left_deferred.pretty(indent + 1) + ",\n"
         s += self.right_deferred.pretty(indent + 1) + "\n"
         s += _FOUR_SPACES * indent + ")"
         return s
+
+    def __or__(self, other):
+        return Concat(self, other)
+
+    def __add__(self, other):
+        return Sum(self, other)
+
+    def __mul__(self, other):
+        return Prod(self, other)
 
 
 class Sum(DeferredBinaryOp):
@@ -201,6 +221,9 @@ class DeferredArray:
     def __or__(self, other):
         return Concat(self, other)
 
+    def __mul__(self, other):
+        return Prod(self, other)
+
     def __le__(self, other):
         return Formula(lhs=self, rhs=other)
 
@@ -253,14 +276,30 @@ class DeferredLayer:
     def __mul__(self, other):
         return Prod(self, other)
 
+    def __bool__(self):
+        raise ValueError(
+            "DeferredLayers cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
 
 class SymbolicLayer:
     def __init__(self, layer):
+        # this is an instance
         self.layer = layer
 
-    def __call__(self, deferred, **kwargs):
+    def __call__(self, deferred_or_actual, **kwargs):
         metadata = kwargs or {}
-        return DeferredLayer(self.layer, deferred, metadata=metadata)
+        # actual
+        if isinstance(deferred_or_actual, jax.Array):
+            return self.layer(deferred_or_actual, metadata=metadata)
+
+        # deferred
+        if isinstance(
+            deferred_or_actual, (DeferredBinaryOp, DeferredArray, DeferredLayer)
+        ):
+            return DeferredLayer(
+                self.layer, deferred_or_actual, metadata=metadata
+            )
 
 
 class SymbolFactory:
@@ -310,3 +349,13 @@ def bl(
     )
 
     return guide_samples
+
+
+# -------- Default stuff ----------------------------------------------------- #
+
+
+c = SymbolicLayer(ConstantLayer())
+a = SymbolicLayer(AdaptiveLayer())
+re = SymbolicLayer(RandomEffectsLayer())
+emb = SymbolicLayer(EmbeddingLayer())
+f = SymbolFactory()

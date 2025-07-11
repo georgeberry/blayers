@@ -43,7 +43,8 @@ class BLayer(ABC):
         Run the layer's forward pass.
 
         Args:
-            name: Name scope for sampled variables.
+            name: Name scope for sampled variables. Note due to mypy stuff we
+                  only write the `name` arg explicitly in subclass.
             *args: Inputs to the layer.
 
         Returns:
@@ -73,6 +74,34 @@ class BLayer(ABC):
         """
         return []
 
+    @abstractmethod
+    def __str__(self, *args: Any) -> str:
+        """
+        Render the layer in str format. Takes the same arguments as `__call__`
+        except data.
+
+        Args:
+            name: Name scope for sampled variables.
+            *args: Inputs to the layer.
+
+        Returns:
+            str: A string representation of the layer.
+        """
+
+    @abstractmethod
+    def render_latex(self, *args: Any) -> str:
+        """
+        Render the layer in LaTeX format. Takes the same arguments as `__call__`
+        except data.
+
+        Args:
+            name: Name scope for sampled variables.
+            *args: Inputs to the layer.
+
+        Returns:
+            str: A string representation of the layer in LaTeX.
+        """
+
 
 class AdaptiveLayer(BLayer):
     """Bayesian layer with adaptive prior using hierarchical modeling.
@@ -80,10 +109,10 @@ class AdaptiveLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \\sim Normal(0., \\lambda)
     """
 
     def __init__(
@@ -152,6 +181,18 @@ class AdaptiveLayer(BLayer):
         """
         return jnp.einsum("ij,j->i", beta, x)
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
+"""
+
 
 class FixedPriorLayer(BLayer):
     """Bayesian layer with a fixed prior distribution over coefficients.
@@ -159,7 +200,7 @@ class FixedPriorLayer(BLayer):
     Generates coefficients from the model
 
     .. math::
-        \\beta \sim Normal(0., 1.)
+        \\beta \\sim Normal(0., 1.)
     """
 
     def __init__(
@@ -215,6 +256,88 @@ class FixedPriorLayer(BLayer):
             jax.Array: Output array of shape (n,).
         """
         return jnp.einsum("ij,j->i", beta, x)
+
+    def __str__(self) -> str:
+        return f"""
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+
+class ConstantLayer(BLayer):
+    """Bayesian layer with a fixed prior distribution over coefficients.
+
+    Generates coefficients from the model
+
+    .. math::
+        \\beta \\sim Normal(0., 1.)
+    """
+
+    def __init__(
+        self,
+        prior_dist: distributions.Distribution = distributions.Normal,
+        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+    ):
+        """
+        Args:
+            prior_dist: NumPyro distribution class for the coefficients.
+            prior_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.prior_dist = prior_dist
+        self.prior_kwargs = prior_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+    ) -> jax.Array:
+        """
+        Forward pass with fixed prior.
+
+        Args:
+            name: Variable name prefix.
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+
+        # sampling block
+        beta = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.prior_dist(**self.prior_kwargs),
+            sample_shape=(1,),
+        )
+        # matmul and return
+        return self.matmul(beta, x)
+
+    @staticmethod
+    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+        """A dot product.
+
+        Args:
+            beta: Model coefficients of shape (j,).
+            x: Input data array of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+
+        return beta * jnp.ones_like(x[:, 0])
+
+    def __str__(self) -> str:
+        return f"""
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, {self.prior_kwargs['loc']})
+"""
 
 
 class EmbeddingLayer(BLayer):
@@ -289,6 +412,18 @@ class EmbeddingLayer(BLayer):
     def required_metadata() -> list[str]:
         return ["n_categories", "embedding_dim"]
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
+"""
+
 
 class RandomEffectsLayer(BLayer):
     """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
@@ -362,6 +497,18 @@ class RandomEffectsLayer(BLayer):
     def required_metadata() -> list[str]:
         return ["n_categories"]
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
+"""
+
 
 class FMLayer(BLayer):
     """Bayesian factorization machine layer with adaptive priors.
@@ -369,10 +516,10 @@ class FMLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \\sim Normal(0., \\lambda)
 
     The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
     if input covariates and :math:`l` is the low rank dim.
@@ -456,6 +603,18 @@ class FMLayer(BLayer):
     def required_metadata() -> list[str]:
         return ["low_rank_dim"]
 
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
+"""
+
 
 class LowRankInteractionLayer(BLayer):
     """Takes two sets of features and learns a low-rank interaction matrix."""
@@ -530,3 +689,15 @@ class LowRankInteractionLayer(BLayer):
     @staticmethod
     def required_metadata() -> list[str]:
         return ["low_rank_dim"]
+
+    def __str__(self) -> str:
+        return f"""
+lambda ~ {self.lmbda_dist.__name__}({self.lmbda_kwargs['scale']})
+beta   ~ {self.prior_dist.__name__}({self.prior_kwargs['loc']}, lambda)
+"""
+
+    def render_latex(self) -> str:
+        return f"""
+\\lambda ~ \\text{{{self.lmbda_dist.__name__}}}({self.lmbda_kwargs['scale']})
+\\beta   ~ \\text{{{self.prior_dist.__name__}}}({self.prior_kwargs['loc']}, \\lambda)
+"""

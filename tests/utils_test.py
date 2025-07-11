@@ -5,7 +5,7 @@ import pytest_check
 from blayers._utils import (
     add_trailing_dim,
     get_dataset_size,
-    get_steps_per_epoch,
+    get_steps_and_steps_per_epoch,
 )
 
 
@@ -37,14 +37,16 @@ def test_get_dataset_size() -> None:
 def test_get_steps_per_epoch() -> None:
     with pytest_check.check:
         with pytest.raises(ValueError):
-            get_steps_per_epoch(
+            get_steps_and_steps_per_epoch(
                 data={},
                 batch_size=1,
+                num_steps=10,
             )
 
     with pytest_check.check:
-        steps_per_epoch = get_steps_per_epoch(
+        steps, steps_per_epoch = get_steps_and_steps_per_epoch(
             data={"x": jnp.array([1.0, 3]), "z": jnp.array([1.0, 2])},
             batch_size=1,
+            num_steps=10,
         )
         assert steps_per_epoch == 2

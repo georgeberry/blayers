@@ -7,15 +7,15 @@ The missing layers package for Bayesian inference.
 
 **NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
 
-## write code immediately
+## Write code immediately
 
 ```
 pip install blayers
 ```
 
-deps are: `numpyro` and `jax`. `optax` is recommended.
+deps are: `numpyro`, `jax`, and `optax`.
 
-## concept
+## Concept
 
 Easily build Bayesian models from parts, abstract away the boilerplate, and
 tweak priors as you wish. Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
@@ -28,7 +28,7 @@ BLayers helps you write pure Numpyro, so you can integrate it with any Numpyro
 code to build models of arbitrary complexity. It also gives you a recipe to
 build more complex layers as you wish.
 
-## the starting point
+## The starting point
 
 The simplest non-trivial (and most important!) Bayesian regression model form is
 the adaptive prior,
@@ -50,7 +50,7 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-### pure numpyro
+### Pure numpyro
 
 All BLayers is doing is writing Numpyro for you under the hood. This model is exacatly equivalent to writing the following, just using way less code.
 
@@ -78,7 +78,7 @@ def model(x, y):
     return sample('obs', distributions.Normal(mu, sigma), obs=y)
 ```
 
-### reparameterizing
+### Reparameterizing
 
 To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
 
@@ -121,7 +121,7 @@ mcmc = MCMC(
     )
 ```
 
-### mixing it up
+### Mixing it up
 
 The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so let's say you wanted to change the model from
 
@@ -155,7 +155,7 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-### "factories"
+### "Factories"
 
 Since Numpyro traces `sample` sites and doesn't record any paramters on the class, you can re-use with a particular generative model structure freely.
 
@@ -176,9 +176,9 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-## additional layers
+## Additional layers
 
-### fixed prior layers
+### Fixed prior layers
 
 For you purists out there, we also provide a `FixedPriorLayer` for standard
 L1/L2 regression.
@@ -194,7 +194,7 @@ def model(x, y):
 Very useful when you have an informative prior.
 
 
-### bayesian embeddings
+### Bayesian embeddings
 
 We'll keep track of your lookup table for you.
 
@@ -207,7 +207,7 @@ def model(x, y, x_cat):
     return gaussian_link_exp(mu, y)
 ```
 
-### old school random effects
+### Old school random effects
 
 A special case of the embedding layer, where `EMB_DIM = 1`, useful for super
 fast one-hot encodings (aka random effects)
@@ -221,7 +221,7 @@ def model(x, y, x_cat):
 ```
 
 
-### factorization machines
+### Factorization machines
 
 Developed in [Rendle 2010](https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf) and [Rendle 2011](https://www.ismll.uni-hildesheim.de/pub/pdfs/FreudenthalerRendle_BayesianFactorizationMachines.pdf), FMs provide a low-rank approximation to the `x`-by-`x` interaction matrix. For those familiar with R syntax, it is an approximation to `y ~ x:x`, excluding the x^2 terms.
 
@@ -239,7 +239,7 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-### uv decomp
+### UV decomp
 
 We also provide a standard UV deccomp for low rank interaction terms
 
@@ -255,7 +255,7 @@ def model(x, z, y):
     return gaussian_link_exp(mu, y)
 ```
 
-## links
+## Links
 
 We provide link functions as a convenience to abstract away a bit more Numpyro
 boilerplate.
@@ -264,7 +264,7 @@ We currently provide
 
 * `gaussian_link_exp`
 
-## batched loss
+## Batched loss
 
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
 me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
@@ -314,14 +314,17 @@ The `<=` symbol indicates sampling like R's `~`. Arithemtic operations like `+` 
 
 The goal here is a minimal domain-specific language for writing formulas in Python.
 
-## roadmap
+<!--
+## Roadmap
 
-
+1. Multioutput models
 1. Fit helpers for models with categorical variables
-2. Multioutput models
-3. Examples
-4. More code re-use in `layers.py` (this will only become clear after more code is written)
-5. More link functions
-6. Fit helpers for getting cols in/out, doing data science
-7. Better errors if you pass the wrong stuff
-8. Version the docs
+1. Examples
+1. More code re-use in `layers.py` (this will only become clear after more code is written)
+1. More link functions
+1. Fit helpers for getting cols in/out, doing data science
+1. Better errors if you pass the wrong stuff
+1. TQDM bar
+1. Settle on shapes, probably always having the trailing dim? Yes! Always output (n, u), and insist that all inputs follow this convention.
+1. probably want to have deferred layers take real arrays as well
+-->
