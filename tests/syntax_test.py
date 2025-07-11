@@ -173,3 +173,8 @@ def test_fit(
             )
             < 0.03
         )
+
+
+def test_multi_concat():
+    f = SymbolFactory()
+    f.x1 | f.x2 | f.x3 + f.x4 | f.x5 * f.x6 * f.x6

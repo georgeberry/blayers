@@ -113,6 +113,15 @@ class DeferredBinaryOp:
         s += _FOUR_SPACES * indent + ")"
         return s
 
+    def __or__(self, other):
+        return Concat(self, other)
+
+    def __add__(self, other):
+        return Sum(self, other)
+
+    def __mul__(self, other):
+        return Prod(self, other)
+
 
 class Sum(DeferredBinaryOp):
     def __init__(self, left, right):
@@ -212,6 +221,9 @@ class DeferredArray:
     def __or__(self, other):
         return Concat(self, other)
 
+    def __mul__(self, other):
+        return Prod(self, other)
+
     def __le__(self, other):
         return Formula(lhs=self, rhs=other)
 
@@ -272,11 +284,22 @@ class DeferredLayer:
 
 class SymbolicLayer:
     def __init__(self, layer):
+        # this is an instance
         self.layer = layer
 
-    def __call__(self, deferred, **kwargs):
+    def __call__(self, deferred_or_actual, **kwargs):
         metadata = kwargs or {}
-        return DeferredLayer(self.layer, deferred, metadata=metadata)
+        # actual
+        if isinstance(deferred_or_actual, jax.Array):
+            return self.layer(deferred_or_actual, metadata=metadata)
+
+        # deferred
+        if isinstance(
+            deferred_or_actual, (DeferredBinaryOp, DeferredArray, DeferredLayer)
+        ):
+            return DeferredLayer(
+                self.layer, deferred_or_actual, metadata=metadata
+            )
 
 
 class SymbolFactory:
@@ -328,7 +351,11 @@ def bl(
     return guide_samples
 
 
+# -------- Default stuff ----------------------------------------------------- #
+
+
 c = SymbolicLayer(ConstantLayer())
 a = SymbolicLayer(AdaptiveLayer())
 re = SymbolicLayer(RandomEffectsLayer())
 emb = SymbolicLayer(EmbeddingLayer())
+f = SymbolFactory()

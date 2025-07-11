@@ -16,8 +16,8 @@ def get_dataset_size(data: dict[str, jax.Array]) -> int:
 def get_steps_and_steps_per_epoch(
     data: dict[str, jax.Array],
     batch_size: int,
-    num_steps: int | None,
-    num_epochs: int | None,
+    num_steps: int | None = None,
+    num_epochs: int | None = None,
 ) -> tuple[int, int]:
     assert (num_steps is None) != (
         num_epochs is None
@@ -72,3 +72,8 @@ def add_trailing_dim(x: jax.Array) -> jax.Array:
     if len(x.shape) == 1:
         x = jnp.reshape(x, (-1, 1))
     return x
+
+
+def cat(*args: list[jax.Array]) -> jax.Array:
+    """Less letters for concatting an arbitrary number of 2-d JAX arrays"""
+    return jnp.concatenate(args, axis=1)
