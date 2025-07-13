@@ -44,6 +44,7 @@ deferred.__call__ --> now
 import itertools
 import logging
 import operator
+from abc import abstractmethod
 
 import jax
 import jax.numpy as jnp
@@ -52,12 +53,7 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.layers import (
-    AdaptiveLayer,
-    ConstantLayer,
-    EmbeddingLayer,
-    RandomEffectsLayer,
-)
+from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
 
 logger = logging.getLogger("syntax")
@@ -140,6 +136,50 @@ class Concat(DeferredBinaryOp):
             right,
             lambda x, y: jnp.concat([x, y], axis=1),
             "Concat",
+        )
+
+
+class DeferredManyOp:
+    """Defers and then calls op(left_now, right_now)"""
+
+    def __init__(self, op, symbol, *args):
+        self.deferred_args = args
+        self.op = op
+        self.symbol = symbol
+
+    def __call__(self, data):
+        return self.op([x(data) for x in self.deferred_args])
+
+    def _mock_call(self):
+        uid = _next_uid()
+        m = [x._mock_call() for x in self.deferred_args]
+        call_stack = f"{uid}_{self.symbol}({m})"
+        return call_stack
+
+    def __repr__(self):
+        return f"{self.symbol}({[x for x in self.deferred_args]})"
+
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
+    def __or__(self, other):
+        return Concat(self, other)
+
+    def __add__(self, other):
+        return Sum(self, other)
+
+    def __mul__(self, other):
+        return Prod(self, other)
+
+
+class ConcatMany(DeferredManyOp):
+    def __init__(self, *args):
+        super().__init__(
+            lambda arrs: jnp.concat(arrs, axis=1),
+            "Concat",
+            *args,
         )
 
 
@@ -234,38 +274,49 @@ class DeferredArray:
         return "".join(c for c in self.__repr__() if ord(c) < 128)
 
 
+# ---- Layers ---------------------------------------------------------------- #
+
+
+class SymbolicLayer:
+    def __init__(self, layer_instance):
+        # this is an instance
+        self.layer_instance = layer_instance
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        # pure passthrough, if you pass the wrong things the layer will error
+        # on call
+        return DeferredLayer(self.layer_instance, *args, **kwargs)
+
+
+def now(x, data):
+    if isinstance(x, DeferredArray):
+        return x(data)
+    return x
+
+
 class DeferredLayer:
-    def __init__(self, layer, deferred, metadata=None):
-        self.layer = layer
-        self.deferred = deferred
-        self.metadata = metadata or {}
+    def __init__(self, layer_instance, args, kwargs):
+        self.layer_instance = layer_instance
+        self.args = args
+        self.kwargs = kwargs
 
     def __call__(self, data):
-        name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
-        dt = self.deferred(data)
-        # for random effects
-        if isinstance(self.layer, (RandomEffectsLayer, EmbeddingLayer)):
-            assert isinstance(
-                self.deferred, DeferredArray
-            ), f"{self.layer.__class__.__name__} only accepts a DeferredArray."
-            assert (
-                len(dt.shape) == 1 or dt.shape[1] == 1
-            ), f"Can only pass {self.layer.__class__.__name__} a one dimensional array, got {dt.shape}."
-            n_categories = int(jnp.unique(dt).shape[0])
-            metadata = self.metadata.copy()
-            metadata["n_categories"] = n_categories
-            return self.layer(name, dt, **metadata)
+        name = f"{self.layer_instance.__class__.__name__}_{str(self.deferred)}"
 
-        return self.layer(name, dt)
+        args_now = [now(x, data) for x in self.args]
+        kwargs_now = {k: now(v, data) for k, v in self.kwargs.items()}
+
+        return self.layer_instance(name, *args_now, **kwargs_now)
 
     def _mock_call(self):
         uid = _next_uid()
-        call_stack = f"{uid}_{self.layer.__class__.__name__}({self.deferred._mock_call()})"
+        call_stack = f"{uid}_{self.layer_instance.__class__.__name__}({self.deferred._mock_call()})"
         print(call_stack)
         return call_stack
 
     def __repr__(self):
-        return f"{self.layer.__class__.__name__}({self.deferred})"
+        return f"{self.layer_instance.__class__.__name__}({self.deferred})"
 
     def pretty(self, indent=0):
         return _FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
@@ -276,30 +327,8 @@ class DeferredLayer:
     def __mul__(self, other):
         return Prod(self, other)
 
-    def __bool__(self):
-        raise ValueError(
-            "DeferredLayers cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
-        )
 
-
-class SymbolicLayer:
-    def __init__(self, layer):
-        # this is an instance
-        self.layer = layer
-
-    def __call__(self, deferred_or_actual, **kwargs):
-        metadata = kwargs or {}
-        # actual
-        if isinstance(deferred_or_actual, jax.Array):
-            return self.layer(deferred_or_actual, metadata=metadata)
-
-        # deferred
-        if isinstance(
-            deferred_or_actual, (DeferredBinaryOp, DeferredArray, DeferredLayer)
-        ):
-            return DeferredLayer(
-                self.layer, deferred_or_actual, metadata=metadata
-            )
+# ---- Pass thru for data ---------------------------------------------------- #
 
 
 class SymbolFactory:
@@ -353,9 +382,23 @@ def bl(
 
 # -------- Default stuff ----------------------------------------------------- #
 
+# this setup is more explicit about args but makes it harder to change layers
 
-c = SymbolicLayer(ConstantLayer())
-a = SymbolicLayer(AdaptiveLayer())
-re = SymbolicLayer(RandomEffectsLayer())
-emb = SymbolicLayer(EmbeddingLayer())
+c = DeferredConstantLayer
+a = DeferredAdaptiveLayer
+
+re = DeferredRandomEffectsLayer
+emb = DeferredEmbeddingLayer
+
+fm = DeferredFMLayer
+lint = DeferredLowRankInteractionLayer
+
 f = SymbolFactory()
+cat = ConcatMany
+
+
+# we want like
+
+a = SymbolicLayer(AdaptiveLayer())
+
+# but then we want the SymbolicLayer to know how to dispatch

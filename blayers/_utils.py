@@ -72,8 +72,3 @@ def add_trailing_dim(x: jax.Array) -> jax.Array:
     if len(x.shape) == 1:
         x = jnp.reshape(x, (-1, 1))
     return x
-
-
-def cat(*args: list[jax.Array]) -> jax.Array:
-    """Less letters for concatting an arbitrary number of 2-d JAX arrays"""
-    return jnp.concatenate(args, axis=1)

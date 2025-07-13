@@ -9,7 +9,7 @@ import pytest_check
 from numpyro.infer import Predictive
 
 from blayers._utils import rmse
-from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
+from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, a, bl, cat
 from blayers.layers import AdaptiveLayer, EmbeddingLayer, RandomEffectsLayer
 from tests.layers_test import (  # noqa
     data,
@@ -175,6 +175,18 @@ def test_fit(
         )
 
 
-def test_multi_concat():
+def test_concat():
     f = SymbolFactory()
     f.x1 | f.x2 | f.x3 + f.x4 | f.x5 * f.x6 * f.x6
+
+
+def test_multi_concat():
+    f = SymbolFactory()
+
+    print(cat(f.x1, f.x2, f.x3))
+
+
+def test_multi_concat_2():
+    f = SymbolFactory()
+
+    print(a(cat(f.x1, f.x2, f.x3)))
