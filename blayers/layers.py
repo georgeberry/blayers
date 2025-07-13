@@ -80,21 +80,21 @@ class AdaptiveLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
             lmbda_dist: NumPyro distribution class for the scale (λ) of the
                 prior.
-            prior_dist: NumPyro distribution class for the coefficient prior.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: NumPyro distribution class for the coefficient prior.
+            coef_kwargs: Parameters for the prior distribution.
             lmbda_kwargs: Parameters for the scale distribution.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
     def __call__(
@@ -123,7 +123,7 @@ class AdaptiveLayer(BLayer):
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
             sample_shape=(input_shape,),
         )
         # matmul and return
@@ -155,16 +155,16 @@ class FixedPriorLayer(BLayer):
 
     def __init__(
         self,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
     ):
         """
         Args:
-            prior_dist: NumPyro distribution class for the coefficients.
-            prior_kwargs: Parameters to initialize the prior distribution.
+            coef_dist: NumPyro distribution class for the coefficients.
+            coef_kwargs: Parameters to initialize the prior distribution.
         """
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
 
     def __call__(
         self,
@@ -188,7 +188,7 @@ class FixedPriorLayer(BLayer):
         # sampling block
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(**self.prior_kwargs),
+            fn=self.coef_dist(**self.coef_kwargs),
             sample_shape=(input_shape,),
         )
         # matmul and return
@@ -219,16 +219,16 @@ class ConstantLayer(BLayer):
 
     def __init__(
         self,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
     ):
         """
         Args:
-            prior_dist: NumPyro distribution class for the coefficients.
-            prior_kwargs: Parameters to initialize the prior distribution.
+            coef_dist: NumPyro distribution class for the coefficients.
+            coef_kwargs: Parameters to initialize the prior distribution.
         """
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
 
     def __call__(
         self,
@@ -249,7 +249,7 @@ class ConstantLayer(BLayer):
         # sampling block
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(**self.prior_kwargs),
+            fn=self.coef_dist(**self.coef_kwargs),
             sample_shape=(1,),
         )
         # matmul and return
@@ -276,20 +276,20 @@ class EmbeddingLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
             num_embeddings: Total number of discrete embedding entries.
             embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: Prior distribution for embedding weights.
+            coef_kwargs: Parameters for the prior distribution.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
     def __call__(
@@ -318,7 +318,7 @@ class EmbeddingLayer(BLayer):
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
             sample_shape=(n_categories, embedding_dim),
         )
         # matmul and return
@@ -345,20 +345,20 @@ class RandomEffectsLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
             num_embeddings: Total number of discrete embedding entries.
             embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: Prior distribution for embedding weights.
+            coef_kwargs: Parameters for the prior distribution.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
     def __call__(
@@ -387,7 +387,7 @@ class RandomEffectsLayer(BLayer):
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
             sample_shape=(n_categories, embedding_dim),
         )
         # matmul and return
@@ -428,21 +428,21 @@ class FMLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
             lmbda_dist: Distribution for scaling factor λ.
-            prior_dist: Prior for beta parameters.
-            prior_kwargs: Arguments for prior distribution.
+            coef_dist: Prior for beta parameters.
+            coef_kwargs: Arguments for prior distribution.
             lmbda_kwargs: Arguments for λ distribution.
             low_rank_dim: Dimensionality of low-rank approximation.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
     def __call__(
@@ -472,7 +472,7 @@ class FMLayer(BLayer):
         )
         thetas = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
             sample_shape=(input_shape, low_rank_dim),
         )
         # matmul and return
@@ -504,13 +504,13 @@ class LowRankInteractionLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
 
     def __call__(
@@ -533,7 +533,7 @@ class LowRankInteractionLayer(BLayer):
         )
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
-            fn=self.prior_dist(scale=lmbda1, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs),
             sample_shape=(input_shape1, low_rank_dim),
         )
         lmbda2 = sample(
@@ -542,7 +542,7 @@ class LowRankInteractionLayer(BLayer):
         )
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
-            fn=self.prior_dist(scale=lmbda2, **self.prior_kwargs),
+            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs),
             sample_shape=(input_shape2, low_rank_dim),
         )
         # matmul and return
