@@ -44,7 +44,7 @@ deferred.__call__ --> now
 import itertools
 import logging
 import operator
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 import jax
 import jax.numpy as jnp
@@ -53,7 +53,14 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.layers import AdaptiveLayer
+from blayers.layers import (
+    AdaptiveLayer,
+    ConstantLayer,
+    EmbeddingLayer,
+    FMLayer,
+    LowRankInteractionLayer,
+    RandomEffectsLayer,
+)
 from blayers.links import gaussian_link_exp
 
 logger = logging.getLogger("syntax")
@@ -67,10 +74,21 @@ def _next_uid():
 
 _FOUR_SPACES = "    "
 
+
+class Deferred(ABC):
+    pass
+
+
+def _now(x, data):
+    if isinstance(x, Deferred):
+        return x(data)
+    return x
+
+
 # ---- Deferred ops ---------------------------------------------------------- #
 
 
-class DeferredBinaryOp:
+class DeferredBinaryOp(Deferred):
     """Defers and then calls op(left_now, right_now)"""
 
     def __init__(self, left_deferred, right_deferred, op, symbol):
@@ -79,7 +97,7 @@ class DeferredBinaryOp:
         self.op = op
         self.symbol = symbol
 
-    def __call__(self, data):
+    def __call__(self, data=None):
         # the results from left_deferred and right_deferred must be composable
         # via `op` or this fails
 
@@ -139,7 +157,7 @@ class Concat(DeferredBinaryOp):
         )
 
 
-class DeferredManyOp:
+class DeferredManyOp(Deferred):
     """Defers and then calls op(left_now, right_now)"""
 
     def __init__(self, op, symbol, *args):
@@ -147,8 +165,8 @@ class DeferredManyOp:
         self.op = op
         self.symbol = symbol
 
-    def __call__(self, data):
-        return self.op([x(data) for x in self.deferred_args])
+    def __call__(self, data=None):
+        return self.op([_now(x, data) for x in self.deferred_args])
 
     def _mock_call(self):
         uid = _next_uid()
@@ -242,7 +260,7 @@ class Formula:
         return Formula(lhs=self, rhs=other)
 
 
-class DeferredArray:
+class DeferredArray(Deferred):
     def __init__(self, name):
         self.name = name
 
@@ -289,23 +307,17 @@ class SymbolicLayer:
         return DeferredLayer(self.layer_instance, *args, **kwargs)
 
 
-def now(x, data):
-    if isinstance(x, DeferredArray):
-        return x(data)
-    return x
-
-
 class DeferredLayer:
-    def __init__(self, layer_instance, args, kwargs):
+    def __init__(self, layer_instance, *args, **kwargs):
         self.layer_instance = layer_instance
         self.args = args
         self.kwargs = kwargs
 
-    def __call__(self, data):
-        name = f"{self.layer_instance.__class__.__name__}_{str(self.deferred)}"
+    def __call__(self, data=None):
+        args_now = [_now(x, data) for x in self.args]
+        kwargs_now = {k: _now(v, data) for k, v in self.kwargs.items()}
 
-        args_now = [now(x, data) for x in self.args]
-        kwargs_now = {k: now(v, data) for k, v in self.kwargs.items()}
+        name = f"{self.layer_instance.__class__.__name__}({data})"
 
         return self.layer_instance(name, *args_now, **kwargs_now)
 
@@ -316,10 +328,7 @@ class DeferredLayer:
         return call_stack
 
     def __repr__(self):
-        return f"{self.layer_instance.__class__.__name__}({self.deferred})"
-
-    def pretty(self, indent=0):
-        return _FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
+        return f"{self.layer_instance.__class__.__name__}()"
 
     def __add__(self, other):
         return Sum(self, other)
@@ -382,23 +391,15 @@ def bl(
 
 # -------- Default stuff ----------------------------------------------------- #
 
-# this setup is more explicit about args but makes it harder to change layers
 
-c = DeferredConstantLayer
-a = DeferredAdaptiveLayer
+c = SymbolicLayer(ConstantLayer())
+a = SymbolicLayer(AdaptiveLayer())
 
-re = DeferredRandomEffectsLayer
-emb = DeferredEmbeddingLayer
+re = SymbolicLayer(RandomEffectsLayer())
+emb = SymbolicLayer(EmbeddingLayer())
 
-fm = DeferredFMLayer
-lint = DeferredLowRankInteractionLayer
+fm = SymbolicLayer(FMLayer())
+lint = SymbolicLayer(LowRankInteractionLayer())
 
 f = SymbolFactory()
 cat = ConcatMany
-
-
-# we want like
-
-a = SymbolicLayer(AdaptiveLayer())
-
-# but then we want the SymbolicLayer to know how to dispatch
