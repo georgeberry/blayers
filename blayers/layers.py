@@ -83,6 +83,7 @@ class AdaptiveLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -91,11 +92,14 @@ class AdaptiveLayer(BLayer):
             coef_dist: NumPyro distribution class for the coefficient prior.
             coef_kwargs: Parameters for the prior distribution.
             lmbda_kwargs: Parameters for the scale distribution.
+            units: The number of outputs
+            dependent_outputs: For multi-output models whether to treat the outputs as dependent. By deafult they are independent.
         """
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -107,10 +111,10 @@ class AdaptiveLayer(BLayer):
 
         Args:
             name: Variable name scope.
-            x: Input data array of shape (n, d).
+            x: Input data array of shape (n, d, u).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
 
         x = add_trailing_dim(x)
@@ -119,18 +123,20 @@ class AdaptiveLayer(BLayer):
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
-            sample_shape=(input_shape,),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand_by(
+                [input_shape]
+            ),
         )
+
         # matmul and return
         return self.matmul(x, betas)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Standard dot product between beta and x.
 
@@ -141,7 +147,9 @@ class AdaptiveLayer(BLayer):
         Returns:
             jax.Array: Output of shape (n,).
         """
-        return jnp.einsum("ij,j->i", beta, x)
+        # import ipdb; ipdb.set_trace()
+
+        return jnp.einsum("nd,du->nu", x, beta)
 
 
 class FixedPriorLayer(BLayer):

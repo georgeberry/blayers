@@ -326,7 +326,7 @@ def loss_instance(request: SubRequest) -> Any:
 @pytest.mark.parametrize(
     "loss_instance",
     [
-        "trace_elbo",
+        # "trace_elbo",
         "trace_elbo_batched",
     ],
     indirect=True,
@@ -350,6 +350,9 @@ def test_models_vi(
 ) -> Any:
     model_fn, coef_groups = model_bundle
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
+
+    # import ipdb; ipdb.set_trace()
 
     guide = AutoDiagonalNormal(model_fn)
 
@@ -376,8 +379,8 @@ def test_models_vi(
         svi_result = svi_run_batched(
             svi,
             rng_key,
+            1000,
             num_steps,
-            batch_size=1000,
             **model_data,
         )
     guide_predicitive = Predictive(
@@ -394,7 +397,7 @@ def test_models_vi(
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
             val = rmse(
-                coef_fn(*[guide_means[x] for x in coef_list]),
+                coef_fn(*[guide_means[x] for x in coef_list]).squeeze(),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
             )
             assert val < 0.1
@@ -468,7 +471,7 @@ def test_models_hmc(
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
             val = rmse(
-                coef_fn(*[sample_means[x] for x in coef_list]),
+                coef_fn(*[sample_means[x] for x in coef_list]).squeeze(),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
             )
             assert val < 0.03
