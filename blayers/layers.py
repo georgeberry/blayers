@@ -125,7 +125,7 @@ class AdaptiveLayer(BLayer):
             name=f"{self.__class__.__name__}_{name}_lmbda",
             fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
             fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand_by(
                 [input_shape]
@@ -133,7 +133,7 @@ class AdaptiveLayer(BLayer):
         )
 
         # matmul and return
-        return self.matmul(x, betas)
+        return self.matmul(x, beta)
 
     @staticmethod
     def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
@@ -165,6 +165,7 @@ class FixedPriorLayer(BLayer):
         self,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -173,6 +174,7 @@ class FixedPriorLayer(BLayer):
         """
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -194,16 +196,15 @@ class FixedPriorLayer(BLayer):
         input_shape = x.shape[1]
 
         # sampling block
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
             fn=self.coef_dist(**self.coef_kwargs),
-            sample_shape=(input_shape,),
-        )
+        ).expand([input_shape, self.units])
         # matmul and return
-        return self.matmul(x, betas)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """A dot product.
 
         Args:
@@ -213,7 +214,7 @@ class FixedPriorLayer(BLayer):
         Returns:
             jax.Array: Output array of shape (n,).
         """
-        return jnp.einsum("ij,j->i", beta, x)
+        return jnp.einsum("nd,du->nu", beta, x)
 
 
 class ConstantLayer(BLayer):
@@ -229,6 +230,7 @@ class ConstantLayer(BLayer):
         self,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -237,6 +239,7 @@ class ConstantLayer(BLayer):
         """
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -257,14 +260,13 @@ class ConstantLayer(BLayer):
         # sampling block
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(**self.coef_kwargs),
-            sample_shape=(1,),
+            fn=self.coef_dist(**self.coef_kwargs).expand([self.units]),
         )
         # matmul and return
-        return self.matmul(beta, x)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """A dot product.
 
         Args:
@@ -287,6 +289,7 @@ class EmbeddingLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -299,6 +302,7 @@ class EmbeddingLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -333,7 +337,7 @@ class EmbeddingLayer(BLayer):
         return self.matmul(betas, x)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Index into the embedding table using the provided indices.
 
@@ -356,6 +360,7 @@ class RandomEffectsLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -368,6 +373,7 @@ class RandomEffectsLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -402,7 +408,7 @@ class RandomEffectsLayer(BLayer):
         return self.matmul(betas, x)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Index into the embedding table using the provided indices.
 
@@ -439,6 +445,7 @@ class FMLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
@@ -452,6 +459,7 @@ class FMLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -487,7 +495,7 @@ class FMLayer(BLayer):
         return self.matmul(thetas, x)
 
     @staticmethod
-    def matmul(theta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, theta: jax.Array) -> jax.Array:
         """
         Apply second-order factorization machine interaction.
 
@@ -515,11 +523,13 @@ class LowRankInteractionLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -558,10 +568,10 @@ class LowRankInteractionLayer(BLayer):
 
     @staticmethod
     def matmul(
-        theta1: jax.Array,
-        theta2: jax.Array,
         x: jax.Array,
         z: jax.Array,
+        theta1: jax.Array,
+        theta2: jax.Array,
     ) -> jax.Array:
         """Implements low rank multiplication.
 
