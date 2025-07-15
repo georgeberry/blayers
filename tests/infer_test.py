@@ -31,7 +31,7 @@ def test_builtin_vs_batched_elbo_simple() -> None:
         optim,
         loss=Batched_Trace_ELBO(
             num_particles=1,
-            n_obs=1,
+            num_obs=1,
             batch_size=1,
         ),
     )
@@ -80,7 +80,7 @@ def test_builtin_vs_batched_elbo_regression() -> None:
         optim,
         loss=Batched_Trace_ELBO(
             num_particles=1000,
-            n_obs=1,
+            num_obs=1,
             batch_size=1,
         ),
         x=x,
@@ -113,7 +113,7 @@ def test_no_batch_error() -> None:
         optim,
         loss=Batched_Trace_ELBO(
             num_particles=1,
-            n_obs=1,
+            num_obs=1,
         ),
     )
     state_batched = svi_batched.init(rng_key)

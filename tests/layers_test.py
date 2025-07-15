@@ -26,24 +26,26 @@ from blayers.layers import (
     FMLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
+    _matmul_factorization_machine,
+    _matmul_uv_decomp,
 )
 from blayers.links import gaussian_link_exp
 from blayers.sampling import autoreparam
 
-N_OBS = 10000
+NUM_OBS = 10000
 LOW_RANK_DIM = 3
 EMB_DIM = 1
-N_EMB_CATEGORIES = 10
+NUM_EMB_CATEGORIES = 10
 
 
 # ---- Data Generating Processes --------------------------------------------- #
 
 
-def dgp_simple(n_obs: int, k: int) -> dict[str, jax.Array]:
+def dgp_simple(num_obs: int, k: int) -> dict[str, jax.Array]:
     lambda1 = sample("lambda1", dist.HalfNormal(1.0))
     beta = sample("beta", dist.Normal(0, lambda1).expand([k]))
 
-    x1 = sample("x1", dist.Normal(0, 1).expand([n_obs, k]))
+    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
     mu = jnp.dot(x1, beta)
@@ -57,15 +59,15 @@ def dgp_simple(n_obs: int, k: int) -> dict[str, jax.Array]:
     }
 
 
-def dgp_fm(n_obs: int, k: int) -> dict[str, jax.Array]:
-    x1 = sample("x1", dist.Normal(0, 1).expand([n_obs, k]))
+def dgp_fm(num_obs: int, k: int) -> dict[str, jax.Array]:
+    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
     lmbda = sample("lambda", dist.HalfNormal(1.0))
     theta = sample(
         "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
     )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = FMLayer.matmul(x1, theta)
+    mu = _matmul_factorization_machine(x1, theta)
     y = sample("y", dist.Normal(mu, sigma))
     return {
         "x1": x1,
@@ -76,14 +78,14 @@ def dgp_fm(n_obs: int, k: int) -> dict[str, jax.Array]:
     }
 
 
-def dgp_emb(n_obs: int, k: int, n_categories: int) -> dict[str, jax.Array]:
+def dgp_emb(num_obs: int, k: int, num_categories: int) -> dict[str, jax.Array]:
     lmbda = sample("lambda", dist.HalfNormal(1.0))
-    beta = sample("beta", dist.Normal(0, lmbda).expand([n_categories, k]))
+    beta = sample("beta", dist.Normal(0, lmbda).expand([num_categories, k]))
     x1 = sample(
         "x1",
-        dist.Categorical(probs=jnp.ones(n_categories) / n_categories).expand(
-            [n_obs]
-        ),
+        dist.Categorical(
+            probs=jnp.ones(num_categories) / num_categories
+        ).expand([num_obs]),
     )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
@@ -99,11 +101,11 @@ def dgp_emb(n_obs: int, k: int, n_categories: int) -> dict[str, jax.Array]:
     }
 
 
-def dgp_lowrank(n_obs: int, k: int) -> dict[str, jax.Array]:
+def dgp_lowrank(num_obs: int, k: int) -> dict[str, jax.Array]:
     offset = 1
 
-    x1 = sample("x1", dist.Normal(0, 1).expand([n_obs, k]))
-    x2 = sample("x2", dist.Normal(0, 1).expand([n_obs, k + offset]))
+    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
+    x2 = sample("x2", dist.Normal(0, 1).expand([num_obs, k + offset]))
 
     lambda1 = sample("lambda1", dist.HalfNormal(1.0))
     theta1_lowrank = sample(
@@ -117,7 +119,7 @@ def dgp_lowrank(n_obs: int, k: int) -> dict[str, jax.Array]:
     )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = LowRankInteractionLayer.matmul(x1, x2, theta1_lowrank, theta2_lowrank)
+    mu = _matmul_uv_decomp(x1, x2, theta1_lowrank, theta2_lowrank)
 
     y = sample("y", dist.Normal(mu, sigma))
     return {
@@ -147,21 +149,21 @@ def simulated_data(
 
 @pytest.fixture
 def simulated_data_simple() -> dict[str, jax.Array]:
-    return simulated_data(dgp_simple, n_obs=N_OBS, k=2)
+    return simulated_data(dgp_simple, num_obs=NUM_OBS, k=2)
 
 
 @pytest.fixture
 def simulated_data_fm() -> dict[str, jax.Array]:
-    return simulated_data(dgp_fm, n_obs=N_OBS, k=10)
+    return simulated_data(dgp_fm, num_obs=NUM_OBS, k=10)
 
 
 @pytest.fixture
 def simulated_data_emb() -> dict[str, jax.Array]:
     return simulated_data(
         dgp_emb,
-        n_obs=N_OBS,
+        num_obs=NUM_OBS,
         k=EMB_DIM,
-        n_categories=N_EMB_CATEGORIES,
+        num_categories=NUM_EMB_CATEGORIES,
     )
 
 
@@ -169,7 +171,7 @@ def simulated_data_emb() -> dict[str, jax.Array]:
 def simulated_data_lowrank() -> dict[str, jax.Array]:
     return simulated_data(
         dgp_lowrank,
-        n_obs=N_OBS,
+        num_obs=NUM_OBS,
         k=10,
     )
 
@@ -207,7 +209,7 @@ def emb_model() -> (
         beta = EmbeddingLayer()(
             "beta",
             x1,
-            n_categories=N_EMB_CATEGORIES,
+            num_categories=NUM_EMB_CATEGORIES,
             embedding_dim=EMB_DIM,
         )
         return gaussian_link_exp(beta, y)
@@ -228,7 +230,7 @@ def re_model() -> (
         beta = RandomEffectsLayer()(
             "beta",
             x1,
-            n_categories=N_EMB_CATEGORIES,
+            num_categories=NUM_EMB_CATEGORIES,
         )
         return gaussian_link_exp(beta, y)
 
@@ -290,7 +292,7 @@ def trace_elbo() -> Trace_ELBO:
 
 @pytest.fixture
 def trace_elbo_batched() -> Batched_Trace_ELBO:
-    return Batched_Trace_ELBO(n_obs=N_OBS)
+    return Batched_Trace_ELBO(num_obs=NUM_OBS)
 
 
 # ---- Dispatchers ----------------------------------------------------------- #
