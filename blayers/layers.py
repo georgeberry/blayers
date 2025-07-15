@@ -283,7 +283,6 @@ class EmbeddingLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
-        embedding_dim: int | None = None,
     ):
         """
         Args:
@@ -297,7 +296,6 @@ class EmbeddingLayer(BLayer):
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
         self.units = units
-        self.embedding_dim = embedding_dim
 
     def __call__(
         self,
@@ -318,6 +316,7 @@ class EmbeddingLayer(BLayer):
         Returns:
             jax.Array: Embedding vectors of shape (n, m).
         """
+
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
@@ -442,7 +441,6 @@ class FMLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
-        low_rank_dim: int | None = None,
     ):
         """
         Args:
@@ -457,7 +455,6 @@ class FMLayer(BLayer):
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
         self.units = units
-        self.low_rank_dim = low_rank_dim
 
     def __call__(
         self,
@@ -490,10 +487,6 @@ class FMLayer(BLayer):
                 [input_shape, low_rank_dim, self.units]
             ),
         )
-        import ipdb
-
-        ipdb.set_trace()
-
         # matmul and return
         return self.matmul(x, theta)
 
@@ -512,9 +505,6 @@ class FMLayer(BLayer):
         Returns:
             jax.Array: Output of shape (n, u).
         """
-        import ipdb
-
-        ipdb.set_trace()
 
         vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
         v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
@@ -531,13 +521,11 @@ class LowRankInteractionLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
-        low_rank_dim: int | None = None,
     ):
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
-        self.low_rank_dim = low_rank_dim
         self.units = units
 
     def __call__(

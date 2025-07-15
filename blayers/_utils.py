@@ -57,14 +57,14 @@ def rmse(m: jax.Array, m_hat: jax.Array) -> jax.Array:
 
 
 identity = lambda x: x
-outer_product_upper_tril_no_diag = lambda x: (x @ x.T)[
+outer_product_upper_tril_no_diag = lambda x: (x.squeeze() @ x.squeeze().T)[
     jnp.triu_indices(x.shape[0], k=1)
 ]
-outer_product_upper_tril_with_diag = lambda x: (x @ x.T)[
+outer_product_upper_tril_with_diag = lambda x: (x.squeeze() @ x.squeeze().T)[
     jnp.triu_indices(x.shape[0], k=0)
 ]
 
-outer_product = lambda x, z: (x @ z.T)
+outer_product = lambda x, z: (x.squeeze() @ z.squeeze().T)
 
 
 def add_trailing_dim(x: jax.Array) -> jax.Array:
