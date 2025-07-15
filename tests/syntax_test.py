@@ -144,6 +144,7 @@ def test_fit(
     # building
 
     model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
     formula = f.y <= a(f.x1)
 
     guide_samples = bl(
