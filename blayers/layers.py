@@ -247,7 +247,7 @@ class FixedPriorLayer(BLayer):
         return _matmul_dot_product(x, beta)
 
 
-class ConstantLayer(BLayer):
+class InterceptLayer(BLayer):
     """Bayesian layer with a fixed prior distribution over coefficients.
 
     Generates coefficients from the model
