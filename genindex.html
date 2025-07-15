@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; blayers v0.1.0a2 documentation</title>
+    <title>Index &#8212; blayers v0.1.0a3 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=4a4e6095"></script>
+    <script src="_static/documentation_options.js?v=f1b2e288"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a2 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -152,6 +152,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/formulas.html">Formulas</a></li>
 </ul>
 
     </div>
@@ -276,23 +277,38 @@ document.write(`
  <a href="#_"><strong>_</strong></a>
  | <a href="#A"><strong>A</strong></a>
  | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
- | <a href="#G"><strong>G</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
- | <a href="#Y"><strong>Y</strong></a>
  
 </div>
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.__call__">__call__() (blayers.layers.AdaptiveLayer method)</a>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredArray.__call__">__call__() (blayers.experimental.syntax.DeferredArray method)</a>
 
       <ul>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredBinaryOp.__call__">(blayers.experimental.syntax.DeferredBinaryOp method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredLayer.__call__">(blayers.experimental.syntax.DeferredLayer method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredManyOp.__call__">(blayers.experimental.syntax.DeferredManyOp method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.Formula.__call__">(blayers.experimental.syntax.Formula method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.SymbolicLayer.__call__">(blayers.experimental.syntax.SymbolicLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.__call__">(blayers.layers.AdaptiveLayer method)</a>
+</li>
         <li><a href="api/layers.html#blayers.layers.BLayer.__call__">(blayers.layers.BLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.ConstantLayer.__call__">(blayers.layers.ConstantLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.__call__">(blayers.layers.EmbeddingLayer method)</a>
 </li>
@@ -304,15 +320,41 @@ document.write(`
 </li>
         <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.__call__">(blayers.layers.RandomEffectsLayer method)</a>
 </li>
+        <li><a href="api/links.html#blayers.links.Link.__call__">(blayers.links.Link method)</a>
+</li>
+        <li><a href="api/links.html#blayers.links.LocScaleLink.__call__">(blayers.links.LocScaleLink method)</a>
+</li>
+        <li><a href="api/links.html#blayers.links.SingleParamLink.__call__">(blayers.links.SingleParamLink method)</a>
+</li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.infer.Batched_Trace_ELBO.__init__">__init__() (blayers.infer.Batched_Trace_ELBO method)</a>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Concat.__init__">__init__() (blayers.experimental.syntax.Concat method)</a>
 
       <ul>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.ConcatMany.__init__">(blayers.experimental.syntax.ConcatMany method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredArray.__init__">(blayers.experimental.syntax.DeferredArray method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredBinaryOp.__init__">(blayers.experimental.syntax.DeferredBinaryOp method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredLayer.__init__">(blayers.experimental.syntax.DeferredLayer method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredManyOp.__init__">(blayers.experimental.syntax.DeferredManyOp method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.Formula.__init__">(blayers.experimental.syntax.Formula method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.Prod.__init__">(blayers.experimental.syntax.Prod method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.Sum.__init__">(blayers.experimental.syntax.Sum method)</a>
+</li>
+        <li><a href="api/formulas.html#blayers.experimental.syntax.SymbolicLayer.__init__">(blayers.experimental.syntax.SymbolicLayer method)</a>
+</li>
+        <li><a href="api/infer.html#blayers.infer.Batched_Trace_ELBO.__init__">(blayers.infer.Batched_Trace_ELBO method)</a>
+</li>
         <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.__init__">(blayers.layers.AdaptiveLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.BLayer.__init__">(blayers.layers.BLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.ConstantLayer.__init__">(blayers.layers.ConstantLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.__init__">(blayers.layers.EmbeddingLayer method)</a>
 </li>
@@ -323,6 +365,12 @@ document.write(`
         <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer.__init__">(blayers.layers.LowRankInteractionLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.__init__">(blayers.layers.RandomEffectsLayer method)</a>
+</li>
+        <li><a href="api/links.html#blayers.links.Link.__init__">(blayers.links.Link method)</a>
+</li>
+        <li><a href="api/links.html#blayers.links.LocScaleLink.__init__">(blayers.links.LocScaleLink method)</a>
+</li>
+        <li><a href="api/links.html#blayers.links.SingleParamLink.__init__">(blayers.links.SingleParamLink method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -345,8 +393,17 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/infer.html#blayers.infer.Batched_Trace_ELBO">Batched_Trace_ELBO (class in blayers.infer)</a>
 </li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.bl">bl() (in module blayers.experimental.syntax)</a>
+</li>
       <li><a href="api/layers.html#blayers.layers.BLayer">BLayer (class in blayers.layers)</a>
 </li>
+      <li>
+    blayers.experimental.syntax
+
+      <ul>
+        <li><a href="api/formulas.html#module-blayers.experimental.syntax">module</a>
+</li>
+      </ul></li>
       <li>
     blayers.infer
 
@@ -354,6 +411,8 @@ document.write(`
         <li><a href="api/infer.html#module-blayers.infer">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blayers.layers
 
@@ -361,8 +420,6 @@ document.write(`
         <li><a href="api/layers.html#module-blayers.layers">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blayers.links
 
@@ -377,6 +434,40 @@ document.write(`
         <li><a href="api/sampling.html#module-blayers.sampling">module</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.cat">cat (in module blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Concat">Concat (class in blayers.experimental.syntax)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.ConcatMany">ConcatMany (class in blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/layers.html#blayers.layers.ConstantLayer">ConstantLayer (class in blayers.layers)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Deferred">Deferred (class in blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredArray">DeferredArray (class in blayers.experimental.syntax)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredBinaryOp">DeferredBinaryOp (class in blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredLayer">DeferredLayer (class in blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredManyOp">DeferredManyOp (class in blayers.experimental.syntax)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -401,13 +492,7 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/layers.html#blayers.layers.FMLayer">FMLayer (class in blayers.layers)</a>
 </li>
-  </ul></td>
-</tr></table>
-
-<h2 id="G">G</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/links.html#blayers.links.gaussian_link_exp">gaussian_link_exp() (in module blayers.links)</a>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Formula">Formula (class in blayers.experimental.syntax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -415,10 +500,14 @@ document.write(`
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.infer.Batched_Trace_ELBO.loss">loss() (blayers.infer.Batched_Trace_ELBO method)</a>
+      <li><a href="api/links.html#blayers.links.Link">Link (class in blayers.links)</a>
+</li>
+      <li><a href="api/links.html#blayers.links.LocScaleLink">LocScaleLink (class in blayers.links)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/infer.html#blayers.infer.Batched_Trace_ELBO.loss">loss() (blayers.infer.Batched_Trace_ELBO method)</a>
+</li>
       <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer">LowRankInteractionLayer (class in blayers.layers)</a>
 </li>
   </ul></td>
@@ -431,6 +520,8 @@ document.write(`
 
       <ul>
         <li><a href="api/layers.html#blayers.layers.BLayer.matmul">(blayers.layers.BLayer static method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.ConstantLayer.matmul">(blayers.layers.ConstantLayer static method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.matmul">(blayers.layers.EmbeddingLayer static method)</a>
 </li>
@@ -449,6 +540,8 @@ document.write(`
     module
 
       <ul>
+        <li><a href="api/formulas.html#module-blayers.experimental.syntax">blayers.experimental.syntax</a>
+</li>
         <li><a href="api/infer.html#module-blayers.infer">blayers.infer</a>
 </li>
         <li><a href="api/layers.html#module-blayers.layers">blayers.layers</a>
@@ -461,38 +554,40 @@ document.write(`
   </ul></td>
 </tr></table>
 
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.DeferredBinaryOp.pretty">pretty() (blayers.experimental.syntax.DeferredBinaryOp method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Prod">Prod (class in blayers.experimental.syntax)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer">RandomEffectsLayer (class in blayers.layers)</a>
 </li>
-      <li><a href="api/layers.html#blayers.layers.BLayer.required_metadata">required_metadata() (blayers.layers.BLayer static method)</a>
-
-      <ul>
-        <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.required_metadata">(blayers.layers.EmbeddingLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.FMLayer.required_metadata">(blayers.layers.FMLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer.required_metadata">(blayers.layers.LowRankInteractionLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.required_metadata">(blayers.layers.RandomEffectsLayer static method)</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.infer.svi_run_batched">svi_run_batched() (in module blayers.infer)</a>
+      <li><a href="api/links.html#blayers.links.SingleParamLink">SingleParamLink (class in blayers.links)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Sum">Sum (class in blayers.experimental.syntax)</a>
 </li>
   </ul></td>
-</tr></table>
-
-<h2 id="Y">Y</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.infer.yield_batches">yield_batches() (in module blayers.infer)</a>
+      <li><a href="api/infer.html#blayers.infer.svi_run_batched">svi_run_batched() (in module blayers.infer)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.SymbolFactory">SymbolFactory (class in blayers.experimental.syntax)</a>
+</li>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.SymbolicLayer">SymbolicLayer (class in blayers.experimental.syntax)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.links &#8212; blayers v0.1.0a2 documentation</title>
+    <title>blayers.links &#8212; blayers v0.1.0a3 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=4a4e6095"></script>
+    <script src="../../_static/documentation_options.js?v=f1b2e288"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a2 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -152,6 +152,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api/infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/links.html">Links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/formulas.html">Formulas</a></li>
 </ul>
 
     </div>
@@ -270,19 +271,115 @@ document.write(`
                 <article class="bd-article">
                   
   <h1>Source code for blayers.links</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample</span>
 
 
-<div class="viewcode-block" id="gaussian_link_exp">
-<a class="viewcode-back" href="../../api/links.html#blayers.links.gaussian_link_exp">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_link_exp</span><span class="p">(</span><span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span></div>
+<div class="viewcode-block" id="Link">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.Link">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Link</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="Link.__init__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.Link.__init__">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize link parameters.&quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="Link.__call__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.Link.__call__">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the link function.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LocScaleLink">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.LocScaleLink">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LocScaleLink</span><span class="p">(</span><span class="n">Link</span><span class="p">):</span>
+<div class="viewcode-block" id="LocScaleLink.__init__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.LocScaleLink.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sigma_dist</span><span class="p">:</span> <span class="n">dist</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
+        <span class="n">sigma_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+        <span class="n">obs_dist</span><span class="p">:</span> <span class="n">dist</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">obs_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma_dist</span> <span class="o">=</span> <span class="n">sigma_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma_kwargs</span> <span class="o">=</span> <span class="n">sigma_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span> <span class="o">=</span> <span class="n">obs_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span> <span class="o">=</span> <span class="n">obs_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span> <span class="o">=</span> <span class="n">dependent_outputs</span></div>
+
+
+<div class="viewcode-block" id="LocScaleLink.__call__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.LocScaleLink.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_kwargs</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to_event</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
+            <span class="n">dist</span><span class="p">,</span>
+            <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">gaussian_link_exp</span> <span class="o">=</span> <span class="n">LocScaleLink</span><span class="p">()</span>
+<span class="n">lognormal_link_exp</span> <span class="o">=</span> <span class="n">LocScaleLink</span><span class="p">(</span><span class="n">obs_dist</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SingleParamLink">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.SingleParamLink">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SingleParamLink</span><span class="p">(</span><span class="n">Link</span><span class="p">):</span>
+<div class="viewcode-block" id="SingleParamLink.__init__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.SingleParamLink.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">obs_dist</span><span class="p">:</span> <span class="n">dist</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Bernoulli</span><span class="p">,</span>
+        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span> <span class="o">=</span> <span class="n">obs_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span> <span class="o">=</span> <span class="n">dependent_outputs</span></div>
+
+
+<div class="viewcode-block" id="SingleParamLink.__call__">
+<a class="viewcode-back" href="../../api/links.html#blayers.links.SingleParamLink.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span><span class="n">y_hat</span><span class="p">)</span><span class="o">.</span><span class="n">to_event</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span><span class="n">y_hat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
+            <span class="n">dist</span><span class="p">,</span>
+            <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">logit_link</span> <span class="o">=</span> <span class="n">SingleParamLink</span><span class="p">()</span>
+<span class="n">poission_link</span> <span class="o">=</span> <span class="n">SingleParamLink</span><span class="p">(</span><span class="n">obs_dist</span><span class="o">=</span><span class="n">dist</span><span class="o">.</span><span class="n">Poisson</span><span class="p">)</span>
 </pre></div>
 
                 </article>

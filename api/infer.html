@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Infer &#8212; blayers v0.1.0a2 documentation</title>
+    <title>Infer &#8212; blayers v0.1.0a3 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=4a4e6095"></script>
+    <script src="../_static/documentation_options.js?v=f1b2e288"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -132,7 +132,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a2 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -153,6 +153,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="formulas.html">Formulas</a></li>
 </ul>
 
     </div>
@@ -355,7 +356,6 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.yield_batches"><code class="docutils literal notranslate"><span class="pre">yield_batches()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -447,37 +447,20 @@ during the course of fitting).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.infer.svi_run_batched">
-<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.svi_run_batched" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.svi_run_batched" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>svi</strong> (<em>SVI</em>)</p></li>
 <li><p><strong>rng_key</strong> (<em>Array</em>)</p></li>
-<li><p><strong>num_steps</strong> (<em>int</em>)</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_steps</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>num_epochs</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>SVIRunResult</em></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blayers.infer.yield_batches">
-<span class="sig-prename descclassname"><span class="pre">blayers.infer.</span></span><span class="sig-name descname"><span class="pre">yield_batches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/infer.html#yield_batches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.infer.yield_batches" title="Link to this definition">#</a></dt>
-<dd><p>Yields batches from a dict of arrays.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
-<li><p><strong>n_epochs</strong> (<em>int</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Generator</em>[dict[str, <em>Array</em>], None, None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -536,7 +519,6 @@ during the course of fitting).</p></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.infer.yield_batches"><code class="docutils literal notranslate"><span class="pre">yield_batches()</span></code></a></li>
 </ul>
   </nav></div>
 
