@@ -36,7 +36,7 @@ def test_get_dataset_size() -> None:
 
 def test_get_steps_per_epoch() -> None:
     with pytest_check.check:
-        with pytest.raises(ValueError):
+        with pytest.raises(IndexError):
             get_steps_and_steps_per_epoch(
                 data={},
                 batch_size=1,
