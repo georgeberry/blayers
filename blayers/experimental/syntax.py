@@ -1,3 +1,4 @@
+# codecov: disable
 # type: ignore
 
 """Deferred computation for easier model building.

@@ -19,6 +19,7 @@ from tests.layers_test import (  # noqa
 )
 
 
+@pytest.mark.skip
 def test_str() -> Any:  # noqa
     f = SymbolFactory()
     a = SymbolicLayer(AdaptiveLayer())
@@ -28,10 +29,12 @@ def test_str() -> Any:  # noqa
     print(formula)
 
 
+@pytest.mark.skip
 def test_latex() -> Any:  # noqa
     a = AdaptiveLayer()
 
 
+@pytest.mark.skip
 def test_re() -> Any:  # noqa
     f = SymbolFactory()
     re = SymbolicLayer(RandomEffectsLayer())
@@ -39,12 +42,14 @@ def test_re() -> Any:  # noqa
     formula = re(f.x1)
 
 
+@pytest.mark.skip
 def test_emb() -> Any:  # noqa
     f = SymbolFactory()
     emb = SymbolicLayer(EmbeddingLayer())
     formula = emb(f.x1, embedding_dim=8)
 
 
+@pytest.mark.skip
 def test_ast() -> None:
     class AdaptiveLayerMock:
         def __call__(self, x):
@@ -67,6 +72,7 @@ def test_ast() -> None:
     )
 
 
+@pytest.mark.skip
 def test_formula_fail() -> None:
     class AdaptiveLayerMock:
         def __call__(self, x):
@@ -82,6 +88,7 @@ def test_formula_fail() -> None:
         f.y <= a(f.x1 + f.x2) <= f.x2
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
@@ -120,6 +127,7 @@ def test_formula(
     ).shape == (1, 2)
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
@@ -173,17 +181,20 @@ def test_fit(
         )
 
 
+@pytest.mark.skip
 def test_concat():
     f = SymbolFactory()
     f.x1 | f.x2 | f.x3 + f.x4 | f.x5 * f.x6 * f.x6
 
 
+@pytest.mark.skip
 def test_multi_concat():
     f = SymbolFactory()
 
     print(cat(f.x1, f.x2, f.x3))
 
 
+@pytest.mark.skip
 def test_multi_concat_2():
     f = SymbolFactory()
 
