@@ -15,9 +15,11 @@ Design:
     produce an output, works like `result = Layer(*args, **kwargs)(data)`
 
 Notation:
-  - `i`: observations in a batch
-  - `j, k`: number of sampled coefficients
+  - `n`: observations in a batch
+  - `d`: number of coefficients
   - `l`: low rank dimension of low rank models
+  - `u`: units aka output dimension
+  - `m`: embedding dimension
 """
 
 from abc import ABC, abstractmethod
@@ -141,13 +143,12 @@ class AdaptiveLayer(BLayer):
         Standard dot product between beta and x.
 
         Args:
-            beta: Coefficient vector of shape (d,).
+            beta: Coefficient vector of shape (d, u).
             x: Input matrix of shape (n, d).
 
         Returns:
-            jax.Array: Output of shape (n,).
+            jax.Array: Output of shape (n, u).
         """
-        # import ipdb; ipdb.set_trace()
 
         return jnp.einsum("nd,du->nu", x, beta)
 
@@ -189,7 +190,7 @@ class FixedPriorLayer(BLayer):
             x: Input data array of shape (n, d).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
 
         x = add_trailing_dim(x)
@@ -208,13 +209,13 @@ class FixedPriorLayer(BLayer):
         """A dot product.
 
         Args:
-            beta: Model coefficients of shape (j,).
+            beta: Model coefficients of shape (d, u).
             x: Input data array of shape (n, d).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
-        return jnp.einsum("nd,du->nu", beta, x)
+        return jnp.einsum("nd,du->nu", x, beta)
 
 
 class ConstantLayer(BLayer):
@@ -244,40 +245,30 @@ class ConstantLayer(BLayer):
     def __call__(
         self,
         name: str,
-        x: jax.Array,
     ) -> jax.Array:
         """
         Forward pass with fixed prior.
 
         Args:
             name: Variable name prefix.
-            x: Input data array of shape (n, d).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (1, u).
         """
 
         # sampling block
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(**self.coef_kwargs).expand([self.units]),
+            fn=self.coef_dist(**self.coef_kwargs).expand([1, self.units]),
         )
         # matmul and return
-        return self.matmul(x, beta)
+        return self.matmul(beta)
 
     @staticmethod
-    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
-        """A dot product.
+    def matmul(beta: jax.Array) -> jax.Array:
+        """Identity"""
 
-        Args:
-            beta: Model coefficients of shape (j,).
-            x: Input data array of shape (n, d).
-
-        Returns:
-            jax.Array: Output array of shape (n,).
-        """
-
-        return beta * jnp.ones_like(x[:, 0])
+        return beta
 
 
 class EmbeddingLayer(BLayer):
@@ -290,6 +281,7 @@ class EmbeddingLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
+        embedding_dim: int | None = None,
     ):
         """
         Args:
@@ -303,6 +295,7 @@ class EmbeddingLayer(BLayer):
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
         self.units = units
+        self.embedding_dim = embedding_dim
 
     def __call__(
         self,
@@ -321,7 +314,7 @@ class EmbeddingLayer(BLayer):
             embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.
 
         Returns:
-            jax.Array: Embedding vectors of shape (n, embedding_dim).
+            jax.Array: Embedding vectors of shape (n, m).
         """
         # sampling block
         lmbda = sample(
@@ -330,8 +323,9 @@ class EmbeddingLayer(BLayer):
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
-            sample_shape=(n_categories, embedding_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [n_categories, embedding_dim]
+            ),
         )
         # matmul and return
         return self.matmul(betas, x)
@@ -392,7 +386,6 @@ class RandomEffectsLayer(BLayer):
         Returns:
             jax.Array: Embedding vectors of shape (n, embedding_dim).
         """
-        embedding_dim = 1
 
         # sampling block
         lmbda = sample(
@@ -401,8 +394,9 @@ class RandomEffectsLayer(BLayer):
         )
         betas = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
-            sample_shape=(n_categories, embedding_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [n_categories, 1]
+            ),
         )
         # matmul and return
         return self.matmul(betas, x)
@@ -446,6 +440,7 @@ class FMLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
+        low_rank_dim: int | None = None,
     ):
         """
         Args:
@@ -460,6 +455,7 @@ class FMLayer(BLayer):
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
         self.units = units
+        self.low_rank_dim = low_rank_dim
 
     def __call__(
         self,
@@ -484,15 +480,16 @@ class FMLayer(BLayer):
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
-        thetas = sample(
+        theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs),
-            sample_shape=(input_shape, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand_by(
+                [input_shape, low_rank_dim]
+            ),
         )
         # matmul and return
-        return self.matmul(thetas, x)
+        return self.matmul(x, theta)
 
     @staticmethod
     def matmul(x: jax.Array, theta: jax.Array) -> jax.Array:
@@ -503,15 +500,15 @@ class FMLayer(BLayer):
         0.5 * sum((xV)^2 - (x^2 V^2))
 
         Args:
-            theta: Weight matrix of shape (d, k).
+            theta: Weight matrix of shape (d, l, u).
             x: Input data of shape (n, d).
 
         Returns:
-            jax.Array: Output of shape (n,).
+            jax.Array: Output of shape (n, u).
         """
-        vx2 = jnp.einsum("ij,jk->ik", x, theta) ** 2
-        v2x2 = jnp.einsum("ij,jk->ik", x**2, theta**2)
-        return 0.5 * jnp.einsum("ik->i", vx2 - v2x2)
+        vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
+        v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
+        return 0.5 * jnp.einsum("nlu->nu", vx2 - v2x2)
 
 
 class LowRankInteractionLayer(BLayer):
@@ -524,11 +521,13 @@ class LowRankInteractionLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
         units: int = 1,
+        low_rank_dim: int | None = None,
     ):
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.low_rank_dim = low_rank_dim
         self.units = units
 
     def __call__(
@@ -547,24 +546,26 @@ class LowRankInteractionLayer(BLayer):
         # sampling block
         lmbda1 = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda1",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
-            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs),
-            sample_shape=(input_shape1, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs).expand_by(
+                [input_shape1, low_rank_dim]
+            ),
         )
         lmbda2 = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda2",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
-            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs),
-            sample_shape=(input_shape2, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs).expand_by(
+                [input_shape2, low_rank_dim]
+            ),
         )
         # matmul and return
-        return self.matmul(theta1, theta2, x, z)
+        return self.matmul(x, z, theta1, theta2)
 
     @staticmethod
     def matmul(
@@ -582,6 +583,6 @@ class LowRankInteractionLayer(BLayer):
         This is equivalent to a UV decomposition where you use n=low_rank_dim
         on the columns of the U/V matrices.
         """
-        xb = jnp.einsum("ij,jk->ik", x, theta1)
-        zb = jnp.einsum("ij,jk->ik", z, theta2)
-        return jnp.einsum("ik->i", xb * zb)
+        xb = jnp.einsum("nd,dlu->nlu", x, theta1)
+        zb = jnp.einsum("nd,dlu->nlu", z, theta2)
+        return jnp.einsum("nlu->nu", xb * zb)
