@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "blayers"
 copyright = "2025, George Berry"
 author = "George Berry"
-release = "v0.1.0a2"
+release = "v0.1.0a3"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -26,6 +26,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
+    "myst_parser",
 ]
 
 autosummary_generate = True

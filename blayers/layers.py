@@ -15,9 +15,11 @@ Design:
     produce an output, works like `result = Layer(*args, **kwargs)(data)`
 
 Notation:
-  - `i`: observations in a batch
-  - `j, k`: number of sampled coefficients
+  - `n`: observations in a batch
+  - `d`: number of coefficients
   - `l`: low rank dimension of low rank models
+  - `u`: units aka output dimension
+  - `m`: embedding dimension
 """
 
 from abc import ABC, abstractmethod
@@ -43,7 +45,8 @@ class BLayer(ABC):
         Run the layer's forward pass.
 
         Args:
-            name: Name scope for sampled variables.
+            name: Name scope for sampled variables. Note due to mypy stuff we
+                  only write the `name` arg explicitly in subclass.
             *args: Inputs to the layer.
 
         Returns:
@@ -63,16 +66,6 @@ class BLayer(ABC):
             jax.Array: The result of the matrix multiplication.
         """
 
-    @staticmethod
-    def required_metadata() -> list[str]:
-        """A list of things this class needs to be passed at call time
-        beyond data (x) and a string name.
-
-        Returns:
-            list[str]: A list of things as strings.
-        """
-        return []
-
 
 class AdaptiveLayer(BLayer):
     """Bayesian layer with adaptive prior using hierarchical modeling.
@@ -80,31 +73,35 @@ class AdaptiveLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \\sim Normal(0., \\lambda)
     """
 
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
             lmbda_dist: NumPyro distribution class for the scale (λ) of the
                 prior.
-            prior_dist: NumPyro distribution class for the coefficient prior.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: NumPyro distribution class for the coefficient prior.
+            coef_kwargs: Parameters for the prior distribution.
             lmbda_kwargs: Parameters for the scale distribution.
+            units: The number of outputs
+            dependent_outputs: For multi-output models whether to treat the outputs as dependent. By deafult they are independent.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -116,10 +113,10 @@ class AdaptiveLayer(BLayer):
 
         Args:
             name: Variable name scope.
-            x: Input data array of shape (n, d).
+            x: Input data array of shape (n, d, u).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
 
         x = add_trailing_dim(x)
@@ -128,29 +125,32 @@ class AdaptiveLayer(BLayer):
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(input_shape,),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape, self.units]
+            ),
         )
+
         # matmul and return
-        return self.matmul(x, betas)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Standard dot product between beta and x.
 
         Args:
-            beta: Coefficient vector of shape (d,).
+            beta: Coefficient vector of shape (d, u).
             x: Input matrix of shape (n, d).
 
         Returns:
-            jax.Array: Output of shape (n,).
+            jax.Array: Output of shape (n, u).
         """
-        return jnp.einsum("ij,j->i", beta, x)
+
+        return jnp.einsum("nd,du->nu", x, beta)
 
 
 class FixedPriorLayer(BLayer):
@@ -159,21 +159,23 @@ class FixedPriorLayer(BLayer):
     Generates coefficients from the model
 
     .. math::
-        \\beta \sim Normal(0., 1.)
+        \\beta \\sim Normal(0., 1.)
     """
 
     def __init__(
         self,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
-            prior_dist: NumPyro distribution class for the coefficients.
-            prior_kwargs: Parameters to initialize the prior distribution.
+            coef_dist: NumPyro distribution class for the coefficients.
+            coef_kwargs: Parameters to initialize the prior distribution.
         """
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -188,33 +190,87 @@ class FixedPriorLayer(BLayer):
             x: Input data array of shape (n, d).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
 
         x = add_trailing_dim(x)
         input_shape = x.shape[1]
 
         # sampling block
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(**self.prior_kwargs),
-            sample_shape=(input_shape,),
+            fn=self.coef_dist(**self.coef_kwargs).expand(
+                [input_shape, self.units]
+            ),
         )
         # matmul and return
-        return self.matmul(x, betas)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """A dot product.
 
         Args:
-            beta: Model coefficients of shape (j,).
+            beta: Model coefficients of shape (d, u).
             x: Input data array of shape (n, d).
 
         Returns:
-            jax.Array: Output array of shape (n,).
+            jax.Array: Output array of shape (n, u).
         """
-        return jnp.einsum("ij,j->i", beta, x)
+        return jnp.einsum("nd,du->nu", x, beta)
+
+
+class ConstantLayer(BLayer):
+    """Bayesian layer with a fixed prior distribution over coefficients.
+
+    Generates coefficients from the model
+
+    .. math::
+        \\beta \\sim Normal(0., 1.)
+    """
+
+    def __init__(
+        self,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+        units: int = 1,
+    ):
+        """
+        Args:
+            coef_dist: NumPyro distribution class for the coefficients.
+            coef_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.units = units
+
+    def __call__(
+        self,
+        name: str,
+    ) -> jax.Array:
+        """
+        Forward pass with fixed prior.
+
+        Args:
+            name: Variable name prefix.
+
+        Returns:
+            jax.Array: Output array of shape (1, u).
+        """
+
+        # sampling block
+        beta = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.coef_dist(**self.coef_kwargs).expand([1, self.units]),
+        )
+        # matmul and return
+        return self.matmul(beta)
+
+    @staticmethod
+    def matmul(beta: jax.Array) -> jax.Array:
+        """Identity"""
+
+        return beta
 
 
 class EmbeddingLayer(BLayer):
@@ -223,21 +279,23 @@ class EmbeddingLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
             num_embeddings: Total number of discrete embedding entries.
             embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: Prior distribution for embedding weights.
+            coef_kwargs: Parameters for the prior distribution.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -256,23 +314,25 @@ class EmbeddingLayer(BLayer):
             embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.
 
         Returns:
-            jax.Array: Embedding vectors of shape (n, embedding_dim).
+            jax.Array: Embedding vectors of shape (n, m).
         """
+
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
             fn=self.lmbda_dist(**self.lmbda_kwargs),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(n_categories, embedding_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [n_categories, embedding_dim]
+            ),
         )
         # matmul and return
-        return self.matmul(betas, x)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Index into the embedding table using the provided indices.
 
@@ -283,11 +343,7 @@ class EmbeddingLayer(BLayer):
         Returns:
             jax.Array: Looked-up embeddings of shape (n, embedding_dim).
         """
-        return beta[x.squeeze()].squeeze()
-
-    @staticmethod
-    def required_metadata() -> list[str]:
-        return ["n_categories", "embedding_dim"]
+        return beta[x.squeeze()]
 
 
 class RandomEffectsLayer(BLayer):
@@ -296,21 +352,23 @@ class RandomEffectsLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
             num_embeddings: Total number of discrete embedding entries.
             embedding_dim: Dimensionality of each embedding vector.
-            prior_dist: Prior distribution for embedding weights.
-            prior_kwargs: Parameters for the prior distribution.
+            coef_dist: Prior distribution for embedding weights.
+            coef_kwargs: Parameters for the prior distribution.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -329,23 +387,23 @@ class RandomEffectsLayer(BLayer):
         Returns:
             jax.Array: Embedding vectors of shape (n, embedding_dim).
         """
-        embedding_dim = 1
 
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
             fn=self.lmbda_dist(**self.lmbda_kwargs),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(n_categories, embedding_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [n_categories, 1]
+            ),
         )
         # matmul and return
-        return self.matmul(betas, x)
+        return self.matmul(x, beta)
 
     @staticmethod
-    def matmul(beta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
         """
         Index into the embedding table using the provided indices.
 
@@ -356,11 +414,7 @@ class RandomEffectsLayer(BLayer):
         Returns:
             jax.Array: Looked-up embeddings of shape (n, embedding_dim).
         """
-        return beta[x.squeeze()].squeeze()
-
-    @staticmethod
-    def required_metadata() -> list[str]:
-        return ["n_categories"]
+        return beta[x.squeeze()]
 
 
 class FMLayer(BLayer):
@@ -369,10 +423,10 @@ class FMLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
-        \lambda \sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.)
 
     .. math::
-        \\beta \sim Normal(0., \lambda)
+        \\beta \\sim Normal(0., \\lambda)
 
     The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
     if input covariates and :math:`l` is the low rank dim.
@@ -383,22 +437,24 @@ class FMLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         """
         Args:
             lmbda_dist: Distribution for scaling factor λ.
-            prior_dist: Prior for beta parameters.
-            prior_kwargs: Arguments for prior distribution.
+            coef_dist: Prior for beta parameters.
+            coef_kwargs: Arguments for prior distribution.
             lmbda_kwargs: Arguments for λ distribution.
             low_rank_dim: Dimensionality of low-rank approximation.
         """
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -423,18 +479,19 @@ class FMLayer(BLayer):
         # sampling block
         lmbda = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
-        thetas = sample(
+        theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.prior_dist(scale=lmbda, **self.prior_kwargs),
-            sample_shape=(input_shape, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape, low_rank_dim, self.units]
+            ),
         )
         # matmul and return
-        return self.matmul(thetas, x)
+        return self.matmul(x, theta)
 
     @staticmethod
-    def matmul(theta: jax.Array, x: jax.Array) -> jax.Array:
+    def matmul(x: jax.Array, theta: jax.Array) -> jax.Array:
         """
         Apply second-order factorization machine interaction.
 
@@ -442,19 +499,16 @@ class FMLayer(BLayer):
         0.5 * sum((xV)^2 - (x^2 V^2))
 
         Args:
-            theta: Weight matrix of shape (d, k).
+            theta: Weight matrix of shape (d, l, u).
             x: Input data of shape (n, d).
 
         Returns:
-            jax.Array: Output of shape (n,).
+            jax.Array: Output of shape (n, u).
         """
-        vx2 = jnp.einsum("ij,jk->ik", x, theta) ** 2
-        v2x2 = jnp.einsum("ij,jk->ik", x**2, theta**2)
-        return 0.5 * jnp.einsum("ik->i", vx2 - v2x2)
 
-    @staticmethod
-    def required_metadata() -> list[str]:
-        return ["low_rank_dim"]
+        vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
+        v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
+        return 0.5 * jnp.einsum("nlu->nu", vx2 - v2x2)
 
 
 class LowRankInteractionLayer(BLayer):
@@ -463,14 +517,16 @@ class LowRankInteractionLayer(BLayer):
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        prior_dist: distributions.Distribution = distributions.Normal,
-        prior_kwargs: dict[str, float] = {"loc": 0.0},
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
     ):
         self.lmbda_dist = lmbda_dist
-        self.prior_dist = prior_dist
-        self.prior_kwargs = prior_kwargs
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
 
     def __call__(
         self,
@@ -488,31 +544,33 @@ class LowRankInteractionLayer(BLayer):
         # sampling block
         lmbda1 = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda1",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
-            fn=self.prior_dist(scale=lmbda1, **self.prior_kwargs),
-            sample_shape=(input_shape1, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs).expand(
+                [input_shape1, low_rank_dim, self.units]
+            ),
         )
         lmbda2 = sample(
             name=f"{self.__class__.__name__}_{name}_lmbda2",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
         )
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
-            fn=self.prior_dist(scale=lmbda2, **self.prior_kwargs),
-            sample_shape=(input_shape2, low_rank_dim),
+            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs).expand(
+                [input_shape2, low_rank_dim, self.units]
+            ),
         )
         # matmul and return
-        return self.matmul(theta1, theta2, x, z)
+        return self.matmul(x, z, theta1, theta2)
 
     @staticmethod
     def matmul(
-        theta1: jax.Array,
-        theta2: jax.Array,
         x: jax.Array,
         z: jax.Array,
+        theta1: jax.Array,
+        theta2: jax.Array,
     ) -> jax.Array:
         """Implements low rank multiplication.
 
@@ -523,10 +581,6 @@ class LowRankInteractionLayer(BLayer):
         This is equivalent to a UV decomposition where you use n=low_rank_dim
         on the columns of the U/V matrices.
         """
-        xb = jnp.einsum("ij,jk->ik", x, theta1)
-        zb = jnp.einsum("ij,jk->ik", z, theta2)
-        return jnp.einsum("ik->i", xb * zb)
-
-    @staticmethod
-    def required_metadata() -> list[str]:
-        return ["low_rank_dim"]
+        xb = jnp.einsum("nd,dlu->nlu", x, theta1)
+        zb = jnp.einsum("nd,dlu->nlu", z, theta2)
+        return jnp.einsum("nlu->nu", xb * zb)

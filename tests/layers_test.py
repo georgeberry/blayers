@@ -60,10 +60,12 @@ def dgp_simple(n_obs: int, k: int) -> dict[str, jax.Array]:
 def dgp_fm(n_obs: int, k: int) -> dict[str, jax.Array]:
     x1 = sample("x1", dist.Normal(0, 1).expand([n_obs, k]))
     lmbda = sample("lambda", dist.HalfNormal(1.0))
-    theta = sample("theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM]))
+    theta = sample(
+        "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
+    )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = FMLayer.matmul(theta, x1)
+    mu = FMLayer.matmul(x1, theta)
     y = sample("y", dist.Normal(mu, sigma))
     return {
         "x1": x1,
@@ -105,21 +107,17 @@ def dgp_lowrank(n_obs: int, k: int) -> dict[str, jax.Array]:
 
     lambda1 = sample("lambda1", dist.HalfNormal(1.0))
     theta1_lowrank = sample(
-        "theta1", dist.Normal(0.0, lambda1).expand([k, LOW_RANK_DIM])
+        "theta1", dist.Normal(0.0, lambda1).expand([k, LOW_RANK_DIM, 1])
     )
 
     lambda2 = sample("lambda2", dist.HalfNormal(1.0))
     theta2_lowrank = sample(
-        "theta2", dist.Normal(0.0, lambda1).expand([k + offset, LOW_RANK_DIM])
+        "theta2",
+        dist.Normal(0.0, lambda1).expand([k + offset, LOW_RANK_DIM, 1]),
     )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = LowRankInteractionLayer.matmul(
-        theta1=theta1_lowrank,
-        theta2=theta2_lowrank,
-        x=x1,
-        z=x2,
-    )
+    mu = LowRankInteractionLayer.matmul(x1, x2, theta1_lowrank, theta2_lowrank)
 
     y = sample("y", dist.Normal(mu, sigma))
     return {
@@ -350,6 +348,7 @@ def test_models_vi(
 ) -> Any:
     model_fn, coef_groups = model_bundle
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
 
     guide = AutoDiagonalNormal(model_fn)
 
@@ -376,8 +375,8 @@ def test_models_vi(
         svi_result = svi_run_batched(
             svi,
             rng_key,
+            1000,
             num_steps,
-            batch_size=1000,
             **model_data,
         )
     guide_predicitive = Predictive(
@@ -394,8 +393,8 @@ def test_models_vi(
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
             val = rmse(
-                coef_fn(*[guide_means[x] for x in coef_list]),
-                coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
+                coef_fn(*[guide_means[x] for x in coef_list]).squeeze(),
+                coef_fn(*[data[x.split("_")[2]] for x in coef_list]).squeeze(),
             )
             assert val < 0.1
 
@@ -433,6 +432,7 @@ def test_models_hmc(
 ) -> Any:
     model_fn, coef_groups = model_bundle
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
 
     if is_reparam:
         model_fn = autoreparam()(model_fn)
@@ -468,7 +468,7 @@ def test_models_hmc(
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
             val = rmse(
-                coef_fn(*[sample_means[x] for x in coef_list]),
+                coef_fn(*[sample_means[x] for x in coef_list]).squeeze(),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]),
             )
             assert val < 0.03
@@ -481,26 +481,3 @@ def test_models_hmc(
             )
             < 0.03
         )
-
-
-# ---- MISC ------------------------------------------------------------------ #
-
-
-def test_required_metadata() -> None:
-    with pytest_check.check:
-        assert AdaptiveLayer.required_metadata() == []
-
-    with pytest_check.check:
-        assert EmbeddingLayer.required_metadata() == [
-            "n_categories",
-            "embedding_dim",
-        ]
-
-    with pytest_check.check:
-        assert RandomEffectsLayer.required_metadata() == ["n_categories"]
-
-    with pytest_check.check:
-        assert FMLayer.required_metadata() == ["low_rank_dim"]
-
-    with pytest_check.check:
-        assert LowRankInteractionLayer.required_metadata() == ["low_rank_dim"]

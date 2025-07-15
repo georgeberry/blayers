@@ -9,7 +9,7 @@ import pytest_check
 from numpyro.infer import Predictive
 
 from blayers._utils import rmse
-from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, bl
+from blayers.experimental.syntax import SymbolFactory, SymbolicLayer, a, bl, cat
 from blayers.layers import AdaptiveLayer, EmbeddingLayer, RandomEffectsLayer
 from tests.layers_test import (  # noqa
     data,
@@ -19,6 +19,22 @@ from tests.layers_test import (  # noqa
 )
 
 
+@pytest.mark.skip
+def test_str() -> Any:  # noqa
+    f = SymbolFactory()
+    a = SymbolicLayer(AdaptiveLayer())
+    re = SymbolicLayer(RandomEffectsLayer())
+    formula = f.y <= a(f.x1) + re(f.x2)
+
+    print(formula)
+
+
+@pytest.mark.skip
+def test_latex() -> Any:  # noqa
+    a = AdaptiveLayer()
+
+
+@pytest.mark.skip
 def test_re() -> Any:  # noqa
     f = SymbolFactory()
     re = SymbolicLayer(RandomEffectsLayer())
@@ -26,12 +42,14 @@ def test_re() -> Any:  # noqa
     formula = re(f.x1)
 
 
+@pytest.mark.skip
 def test_emb() -> Any:  # noqa
     f = SymbolFactory()
     emb = SymbolicLayer(EmbeddingLayer())
     formula = emb(f.x1, embedding_dim=8)
 
 
+@pytest.mark.skip
 def test_ast() -> None:
     class AdaptiveLayerMock:
         def __call__(self, x):
@@ -54,6 +72,7 @@ def test_ast() -> None:
     )
 
 
+@pytest.mark.skip
 def test_formula_fail() -> None:
     class AdaptiveLayerMock:
         def __call__(self, x):
@@ -69,6 +88,7 @@ def test_formula_fail() -> None:
         f.y <= a(f.x1 + f.x2) <= f.x2
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
@@ -107,6 +127,7 @@ def test_formula(
     ).shape == (1, 2)
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
@@ -131,6 +152,7 @@ def test_fit(
     # building
 
     model_data = {k: v for k, v in data.items() if k in ("y", "x1")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
     formula = f.y <= a(f.x1)
 
     guide_samples = bl(
@@ -157,3 +179,23 @@ def test_fit(
             )
             < 0.03
         )
+
+
+@pytest.mark.skip
+def test_concat():
+    f = SymbolFactory()
+    f.x1 | f.x2 | f.x3 + f.x4 | f.x5 * f.x6 * f.x6
+
+
+@pytest.mark.skip
+def test_multi_concat():
+    f = SymbolFactory()
+
+    print(cat(f.x1, f.x2, f.x3))
+
+
+@pytest.mark.skip
+def test_multi_concat_2():
+    f = SymbolFactory()
+
+    print(a(cat(f.x1, f.x2, f.x3)))

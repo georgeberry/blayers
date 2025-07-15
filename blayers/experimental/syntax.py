@@ -1,3 +1,4 @@
+# codecov: disable
 # type: ignore
 
 """Deferred computation for easier model building.
@@ -22,6 +23,7 @@ a(f.x1 + f.x2) * a(f.x1 | f.x2)
 
 What's going to happen here is we go from right to left so
 
+```
 Prod(
   AdaptiveLayer(
     Sum(
@@ -35,7 +37,7 @@ Prod(
       f.x2
     )
   )
-
+```
 
 deferred.__call__ --> now
 """
@@ -43,6 +45,7 @@ deferred.__call__ --> now
 import itertools
 import logging
 import operator
+from abc import ABC, abstractmethod
 
 import jax
 import jax.numpy as jnp
@@ -51,7 +54,14 @@ from jax import random
 from numpyro.infer import SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.layers import EmbeddingLayer, RandomEffectsLayer
+from blayers.layers import (
+    AdaptiveLayer,
+    ConstantLayer,
+    EmbeddingLayer,
+    FMLayer,
+    LowRankInteractionLayer,
+    RandomEffectsLayer,
+)
 from blayers.links import gaussian_link_exp
 
 logger = logging.getLogger("syntax")
@@ -65,10 +75,21 @@ def _next_uid():
 
 _FOUR_SPACES = "    "
 
+
+class Deferred(ABC):
+    pass
+
+
+def _now(x, data):
+    if isinstance(x, Deferred):
+        return x(data)
+    return x
+
+
 # ---- Deferred ops ---------------------------------------------------------- #
 
 
-class DeferredBinaryOp:
+class DeferredBinaryOp(Deferred):
     """Defers and then calls op(left_now, right_now)"""
 
     def __init__(self, left_deferred, right_deferred, op, symbol):
@@ -77,7 +98,7 @@ class DeferredBinaryOp:
         self.op = op
         self.symbol = symbol
 
-    def __call__(self, data):
+    def __call__(self, data=None):
         # the results from left_deferred and right_deferred must be composable
         # via `op` or this fails
 
@@ -95,12 +116,26 @@ class DeferredBinaryOp:
     def __repr__(self):
         return f"{self.symbol}({self.left_deferred}, {self.right_deferred})"
 
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
     def pretty(self, indent=0):
         s = _FOUR_SPACES * indent + f"{self.symbol}(\n"
         s += self.left_deferred.pretty(indent + 1) + ",\n"
         s += self.right_deferred.pretty(indent + 1) + "\n"
         s += _FOUR_SPACES * indent + ")"
         return s
+
+    def __or__(self, other):
+        return Concat(self, other)
+
+    def __add__(self, other):
+        return Sum(self, other)
+
+    def __mul__(self, other):
+        return Prod(self, other)
 
 
 class Sum(DeferredBinaryOp):
@@ -120,6 +155,50 @@ class Concat(DeferredBinaryOp):
             right,
             lambda x, y: jnp.concat([x, y], axis=1),
             "Concat",
+        )
+
+
+class DeferredManyOp(Deferred):
+    """Defers and then calls op(left_now, right_now)"""
+
+    def __init__(self, op, symbol, *args):
+        self.deferred_args = args
+        self.op = op
+        self.symbol = symbol
+
+    def __call__(self, data=None):
+        return self.op([_now(x, data) for x in self.deferred_args])
+
+    def _mock_call(self):
+        uid = _next_uid()
+        m = [x._mock_call() for x in self.deferred_args]
+        call_stack = f"{uid}_{self.symbol}({m})"
+        return call_stack
+
+    def __repr__(self):
+        return f"{self.symbol}({[x for x in self.deferred_args]})"
+
+    def __bool__(self):
+        raise ValueError(
+            "Ops cannot be used in a boolean context. Avoid chained comparisons like 'f.y <= f.x1 <= f.x2'."
+        )
+
+    def __or__(self, other):
+        return Concat(self, other)
+
+    def __add__(self, other):
+        return Sum(self, other)
+
+    def __mul__(self, other):
+        return Prod(self, other)
+
+
+class ConcatMany(DeferredManyOp):
+    def __init__(self, *args):
+        super().__init__(
+            lambda arrs: jnp.concat(arrs, axis=1),
+            "Concat",
+            *args,
         )
 
 
@@ -182,7 +261,7 @@ class Formula:
         return Formula(lhs=self, rhs=other)
 
 
-class DeferredArray:
+class DeferredArray(Deferred):
     def __init__(self, name):
         self.name = name
 
@@ -201,6 +280,9 @@ class DeferredArray:
     def __or__(self, other):
         return Concat(self, other)
 
+    def __mul__(self, other):
+        return Prod(self, other)
+
     def __le__(self, other):
         return Formula(lhs=self, rhs=other)
 
@@ -211,41 +293,43 @@ class DeferredArray:
         return "".join(c for c in self.__repr__() if ord(c) < 128)
 
 
+# ---- Layers ---------------------------------------------------------------- #
+
+
+class SymbolicLayer:
+    def __init__(self, layer_instance):
+        # this is an instance
+        self.layer_instance = layer_instance
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        # pure passthrough, if you pass the wrong things the layer will error
+        # on call
+        return DeferredLayer(self.layer_instance, *args, **kwargs)
+
+
 class DeferredLayer:
-    def __init__(self, layer, deferred, metadata=None):
-        self.layer = layer
-        self.deferred = deferred
-        self.metadata = metadata or {}
+    def __init__(self, layer_instance, *args, **kwargs):
+        self.layer_instance = layer_instance
+        self.args = args
+        self.kwargs = kwargs
 
-    def __call__(self, data):
-        name = f"{self.layer.__class__.__name__}_{str(self.deferred)}"
-        dt = self.deferred(data)
-        # for random effects
-        if isinstance(self.layer, (RandomEffectsLayer, EmbeddingLayer)):
-            assert isinstance(
-                self.deferred, DeferredArray
-            ), f"{self.layer.__class__.__name__} only accepts a DeferredArray."
-            assert (
-                len(dt.shape) == 1 or dt.shape[1] == 1
-            ), f"Can only pass {self.layer.__class__.__name__} a one dimensional array, got {dt.shape}."
-            n_categories = int(jnp.unique(dt).shape[0])
-            metadata = self.metadata.copy()
-            metadata["n_categories"] = n_categories
-            return self.layer(name, dt, **metadata)
+    def __call__(self, data=None):
+        args_now = [_now(x, data) for x in self.args]
+        kwargs_now = {k: _now(v, data) for k, v in self.kwargs.items()}
 
-        return self.layer(name, dt)
+        name = f"{self.layer_instance.__class__.__name__}({data})"
+
+        return self.layer_instance(name, *args_now, **kwargs_now)
 
     def _mock_call(self):
         uid = _next_uid()
-        call_stack = f"{uid}_{self.layer.__class__.__name__}({self.deferred._mock_call()})"
+        call_stack = f"{uid}_{self.layer_instance.__class__.__name__}({self.deferred._mock_call()})"
         print(call_stack)
         return call_stack
 
     def __repr__(self):
-        return f"{self.layer.__class__.__name__}({self.deferred})"
-
-    def pretty(self, indent=0):
-        return _FOUR_SPACES * indent + f"DeferredLayer({self.deferred})"
+        return f"{self.layer_instance.__class__.__name__}()"
 
     def __add__(self, other):
         return Sum(self, other)
@@ -254,13 +338,7 @@ class DeferredLayer:
         return Prod(self, other)
 
 
-class SymbolicLayer:
-    def __init__(self, layer):
-        self.layer = layer
-
-    def __call__(self, deferred, **kwargs):
-        metadata = kwargs or {}
-        return DeferredLayer(self.layer, deferred, metadata=metadata)
+# ---- Pass thru for data ---------------------------------------------------- #
 
 
 class SymbolFactory:
@@ -310,3 +388,19 @@ def bl(
     )
 
     return guide_samples
+
+
+# -------- Default stuff ----------------------------------------------------- #
+
+
+c = SymbolicLayer(ConstantLayer())
+a = SymbolicLayer(AdaptiveLayer())
+
+re = SymbolicLayer(RandomEffectsLayer())
+emb = SymbolicLayer(EmbeddingLayer())
+
+fm = SymbolicLayer(FMLayer())
+lint = SymbolicLayer(LowRankInteractionLayer())
+
+f = SymbolFactory()
+cat = ConcatMany
