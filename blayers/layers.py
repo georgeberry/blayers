@@ -129,8 +129,8 @@ class AdaptiveLayer(BLayer):
         )
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand_by(
-                [input_shape]
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape, self.units]
             ),
         )
 
@@ -199,8 +199,10 @@ class FixedPriorLayer(BLayer):
         # sampling block
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(**self.coef_kwargs),
-        ).expand([input_shape, self.units])
+            fn=self.coef_dist(**self.coef_kwargs).expand(
+                [input_shape, self.units]
+            ),
+        )
         # matmul and return
         return self.matmul(x, beta)
 
@@ -321,14 +323,14 @@ class EmbeddingLayer(BLayer):
             name=f"{self.__class__.__name__}_{name}_lmbda",
             fn=self.lmbda_dist(**self.lmbda_kwargs),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
             fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
                 [n_categories, embedding_dim]
             ),
         )
         # matmul and return
-        return self.matmul(betas, x)
+        return self.matmul(x, beta)
 
     @staticmethod
     def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
@@ -342,7 +344,7 @@ class EmbeddingLayer(BLayer):
         Returns:
             jax.Array: Looked-up embeddings of shape (n, embedding_dim).
         """
-        return beta[x.squeeze()].squeeze()
+        return beta[x.squeeze()]
 
 
 class RandomEffectsLayer(BLayer):
@@ -392,14 +394,14 @@ class RandomEffectsLayer(BLayer):
             name=f"{self.__class__.__name__}_{name}_lmbda",
             fn=self.lmbda_dist(**self.lmbda_kwargs),
         )
-        betas = sample(
+        beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
             fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
                 [n_categories, 1]
             ),
         )
         # matmul and return
-        return self.matmul(betas, x)
+        return self.matmul(x, beta)
 
     @staticmethod
     def matmul(x: jax.Array, beta: jax.Array) -> jax.Array:
@@ -413,7 +415,7 @@ class RandomEffectsLayer(BLayer):
         Returns:
             jax.Array: Looked-up embeddings of shape (n, embedding_dim).
         """
-        return beta[x.squeeze()].squeeze()
+        return beta[x.squeeze()]
 
 
 class FMLayer(BLayer):
@@ -484,10 +486,14 @@ class FMLayer(BLayer):
         )
         theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand_by(
-                [input_shape, low_rank_dim]
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape, low_rank_dim, self.units]
             ),
         )
+        import ipdb
+
+        ipdb.set_trace()
+
         # matmul and return
         return self.matmul(x, theta)
 
@@ -506,6 +512,10 @@ class FMLayer(BLayer):
         Returns:
             jax.Array: Output of shape (n, u).
         """
+        import ipdb
+
+        ipdb.set_trace()
+
         vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
         v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
         return 0.5 * jnp.einsum("nlu->nu", vx2 - v2x2)
@@ -550,8 +560,8 @@ class LowRankInteractionLayer(BLayer):
         )
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
-            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs).expand_by(
-                [input_shape1, low_rank_dim]
+            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs).expand(
+                [input_shape1, low_rank_dim, self.units]
             ),
         )
         lmbda2 = sample(
@@ -560,8 +570,8 @@ class LowRankInteractionLayer(BLayer):
         )
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
-            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs).expand_by(
-                [input_shape2, low_rank_dim]
+            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs).expand(
+                [input_shape2, low_rank_dim, self.units]
             ),
         )
         # matmul and return

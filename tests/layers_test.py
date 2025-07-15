@@ -436,6 +436,7 @@ def test_models_hmc(
 ) -> Any:
     model_fn, coef_groups = model_bundle
     model_data = {k: v for k, v in data.items() if k in ("y", "x1", "x2")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
 
     if is_reparam:
         model_fn = autoreparam()(model_fn)

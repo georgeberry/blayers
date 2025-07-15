@@ -30,9 +30,6 @@ def test_str() -> Any:  # noqa
 
 def test_latex() -> Any:  # noqa
     a = AdaptiveLayer()
-    import ipdb
-
-    ipdb.set_trace()
 
 
 def test_re() -> Any:  # noqa
