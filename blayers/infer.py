@@ -15,11 +15,11 @@ from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
 class Batched_Trace_ELBO(ELBO):
     def __init__(
         self,
-        n_obs: int,
+        num_obs: int,
         num_particles: int = 1,
         batch_size: int | None = None,
     ):
-        self.n_obs = n_obs
+        self.num_obs = num_obs
         self.num_particles = num_particles
         self.batch_size = batch_size
 
@@ -104,7 +104,7 @@ class Batched_Trace_ELBO(ELBO):
             # is the batch size. This provides an estimator of the full dataset
             # loss that scales approriately with the KL.
             llhs.append(
-                self.n_obs
+                self.num_obs
                 / batch_size
                 * sum(
                     site["fn"].log_prob(site["value"]).sum()

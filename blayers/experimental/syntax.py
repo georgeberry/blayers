@@ -1,4 +1,3 @@
-# codecov: disable
 # type: ignore
 
 """Deferred computation for easier model building.
@@ -56,11 +55,12 @@ from numpyro.infer.autoguide import AutoDiagonalNormal
 
 from blayers.layers import (
     AdaptiveLayer,
-    ConstantLayer,
     EmbeddingLayer,
     FMLayer,
+    InterceptLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
+    RandomWalkLayer,
 )
 from blayers.links import gaussian_link_exp
 
@@ -393,7 +393,7 @@ def bl(
 # -------- Default stuff ----------------------------------------------------- #
 
 
-c = SymbolicLayer(ConstantLayer())
+c = SymbolicLayer(InterceptLayer())
 a = SymbolicLayer(AdaptiveLayer())
 
 re = SymbolicLayer(RandomEffectsLayer())
@@ -401,6 +401,8 @@ emb = SymbolicLayer(EmbeddingLayer())
 
 fm = SymbolicLayer(FMLayer())
 lint = SymbolicLayer(LowRankInteractionLayer())
+
+rw = SymbolicLayer(RandomWalkLayer())
 
 f = SymbolFactory()
 cat = ConcatMany
