@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.experimental.syntax &#8212; blayers v0.1.0a3 documentation</title>
+    <title>blayers.experimental.syntax &#8212; blayers v0.1.0a4 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../../_static/documentation_options.js?v=f1b2e288"></script>
+    <script src="../../../_static/documentation_options.js?v=64a76059"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -271,8 +271,7 @@ document.write(`
                 <article class="bd-article">
                   
   <h1>Source code for blayers.experimental.syntax</h1><div class="highlight"><pre>
-<span></span><span class="c1"># codecov: disable</span>
-<span class="c1"># type: ignore</span>
+<span></span><span class="c1"># type: ignore</span>
 
 <span class="sd">&quot;&quot;&quot;Deferred computation for easier model building.</span>
 
@@ -329,11 +328,12 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AdaptiveLayer</span><span class="p">,</span>
-    <span class="n">ConstantLayer</span><span class="p">,</span>
     <span class="n">EmbeddingLayer</span><span class="p">,</span>
     <span class="n">FMLayer</span><span class="p">,</span>
+    <span class="n">InterceptLayer</span><span class="p">,</span>
     <span class="n">LowRankInteractionLayer</span><span class="p">,</span>
     <span class="n">RandomEffectsLayer</span><span class="p">,</span>
+    <span class="n">RandomWalkLayer</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
 
@@ -756,7 +756,7 @@ document.write(`
 <span class="c1"># -------- Default stuff ----------------------------------------------------- #</span>
 
 
-<span class="n">c</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">ConstantLayer</span><span class="p">())</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">InterceptLayer</span><span class="p">())</span>
 <span class="n">a</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">AdaptiveLayer</span><span class="p">())</span>
 
 <span class="n">re</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">RandomEffectsLayer</span><span class="p">())</span>
@@ -764,6 +764,8 @@ document.write(`
 
 <span class="n">fm</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">FMLayer</span><span class="p">())</span>
 <span class="n">lint</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">LowRankInteractionLayer</span><span class="p">())</span>
+
+<span class="n">rw</span> <span class="o">=</span> <span class="n">SymbolicLayer</span><span class="p">(</span><span class="n">RandomWalkLayer</span><span class="p">())</span>
 
 <span class="n">f</span> <span class="o">=</span> <span class="n">SymbolFactory</span><span class="p">()</span>
 <span class="n">cat</span> <span class="o">=</span> <span class="n">ConcatMany</span>

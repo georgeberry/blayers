@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.infer &#8212; blayers v0.1.0a3 documentation</title>
+    <title>blayers.infer &#8212; blayers v0.1.0a4 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=f1b2e288"></script>
+    <script src="../../_static/documentation_options.js?v=64a76059"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -292,11 +292,11 @@ document.write(`
 <a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">n_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_obs</span> <span class="o">=</span> <span class="n">n_obs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span> <span class="o">=</span> <span class="n">num_obs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_particles</span> <span class="o">=</span> <span class="n">num_particles</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span></div>
 
@@ -387,7 +387,7 @@ document.write(`
             <span class="c1"># is the batch size. This provides an estimator of the full dataset</span>
             <span class="c1"># loss that scales approriately with the KL.</span>
             <span class="n">llhs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">n_obs</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span>
                 <span class="o">/</span> <span class="n">batch_size</span>
                 <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span>
                     <span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>

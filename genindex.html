@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; blayers v0.1.0a3 documentation</title>
+    <title>Index &#8212; blayers v0.1.0a4 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=f1b2e288"></script>
+    <script src="_static/documentation_options.js?v=64a76059"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a3 documentation</p>
+    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -281,6 +281,7 @@ document.write(`
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#P"><strong>P</strong></a>
@@ -308,17 +309,21 @@ document.write(`
 </li>
         <li><a href="api/layers.html#blayers.layers.BLayer.__call__">(blayers.layers.BLayer method)</a>
 </li>
-        <li><a href="api/layers.html#blayers.layers.ConstantLayer.__call__">(blayers.layers.ConstantLayer method)</a>
-</li>
         <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.__call__">(blayers.layers.EmbeddingLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.FixedPriorLayer.__call__">(blayers.layers.FixedPriorLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.FMLayer.__call__">(blayers.layers.FMLayer method)</a>
 </li>
+        <li><a href="api/layers.html#blayers.layers.InteractionLayer.__call__">(blayers.layers.InteractionLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.InterceptLayer.__call__">(blayers.layers.InterceptLayer method)</a>
+</li>
         <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer.__call__">(blayers.layers.LowRankInteractionLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.__call__">(blayers.layers.RandomEffectsLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.RandomWalkLayer.__call__">(blayers.layers.RandomWalkLayer method)</a>
 </li>
         <li><a href="api/links.html#blayers.links.Link.__call__">(blayers.links.Link method)</a>
 </li>
@@ -354,17 +359,21 @@ document.write(`
 </li>
         <li><a href="api/layers.html#blayers.layers.BLayer.__init__">(blayers.layers.BLayer method)</a>
 </li>
-        <li><a href="api/layers.html#blayers.layers.ConstantLayer.__init__">(blayers.layers.ConstantLayer method)</a>
-</li>
         <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.__init__">(blayers.layers.EmbeddingLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.FixedPriorLayer.__init__">(blayers.layers.FixedPriorLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.FMLayer.__init__">(blayers.layers.FMLayer method)</a>
 </li>
+        <li><a href="api/layers.html#blayers.layers.InteractionLayer.__init__">(blayers.layers.InteractionLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.InterceptLayer.__init__">(blayers.layers.InterceptLayer method)</a>
+</li>
         <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer.__init__">(blayers.layers.LowRankInteractionLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.__init__">(blayers.layers.RandomEffectsLayer method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.RandomWalkLayer.__init__">(blayers.layers.RandomWalkLayer method)</a>
 </li>
         <li><a href="api/links.html#blayers.links.Link.__init__">(blayers.links.Link method)</a>
 </li>
@@ -442,13 +451,11 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/formulas.html#blayers.experimental.syntax.cat">cat (in module blayers.experimental.syntax)</a>
 </li>
-      <li><a href="api/formulas.html#blayers.experimental.syntax.Concat">Concat (class in blayers.experimental.syntax)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/formulas.html#blayers.experimental.syntax.ConcatMany">ConcatMany (class in blayers.experimental.syntax)</a>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.Concat">Concat (class in blayers.experimental.syntax)</a>
 </li>
-      <li><a href="api/layers.html#blayers.layers.ConstantLayer">ConstantLayer (class in blayers.layers)</a>
+      <li><a href="api/formulas.html#blayers.experimental.syntax.ConcatMany">ConcatMany (class in blayers.experimental.syntax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -497,6 +504,18 @@ document.write(`
   </ul></td>
 </tr></table>
 
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/layers.html#blayers.layers.InteractionLayer">InteractionLayer (class in blayers.layers)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/layers.html#blayers.layers.InterceptLayer">InterceptLayer (class in blayers.layers)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -515,26 +534,6 @@ document.write(`
 
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.matmul">matmul() (blayers.layers.AdaptiveLayer static method)</a>
-
-      <ul>
-        <li><a href="api/layers.html#blayers.layers.BLayer.matmul">(blayers.layers.BLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.ConstantLayer.matmul">(blayers.layers.ConstantLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.EmbeddingLayer.matmul">(blayers.layers.EmbeddingLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.FixedPriorLayer.matmul">(blayers.layers.FixedPriorLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.FMLayer.matmul">(blayers.layers.FMLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.LowRankInteractionLayer.matmul">(blayers.layers.LowRankInteractionLayer static method)</a>
-</li>
-        <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer.matmul">(blayers.layers.RandomEffectsLayer static method)</a>
-</li>
-      </ul></li>
-  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
@@ -570,6 +569,10 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/layers.html#blayers.layers.RandomEffectsLayer">RandomEffectsLayer (class in blayers.layers)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/layers.html#blayers.layers.RandomWalkLayer">RandomWalkLayer (class in blayers.layers)</a>
 </li>
   </ul></td>
 </tr></table>
