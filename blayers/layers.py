@@ -97,6 +97,21 @@ def _matmul_randomwalk(
     return jnp.reshape(theta_cumsum[x_flat], (-1, 1))
 
 
+def _matmul_interaction(
+    x: jax.Array,
+    z: jax.Array,
+    beta: jax.Array,
+) -> jax.Array:
+    """."""
+    n, d1 = x.shape
+    _, d2 = z.shape
+
+    # thanks chat GPT
+    interactions = jnp.reshape(x[:, :, None] * z[:, None, :], (n, d1 * d2))
+
+    return jnp.einsum("nd,du->nu", interactions, beta)
+
+
 # ---- Classes --------------------------------------------------------------- #
 
 
@@ -574,3 +589,45 @@ class RandomWalkLayer(BLayer):
         )
         # matmul and return
         return _matmul_randomwalk(x, theta)
+
+
+class InteractionLayer(BLayer):
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
+    ):
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        z: jax.Array,
+    ) -> jax.Array:
+        # get shapes and reshape if necessary
+        x = add_trailing_dim(x)
+        z = add_trailing_dim(z)
+        input_shape1 = x.shape[1]
+        input_shape2 = z.shape[1]
+
+        # sampling block
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda1",
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
+        )
+        beta = sample(
+            name=f"{self.__class__.__name__}_{name}_beta1",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape1 * input_shape2, self.units]
+            ),
+        )
+
+        return _matmul_interaction(x, z, beta)
