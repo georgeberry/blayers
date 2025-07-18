@@ -18,8 +18,8 @@ Notation:
   - `n`: observations in a batch
   - `d`: number of coefficients
   - `l`: low rank dimension of low rank models
-  - `u`: units aka output dimension
   - `m`: embedding dimension
+  - `u`: units aka output dimension
 """
 
 from abc import ABC, abstractmethod
@@ -92,9 +92,9 @@ def _matmul_randomwalk(
     theta: jax.Array,
 ) -> jax.Array:
     """."""
-    theta_cumsum = jnp.cumsum(theta)
+    theta_cumsum = jnp.cumsum(theta, axis=0)
     x_flat = x.squeeze(-1).astype(jnp.int32)
-    return jnp.reshape(theta_cumsum[x_flat], (-1, 1))
+    return theta_cumsum[x_flat]
 
 
 def _matmul_interaction(
@@ -571,6 +571,7 @@ class RandomWalkLayer(BLayer):
         name: str,
         x: jax.Array,
         num_periods: int,
+        embedding_dim: int,
     ) -> jax.Array:
         """ """
 
@@ -584,6 +585,7 @@ class RandomWalkLayer(BLayer):
             fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
                 [
                     num_periods,
+                    embedding_dim,
                 ]
             ),
         )
