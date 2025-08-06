@@ -283,37 +283,6 @@ svi_result = svi_run_batched(
     **model_data,
 )
 ```
-
-## Formulas
-
-**NOTE: Formulas are very much in alpha and are subject to bugs and changes. Use carefully! Feedback appreciated.**
-
-BLayers exposes a Python-based syntax for writing models similar to R's Wilkinson formulas. These Formulas are based on Layers and "compile" directly to Numpyro.
-
-Take a look--
-
-```python
-from blayers.layers import AdaptiveLayer, EmbeddingLayer, RandomEffectsLayer
-f = SymbolFactory()
-re = SymbolicLayer(RandomEffectsLayer())
-a = SymbolicLayer(AdaptiveLayerMock())
-
-data = {
-    'x1': ...,
-    'x2': ...,
-    'x3': ...,
-}
-
-posterior_samples = bl(
-    formula=f.y <= a(f.x1) + a(f.x1 + f.x2) + re(f.x3) + a(f.x1 | f.x2),
-    data=data,
-)
-```
-
-The `<=` symbol indicates sampling like R's `~`. Arithemtic operations like `+` do their normal thing, adding vectors together. To concat things use `|`.
-
-The goal here is a minimal domain-specific language for writing formulas in Python.
-
 <!--
 ## Roadmap
 
