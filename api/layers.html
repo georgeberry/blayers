@@ -154,7 +154,6 @@
 <li class="toctree-l1"><a class="reference internal" href="infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="formulas.html">Formulas</a></li>
 </ul>
 
     </div>
@@ -433,8 +432,8 @@ produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite>
 <li><p><cite>n</cite>: observations in a batch</p></li>
 <li><p><cite>d</cite>: number of coefficients</p></li>
 <li><p><cite>l</cite>: low rank dimension of low rank models</p></li>
-<li><p><cite>u</cite>: units aka output dimension</p></li>
 <li><p><cite>m</cite>: embedding dimension</p></li>
+<li><p><cite>u</cite>: units aka output dimension</p></li>
 </ul>
 </dd>
 </dl>
@@ -920,13 +919,14 @@ only write the <cite>name</cite> arg explicitly in subclass.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.layers.RandomWalkLayer.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_periods</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_periods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer.__call__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>)</p></li>
 <li><p><strong>x</strong> (<em>Array</em>)</p></li>
 <li><p><strong>num_periods</strong> (<em>int</em>)</p></li>
+<li><p><strong>embedding_dim</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
