@@ -1,6 +1,6 @@
-name: test
+on: ["push", "pull_request"]
 
-on: [push, pull_request]
+name: Test Coveralls
 
 jobs:
   test:
@@ -13,20 +13,13 @@ jobs:
 
       - name: Install deps
         run: |
-          pip install -e .[dev]  # or whatever installs pytest + pytest-cov
-          pip install codecov
+          pip install -e .[dev]  # pytest, pytest-cov
+          pip install coveralls
 
       - name: Run tests with coverage
-        run: |
-          pytest --cov=blayers --cov-report=xml
+        run: pytest --cov=blayers --cov-report=term-missing --cov-report=xml
 
-      - name: Check coverage
-        run: |
-          head -n 20 coverage.xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: georgeberry/blayers
-          files: coverage.xml
+      - name: Upload coverage to Coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: coveralls --service=github
