@@ -20,6 +20,9 @@ jobs:
         run: |
           pytest --cov=blayers --cov-report=xml
 
+      - name: Check coverage
+        run: head -n 20 coverage.xml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
