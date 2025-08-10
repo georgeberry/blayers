@@ -5,8 +5,6 @@
 
 The missing layers package for Bayesian inference.
 
-**NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
-
 ## Write code immediately
 
 ```
@@ -258,11 +256,50 @@ def model(x, z, y):
 ## Links
 
 We provide link functions as a convenience to abstract away a bit more Numpyro
-boilerplate.
+boilerplate. Link functions take model predictions as inputs to a distribution.
+
+The simplest example is the Gaussian link
+
+```
+mu = ...
+sigma ~ Exp(1)
+y     ~ Normal(mu, sigma)
+```
 
 We currently provide
 
+* `negative_binomial_link`
+* `logit_link`
+* `poission_link`
 * `gaussian_link_exp`
+* `lognormal_link_exp`
+
+Link functions include trainable scale parameters when needed, as in the case
+of Gaussians. We also provide classes for eaisly making additional links via
+the `LocScaleLink` and `SingleParamLink` classes.
+
+For instance, the Poisson link is created like this:
+
+```
+poission_link = SingleParamLink(obs_dist=dists.Poisson)
+```
+
+And implements
+
+```
+rate = ...
+y    ~ Poisson(rate)
+```
+
+In a Numpyro model, you use a link like
+
+```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import poisson_link
+def model(x, y):
+    rate = AdaptiveLayer()('rate', x)
+    return poisson_link(rate, y)
+```
 
 ## Batched loss
 
@@ -286,14 +323,6 @@ svi_result = svi_run_batched(
 <!--
 ## Roadmap
 
-1. Multioutput models
-1. Fit helpers for models with categorical variables
-1. Examples
-1. More code re-use in `layers.py` (this will only become clear after more code is written)
-1. More link functions
-1. Fit helpers for getting cols in/out, doing data science
-1. Better errors if you pass the wrong stuff
-1. TQDM bar
-1. Settle on shapes, probably always having the trailing dim? Yes! Always output (n, u), and insist that all inputs follow this convention.
-1. probably want to have deferred layers take real arrays as well
+1. Loss function callbacks
+2. Helpers for categorical
 -->

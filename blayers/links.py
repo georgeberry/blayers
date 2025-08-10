@@ -1,3 +1,54 @@
+"""
+We provide link functions as a convenience to abstract away a bit more Numpyro
+boilerplate. Link functions take model predictions as inputs to a distribution.
+
+The simplest example is the Gaussian link
+
+.. code-block:: python
+
+    mu = ...
+    sigma ~ Exp(1)
+    y     ~ Normal(mu, sigma)
+
+We currently provide
+
+* ``negative_binomial_link``
+* ``logit_link``
+* ``poission_link``
+* ``gaussian_link_exp``
+* ``lognormal_link_exp``
+
+Link functions include trainable scale parameters when needed, as in the case
+of Gaussians. We also provide classes for eaisly making additional links via
+the ``LocScaleLink`` and ``SingleParamLink`` classes.
+
+For instance, the Poisson link is created like this:
+
+.. code-block:: python
+
+    poission_link = SingleParamLink(obs_dist=dists.Poisson)
+
+
+And implements
+
+.. code-block:: python
+
+    rate = ...
+    y    ~ Poisson(rate)
+
+
+In a Numpyro model, you use a link like
+
+.. code-block:: python
+
+    from blayers.layers import AdaptiveLayer
+    from blayers.links import poisson_link
+    def model(x, y):
+        rate = AdaptiveLayer()('rate', x)
+        return poisson_link(rate, y)
+
+"""
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -51,10 +102,6 @@ class LocScaleLink(Link):
         )
 
 
-gaussian_link_exp = LocScaleLink()
-lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
-
-
 class SingleParamLink(Link):
     def __init__(
         self,
@@ -78,8 +125,7 @@ class SingleParamLink(Link):
         )
 
 
-logit_link = SingleParamLink()
-poission_link = SingleParamLink(obs_dist=dists.Poisson)
+# Exports
 
 
 def negative_binomial_link(
@@ -101,3 +147,16 @@ def negative_binomial_link(
         dist,
         obs=y,
     )
+
+
+logit_link = SingleParamLink()
+"""Logit link function."""
+
+poission_link = SingleParamLink(obs_dist=dists.Poisson)
+"""Poisson link function."""
+
+gaussian_link_exp = LocScaleLink()
+"""Gaussian link function with exponentially distributed sigma."""
+
+lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
+"""Lognormal link function with exponentially distributed sigma."""
