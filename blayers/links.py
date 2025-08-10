@@ -51,10 +51,6 @@ class LocScaleLink(Link):
         )
 
 
-gaussian_link_exp = LocScaleLink()
-lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
-
-
 class SingleParamLink(Link):
     def __init__(
         self,
@@ -78,8 +74,7 @@ class SingleParamLink(Link):
         )
 
 
-logit_link = SingleParamLink()
-poission_link = SingleParamLink(obs_dist=dists.Poisson)
+# Exports
 
 
 def negative_binomial_link(
@@ -101,3 +96,9 @@ def negative_binomial_link(
         dist,
         obs=y,
     )
+
+
+logit_link = SingleParamLink()
+poission_link = SingleParamLink(obs_dist=dists.Poisson)
+gaussian_link_exp = LocScaleLink()
+lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
