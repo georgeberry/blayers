@@ -25,3 +25,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: georgeberry/blayers
+          files: coverage.xml
