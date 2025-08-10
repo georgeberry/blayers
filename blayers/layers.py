@@ -115,7 +115,7 @@ def _matmul_randomwalk(
 
     """
     theta_cumsum = jnp.cumsum(theta, axis=0)
-    idx_flat = idx.squeeze(-1).astype(jnp.int32)
+    idx_flat = idx.squeeze().astype(jnp.int32)
     return theta_cumsum[idx_flat]
 
 
@@ -135,6 +135,7 @@ def _matmul_interaction(
         jax.Array
 
     """
+
     n, d1 = x.shape
     _, d2 = z.shape
 
@@ -606,7 +607,7 @@ class RandomWalkLayer(BLayer):
         self,
         name: str,
         x: jax.Array,
-        num_periods: int,
+        num_categories: int,
         embedding_dim: int,
     ) -> jax.Array:
         """ """
@@ -620,7 +621,7 @@ class RandomWalkLayer(BLayer):
             name=f"{self.__class__.__name__}_{name}_theta",
             fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
                 [
-                    num_periods,
+                    num_categories,
                     embedding_dim,
                 ]
             ),

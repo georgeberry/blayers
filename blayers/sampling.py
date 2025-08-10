@@ -47,9 +47,6 @@ def autoreparam(centered: float = 0.0) -> Any:
                     hasattr(site["fn"], "base_dist")
                     and isinstance(site["fn"].base_dist, LocScaleDist)
                 ):
-                    import ipdb
-
-                    ipdb.set_trace()
                     config[name] = LocScaleReparam(centered=centered)
 
             # Wrap and return reparam'd model
