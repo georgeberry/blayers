@@ -5,8 +5,6 @@
 
 The missing layers package for Bayesian inference.
 
-**NOTE: BLayers is in alpha. Expect changes. Feedback welcome.**
-
 ## Write code immediately
 
 ```
