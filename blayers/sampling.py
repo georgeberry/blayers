@@ -1,5 +1,12 @@
 """
-Systematically reparamaterize models
+We offer some help for automatically reparameterizing `LocScaleDist`s for
+your MCMC models. Use like
+
+```
+@autoreparam
+def my_model():
+    ...
+```
 """
 
 from functools import wraps

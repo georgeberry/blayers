@@ -1,3 +1,51 @@
+"""
+We provide link functions as a convenience to abstract away a bit more Numpyro
+boilerplate. Link functions take model predictions as inputs to a distribution.
+
+The simplest example is the Gaussian link
+
+```
+mu = ...
+sigma ~ Exp(1)
+y     ~ Normal(mu, sigma)
+```
+
+We currently provide
+
+* `negative_binomial_link`
+* `logit_link`
+* `poission_link`
+* `gaussian_link_exp`
+* `lognormal_link_exp`
+
+Link functions include trainable scale parameters when needed, as in the case
+of Gaussians. We also provide classes for eaisly making additional links via
+the `LocScaleLink` and `SingleParamLink` classes.
+
+For instance, the Poisson link is created like this:
+
+```
+poission_link = SingleParamLink(obs_dist=dists.Poisson)
+```
+
+And implements
+
+```
+rate = ...
+y    ~ Poisson(rate)
+```
+
+In a Numpyro model, you use a link like
+
+```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import poisson_link
+def model(x, y):
+    rate = AdaptiveLayer()('rate', x)
+    return poisson_link(rate, y)
+```
+"""
+
 from abc import ABC, abstractmethod
 from typing import Any
 
