@@ -446,7 +446,7 @@ def loss_instance(request: SubRequest) -> Any:
 @pytest.mark.parametrize(
     "loss_instance",
     [
-        # "trace_elbo",
+        "trace_elbo",
         "trace_elbo_batched",
     ],
     indirect=True,
@@ -454,13 +454,13 @@ def loss_instance(request: SubRequest) -> Any:
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
-        # ("linear_regression_adaptive_model", "simulated_data_simple"),
-        # ("linear_regression_fixed_model", "simulated_data_simple"),
-        # ("emb_model", "simulated_data_emb"),
-        # ("re_model", "simulated_data_emb"),
-        # ("fm_regression_model", "simulated_data_fm"),
-        # ("lowrank_model", "simulated_data_lowrank"),
-        # ("interaction_model", "simulated_data_interaction"),
+        ("linear_regression_adaptive_model", "simulated_data_simple"),
+        ("linear_regression_fixed_model", "simulated_data_simple"),
+        ("emb_model", "simulated_data_emb"),
+        ("re_model", "simulated_data_emb"),
+        ("fm_regression_model", "simulated_data_fm"),
+        ("lowrank_model", "simulated_data_lowrank"),
+        ("interaction_model", "simulated_data_interaction"),
         ("rw_model", "simulated_data_rw"),
     ],
     indirect=True,
