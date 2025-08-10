@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/georgeberry/blayers/graph/badge.svg?token=ZDGT0C39QM)](https://codecov.io/gh/georgeberry/blayers) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/)
+[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2)](https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/)
 
 
 # BLayers
