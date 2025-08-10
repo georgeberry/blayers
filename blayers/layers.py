@@ -16,6 +16,7 @@ Design:
 
 Notation:
   - `n`: observations in a batch
+  - `c`: number of categories of things for time, random effects, etc
   - `d`: number of coefficients
   - `l`: low rank dimension of low rank models
   - `m`: embedding dimension
@@ -35,32 +36,32 @@ from blayers._utils import add_trailing_dim
 
 
 def _matmul_dot_product(x: jax.Array, beta: jax.Array) -> jax.Array:
-    """
-    Standard dot product between beta and x.
+    """Standard dot product between beta and x.
 
     Args:
-        beta: Coefficient vector of shape (d, u).
-        x: Input matrix of shape (n, d).
+        beta: Coefficient vector of shape `(d, u)`.
+        x: Input matrix of shape `(n, d)`.
 
     Returns:
-        jax.Array: Output of shape (n, u).
+        jax.Array: Output of shape `(n, u)`.
     """
     return jnp.einsum("nd,du->nu", x, beta)
 
 
 def _matmul_factorization_machine(x: jax.Array, theta: jax.Array) -> jax.Array:
-    """
-    Apply second-order factorization machine interaction.
+    """Apply second-order factorization machine interaction.
 
     Based on Rendle (2010). Computes:
-    0.5 * sum((xV)^2 - (x^2 V^2))
+
+    .. math::
+        0.5 * sum((xV)^2 - (x^2 V^2))
 
     Args:
-        theta: Weight matrix of shape (d, l, u).
-        x: Input data of shape (n, d).
+        theta: Weight matrix of shape `(d, l, u)`.
+        x: Input data of shape `(n, d)`.
 
     Returns:
-        jax.Array: Output of shape (n, u).
+        jax.Array: Output of shape `(n, u)`.
     """
     vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
     v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
@@ -68,10 +69,10 @@ def _matmul_factorization_machine(x: jax.Array, theta: jax.Array) -> jax.Array:
 
 
 def _matmul_uv_decomp(
-    x: jax.Array,
-    z: jax.Array,
     theta1: jax.Array,
     theta2: jax.Array,
+    x: jax.Array,
+    z: jax.Array,
 ) -> jax.Array:
     """Implements low rank multiplication.
 
@@ -81,6 +82,15 @@ def _matmul_uv_decomp(
 
     This is equivalent to a UV decomposition where you use n=low_rank_dim
     on the columns of the U/V matrices.
+
+    Args:
+        theta1: Weight matrix of shape `(d1, l, u)`.
+        theta2: Weight matrix of shape `(d2, l, u)`.
+        x: Input data of shape `(n, d1)`.
+        z: Input data of shape `(n, d2)`.
+
+    Returns:
+        jax.Array: Output of shape `(n, u)`.
     """
     xb = jnp.einsum("nd,dlu->nlu", x, theta1)
     zb = jnp.einsum("nd,dlu->nlu", z, theta2)
@@ -88,21 +98,43 @@ def _matmul_uv_decomp(
 
 
 def _matmul_randomwalk(
-    x: jax.Array,
     theta: jax.Array,
+    idx: jax.Array,
 ) -> jax.Array:
-    """."""
+    """Vertical cumsum and then picks out index.
+
+    We do a vertical cumsum of `theta` across `m` embedding dimensions, and then
+    pick out the index.
+
+    Args:
+        theta: Weight matrix of shape `(c, m)`
+        idx: Integer indexes of shape `(n, 1)` or `(n,)` with indexes up to `c`
+
+    Returns:
+        jax.Array: Output of shape `(n, m)`
+
+    """
     theta_cumsum = jnp.cumsum(theta, axis=0)
-    x_flat = x.squeeze(-1).astype(jnp.int32)
-    return theta_cumsum[x_flat]
+    idx_flat = idx.squeeze(-1).astype(jnp.int32)
+    return theta_cumsum[idx_flat]
 
 
 def _matmul_interaction(
+    beta: jax.Array,
     x: jax.Array,
     z: jax.Array,
-    beta: jax.Array,
 ) -> jax.Array:
-    """."""
+    """Full interaction between `x` and `z`.
+
+    Args:
+        beta: Weight matrix for each interaction between `x` and `z`.
+        x: First feature matrix.
+        z: Second feature matrix.
+
+    Returns:
+        jax.Array
+
+    """
     n, d1 = x.shape
     _, d2 = z.shape
 
@@ -548,11 +580,11 @@ class LowRankInteractionLayer(BLayer):
                 [input_shape2, low_rank_dim, self.units]
             ),
         )
-        return _matmul_uv_decomp(x, z, theta1, theta2)
+        return _matmul_uv_decomp(theta1, theta2, x, z)
 
 
 class RandomWalkLayer(BLayer):
-    """."""
+    """Random walk of embedding dim `m`, defaults to Gaussian walk."""
 
     def __init__(
         self,
@@ -590,10 +622,12 @@ class RandomWalkLayer(BLayer):
             ),
         )
         # matmul and return
-        return _matmul_randomwalk(x, theta)
+        return _matmul_randomwalk(theta, x)
 
 
 class InteractionLayer(BLayer):
+    """Computes every interaction coefficient between two sets of inputs."""
+
     def __init__(
         self,
         lmbda_dist: distributions.Distribution = distributions.HalfNormal,
@@ -632,4 +666,4 @@ class InteractionLayer(BLayer):
             ),
         )
 
-        return _matmul_interaction(x, z, beta)
+        return _matmul_interaction(beta, x, z)
