@@ -5,22 +5,22 @@ Design:
   - There are three levels of complexity here: class-level, instance-level, and
     call-level
   - The class-level handles things like choosing generic model form and how to
-    multiply coefficents with data. Defined by the `class Layer(BLayer)` def
+    multiply coefficents with data. Defined by the ``class Layer(BLayer)`` def
     itself.
   - The instance-level handles specific distributions that fit into a generic
     model and the initial parameters for those distributions. Defined by
-    creating an instance of the class: `Layer(*args, **kwargs)`.
+    creating an instance of the class: ``Layer(*args, **kwargs)``.
   - The call-level handles seeing a batch of data, sampling from the
     distributions defined on the class and multiplying coefficients and data to
-    produce an output, works like `result = Layer(*args, **kwargs)(data)`
+    produce an output, works like ``result = Layer(*args, **kwargs)(data)``
 
 Notation:
-  - `n`: observations in a batch
-  - `c`: number of categories of things for time, random effects, etc
-  - `d`: number of coefficients
-  - `l`: low rank dimension of low rank models
-  - `m`: embedding dimension
-  - `u`: units aka output dimension
+  - ``n``: observations in a batch
+  - ``c``: number of categories of things for time, random effects, etc
+  - ``d``: number of coefficients
+  - ``l``: low rank dimension of low rank models
+  - ``m``: embedding dimension
+  - ``u``: units aka output dimension
 """
 
 from abc import ABC, abstractmethod
@@ -246,6 +246,7 @@ class FixedPriorLayer(BLayer):
     Generates coefficients from the model
 
     .. math::
+
         \\beta \\sim Normal(0., 1.)
     """
 
@@ -300,6 +301,7 @@ class InterceptLayer(BLayer):
     Generates coefficients from the model
 
     .. math::
+
         \\beta \\sim Normal(0., 1.)
     """
 
@@ -311,8 +313,8 @@ class InterceptLayer(BLayer):
     ):
         """
         Args:
-            coef_dist: NumPyro distribution class for the coefficients.
-            coef_kwargs: Parameters to initialize the prior distribution.
+            ``coef_dist``: NumPyro distribution class for the coefficients.
+            ``coef_kwargs``: Parameters to initialize the prior distribution.
         """
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
@@ -400,7 +402,7 @@ class EmbeddingLayer(BLayer):
 
 
 class RandomEffectsLayer(BLayer):
-    """Exactly like the EmbeddingLayer but with `embedding_dim=1`."""
+    """Exactly like the EmbeddingLayer but with ``embedding_dim=1``."""
 
     def __init__(
         self,
@@ -412,10 +414,10 @@ class RandomEffectsLayer(BLayer):
     ):
         """
         Args:
-            num_embeddings: Total number of discrete embedding entries.
-            embedding_dim: Dimensionality of each embedding vector.
-            coef_dist: Prior distribution for embedding weights.
-            coef_kwargs: Parameters for the prior distribution.
+            ``num_embeddings``: Total number of discrete embedding entries.
+            ``embedding_dim``: Dimensionality of each embedding vector.
+            ``coef_dist``: Prior distribution for embedding weights.
+            ``coef_kwargs``: Parameters for the prior distribution.
         """
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
@@ -461,13 +463,15 @@ class FMLayer(BLayer):
     Generates coefficients from the hierarchical model
 
     .. math::
+
         \\lambda \\sim HalfNormal(1.)
 
     .. math::
+
         \\beta \\sim Normal(0., \\lambda)
 
-    The shape of :math:`\\beta` is :math:`(j, l)`, where :math:`j` is the number
-    if input covariates and :math:`l` is the low rank dim.
+    The shape of ``beta`` is ``(j, l)``, where ``j`` is the number
+    if input covariates and ``l`` is the low rank dim.
 
     Then performs matrix multiplication using the formula in `Rendle (2010) <https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf>`_.
     """
@@ -584,7 +588,7 @@ class LowRankInteractionLayer(BLayer):
 
 
 class RandomWalkLayer(BLayer):
-    """Random walk of embedding dim `m`, defaults to Gaussian walk."""
+    """Random walk of embedding dim ``m``, defaults to Gaussian walk."""
 
     def __init__(
         self,
