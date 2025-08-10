@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Links &#8212; blayers v0.1.0a4 documentation</title>
+    <title>Links &#8212; blayers v0.2.0 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=64a76059"></script>
+    <script src="../_static/documentation_options.js?v=0a6a6ad3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -132,7 +132,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
+    <p class="title logo__title">blayers v0.2.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -364,6 +364,10 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poission_link"><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link_exp"><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link_exp"><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -377,6 +381,42 @@ document.write(`
                   
   <section id="module-blayers.links">
 <span id="links"></span><h1>Links<a class="headerlink" href="#module-blayers.links" title="Link to this heading">#</a></h1>
+<p>We provide link functions as a convenience to abstract away a bit more Numpyro
+boilerplate. Link functions take model predictions as inputs to a distribution.</p>
+<p>The simplest example is the Gaussian link</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">sigma</span> <span class="o">~</span> <span class="n">Exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We currently provide</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></p></li>
+</ul>
+<p>Link functions include trainable scale parameters when needed, as in the case
+of Gaussians. We also provide classes for eaisly making additional links via
+the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</span></code> and <code class="docutils literal notranslate"><span class="pre">SingleParamLink</span></code> classes.</p>
+<p>For instance, the Poisson link is created like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">poission_link</span> <span class="o">=</span> <span class="n">SingleParamLink</span><span class="p">(</span><span class="n">obs_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">Poisson</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And implements</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">y</span>    <span class="o">~</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In a Numpyro model, you use a link like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">poisson_link</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;rate&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">poisson_link</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.links.Link">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">Link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link" title="Link to this definition">#</a></dt>
@@ -536,6 +576,74 @@ document.write(`
 </dl>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="blayers.links.logit_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">logit_link</span></span><a class="headerlink" href="#blayers.links.logit_link" title="Link to this definition">#</a></dt>
+<dd><p>Logit link function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>)</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blayers.links.poission_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">poission_link</span></span><a class="headerlink" href="#blayers.links.poission_link" title="Link to this definition">#</a></dt>
+<dd><p>Poisson link function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>)</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blayers.links.gaussian_link_exp">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">gaussian_link_exp</span></span><a class="headerlink" href="#blayers.links.gaussian_link_exp" title="Link to this definition">#</a></dt>
+<dd><p>Gaussian link function with exponentially distributed sigma.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>)</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blayers.links.lognormal_link_exp">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">lognormal_link_exp</span></span><a class="headerlink" href="#blayers.links.lognormal_link_exp" title="Link to this definition">#</a></dt>
+<dd><p>Lognormal link function with exponentially distributed sigma.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>)</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -599,6 +707,10 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poission_link"><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link_exp"><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link_exp"><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></a></li>
 </ul>
   </nav></div>
 

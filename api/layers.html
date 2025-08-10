@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Layers &#8212; blayers v0.1.0a4 documentation</title>
+    <title>Layers &#8212; blayers v0.2.0 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=64a76059"></script>
+    <script src="../_static/documentation_options.js?v=0a6a6ad3"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -133,7 +133,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
+    <p class="title logo__title">blayers v0.2.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -418,22 +418,23 @@ document.write(`
 <li><p>There are three levels of complexity here: class-level, instance-level, and
 call-level</p></li>
 <li><p>The class-level handles things like choosing generic model form and how to
-multiply coefficents with data. Defined by the <cite>class Layer(BLayer)</cite> def
+multiply coefficents with data. Defined by the <code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">Layer(BLayer)</span></code> def
 itself.</p></li>
 <li><p>The instance-level handles specific distributions that fit into a generic
 model and the initial parameters for those distributions. Defined by
-creating an instance of the class: <cite>Layer(*args, **kwargs)</cite>.</p></li>
+creating an instance of the class: <code class="docutils literal notranslate"><span class="pre">Layer(*args,</span> <span class="pre">**kwargs)</span></code>.</p></li>
 <li><p>The call-level handles seeing a batch of data, sampling from the
 distributions defined on the class and multiplying coefficients and data to
-produce an output, works like <cite>result = Layer(*args, **kwargs)(data)</cite></p></li>
+produce an output, works like <code class="docutils literal notranslate"><span class="pre">result</span> <span class="pre">=</span> <span class="pre">Layer(*args,</span> <span class="pre">**kwargs)(data)</span></code></p></li>
 </ul>
 </dd>
 <dt>Notation:</dt><dd><ul class="simple">
-<li><p><cite>n</cite>: observations in a batch</p></li>
-<li><p><cite>d</cite>: number of coefficients</p></li>
-<li><p><cite>l</cite>: low rank dimension of low rank models</p></li>
-<li><p><cite>m</cite>: embedding dimension</p></li>
-<li><p><cite>u</cite>: units aka output dimension</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code>: observations in a batch</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: number of categories of things for time, random effects, etc</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">d</span></code>: number of coefficients</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">l</span></code>: low rank dimension of low rank models</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m</span></code>: embedding dimension</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u</span></code>: units aka output dimension</p></li>
 </ul>
 </dd>
 </dl>
@@ -710,7 +711,7 @@ prior.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units=1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Exactly like the EmbeddingLayer but with <cite>embedding_dim=1</cite>.</p>
+<p>Exactly like the EmbeddingLayer but with <code class="docutils literal notranslate"><span class="pre">embedding_dim=1</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -773,8 +774,8 @@ prior.</p></li>
 \[\lambda \sim HalfNormal(1.)\]</div>
 <div class="math notranslate nohighlight">
 \[\beta \sim Normal(0., \lambda)\]</div>
-<p>The shape of <span class="math notranslate nohighlight">\(\beta\)</span> is <span class="math notranslate nohighlight">\((j, l)\)</span>, where <span class="math notranslate nohighlight">\(j\)</span> is the number
-if input covariates and <span class="math notranslate nohighlight">\(l\)</span> is the low rank dim.</p>
+<p>The shape of <code class="docutils literal notranslate"><span class="pre">beta</span></code> is <code class="docutils literal notranslate"><span class="pre">(j,</span> <span class="pre">l)</span></code>, where <code class="docutils literal notranslate"><span class="pre">j</span></code> is the number
+if input covariates and <code class="docutils literal notranslate"><span class="pre">l</span></code> is the low rank dim.</p>
 <p>Then performs matrix multiplication using the formula in <a class="reference external" href="https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf">Rendle (2010)</a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -890,7 +891,7 @@ only write the <cite>name</cite> arg explicitly in subclass.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.RandomWalkLayer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomWalkLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>.</p>
+<p>Random walk of embedding dim <code class="docutils literal notranslate"><span class="pre">m</span></code>, defaults to Gaussian walk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -919,13 +920,13 @@ only write the <cite>name</cite> arg explicitly in subclass.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.layers.RandomWalkLayer.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_periods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer.__call__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_categories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer.__call__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>)</p></li>
 <li><p><strong>x</strong> (<em>Array</em>)</p></li>
-<li><p><strong>num_periods</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_categories</strong> (<em>int</em>)</p></li>
 <li><p><strong>embedding_dim</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
@@ -941,6 +942,7 @@ only write the <cite>name</cite> arg explicitly in subclass.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.InteractionLayer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">InteractionLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lmbda_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs={'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda_kwargs={'scale':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units=1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#InteractionLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.InteractionLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Computes every interaction coefficient between two sets of inputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

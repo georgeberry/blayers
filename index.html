@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BLayers &#8212; blayers v0.1.0a4 documentation</title>
+    <title>BLayers &#8212; blayers v0.2.0 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=64a76059"></script>
+    <script src="_static/documentation_options.js?v=0a6a6ad3"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -133,7 +133,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.1.0a4 documentation</p>
+    <p class="title logo__title">blayers v0.2.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -389,7 +389,6 @@ document.write(`
 <section id="blayers">
 <h1>BLayers<a class="headerlink" href="#blayers" title="Link to this heading">#</a></h1>
 <p>The missing layers package for Bayesian inference.</p>
-<p><strong>NOTE: BLayers is in alpha. Expect changes. Feedback welcome.</strong></p>
 <section id="write-code-immediately">
 <h2>Write code immediately<a class="headerlink" href="#write-code-immediately" title="Link to this heading">#</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">blayers</span>
@@ -617,11 +616,41 @@ fast one-hot encodings (aka random effects)</p>
 <section id="links">
 <h2>Links<a class="headerlink" href="#links" title="Link to this heading">#</a></h2>
 <p>We provide link functions as a convenience to abstract away a bit more Numpyro
-boilerplate.</p>
+boilerplate. Link functions take model predictions as inputs to a distribution.</p>
+<p>The simplest example is the Gaussian link</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">sigma</span> <span class="o">~</span> <span class="n">Exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+</pre></div>
+</div>
 <p>We currently provide</p>
 <ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></p></li>
 </ul>
+<p>Link functions include trainable scale parameters when needed, as in the case
+of Gaussians. We also provide classes for eaisly making additional links via
+the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</span></code> and <code class="docutils literal notranslate"><span class="pre">SingleParamLink</span></code> classes.</p>
+<p>For instance, the Poisson link is created like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">poission_link</span> <span class="o">=</span> <span class="n">SingleParamLink</span><span class="p">(</span><span class="n">obs_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">Poisson</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And implements</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">y</span>    <span class="o">~</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In a Numpyro model, you use a link like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">poisson_link</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;rate&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">poisson_link</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="batched-loss">
 <h2>Batched loss<a class="headerlink" href="#batched-loss" title="Link to this heading">#</a></h2>
@@ -644,16 +673,8 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <!--
 ## Roadmap
 
-1. Multioutput models
-1. Fit helpers for models with categorical variables
-1. Examples
-1. More code re-use in `layers.py` (this will only become clear after more code is written)
-1. More link functions
-1. Fit helpers for getting cols in/out, doing data science
-1. Better errors if you pass the wrong stuff
-1. TQDM bar
-1. Settle on shapes, probably always having the trailing dim? Yes! Always output (n, u), and insist that all inputs follow this convention.
-1. probably want to have deferred layers take real arrays as well
+1. Loss function callbacks
+2. Helpers for categorical
 --></section>
 </section>
 <section id="resources">
@@ -690,6 +711,10 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.LocScaleLink"><code class="docutils literal notranslate"><span class="pre">LocScaleLink</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.SingleParamLink"><code class="docutils literal notranslate"><span class="pre">SingleParamLink</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.poission_link"><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.gaussian_link_exp"><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.lognormal_link_exp"><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a><ul>
