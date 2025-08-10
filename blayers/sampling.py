@@ -43,7 +43,13 @@ def autoreparam(centered: float = 0.0) -> Any:
             for name, site in tr.items():
                 if site["type"] != "sample" or site.get("is_observed", False):
                     continue
-                if isinstance(site["fn"], LocScaleDist):
+                if isinstance(site["fn"], LocScaleDist) or (
+                    hasattr(site["fn"], "base_dist")
+                    and isinstance(site["fn"].base_dist, LocScaleDist)
+                ):
+                    import ipdb
+
+                    ipdb.set_trace()
                     config[name] = LocScaleReparam(centered=centered)
 
             # Wrap and return reparam'd model

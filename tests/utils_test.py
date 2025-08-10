@@ -50,3 +50,11 @@ def test_get_steps_per_epoch() -> None:
             num_steps=10,
         )
         assert steps_per_epoch == 2
+
+    with pytest_check.check:
+        steps, steps_per_epoch = get_steps_and_steps_per_epoch(
+            data={"x": jnp.array([1.0, 3]), "z": jnp.array([1.0, 2])},
+            batch_size=1,
+            num_epochs=10,
+        )
+        assert steps == 20
