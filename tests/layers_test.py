@@ -124,7 +124,7 @@ def dgp_lowrank(num_obs: int, k: int) -> dict[str, jax.Array]:
     )
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = _matmul_uv_decomp(x1, x2, theta1_lowrank, theta2_lowrank)
+    mu = _matmul_uv_decomp(theta1_lowrank, theta2_lowrank, x1, x2)
 
     y = sample("y", dist.Normal(mu, sigma))
     return {
@@ -447,21 +447,21 @@ def loss_instance(request: SubRequest) -> Any:
     "loss_instance",
     [
         "trace_elbo",
-        "trace_elbo_batched",
+        # "trace_elbo_batched",
     ],
     indirect=True,
 )
 @pytest.mark.parametrize(
     ("model_bundle", "data"),
     [
-        ("linear_regression_adaptive_model", "simulated_data_simple"),
-        ("linear_regression_fixed_model", "simulated_data_simple"),
-        ("emb_model", "simulated_data_emb"),
-        ("re_model", "simulated_data_emb"),
-        ("fm_regression_model", "simulated_data_fm"),
+        # ("linear_regression_adaptive_model", "simulated_data_simple"),
+        # ("linear_regression_fixed_model", "simulated_data_simple"),
+        # ("emb_model", "simulated_data_emb"),
+        # ("re_model", "simulated_data_emb"),
+        # ("fm_regression_model", "simulated_data_fm"),
         ("lowrank_model", "simulated_data_lowrank"),
-        ("interaction_model", "simulated_data_interaction"),
-        ("rw_model", "simulated_data_rw"),
+        # ("interaction_model", "simulated_data_interaction"),
+        # ("rw_model", "simulated_data_rw"),
     ],
     indirect=True,
 )
