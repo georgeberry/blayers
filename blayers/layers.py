@@ -35,6 +35,23 @@ from blayers._utils import add_trailing_dim
 # ---- Matmul functions ------------------------------------------------------ #
 
 
+def pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
+    """
+    Compute all pairwise interactions between features in X and Y.
+
+    Parameters:
+        X: (n_samples, n_features1)
+        Y: (n_samples, n_features2)
+
+    Returns:
+        interactions: (n_samples, n_features1 * n_features2)
+    """
+
+    n, d1 = x.shape
+    _, d2 = z.shape
+    return jnp.reshape(x[:, :, None] * z[:, None, :], (n, d1 * d2))
+
+
 def _matmul_dot_product(x: jax.Array, beta: jax.Array) -> jax.Array:
     """Standard dot product between beta and x.
 
@@ -66,6 +83,37 @@ def _matmul_factorization_machine(x: jax.Array, theta: jax.Array) -> jax.Array:
     vx2 = jnp.einsum("nd,dlu->nlu", x, theta) ** 2
     v2x2 = jnp.einsum("nd,dlu->nlu", x**2, theta**2)
     return 0.5 * jnp.einsum("nlu->nu", vx2 - v2x2)
+
+
+def _matmul_f3m(x: jax.Array, theta: jax.Array) -> jax.Array:
+    """Apply second-order factorization machine interaction.
+
+    Based on Rendle (2010). Computes:
+
+    .. math::
+        0.5 * sum((xV)^2 - (x^2 V^2))
+
+    Args:
+        theta: Weight matrix of shape `(d, l, u)`.
+        x: Input data of shape `(n, d)`.
+
+    Returns:
+        jax.Array: Output of shape `(n, u)`.
+    """
+    # x: (n_features,)
+    # E: (n_features, k)  embedding matrix
+    linear_sum = jnp.einsum("nd,dlu->nlu", x, theta)  # jnp.dot(x, theta)
+    square_sum = jnp.einsum(
+        "nd,dlu->nlu", x**2, theta**2
+    )  # jnp.dot(x**2, theta**2)
+    cube_sum = jnp.einsum(
+        "nd,dlu->nlu", x**3, theta**3
+    )  # jnp.dot(x**3, theta**3)
+
+    term = (
+        linear_sum**3 - 3.0 * square_sum * linear_sum + 2.0 * cube_sum
+    ) / 6.0
+    return jnp.einsum("nlu->nu", term)  # scalar
 
 
 def _matmul_uv_decomp(
@@ -136,11 +184,8 @@ def _matmul_interaction(
 
     """
 
-    n, d1 = x.shape
-    _, d2 = z.shape
-
     # thanks chat GPT
-    interactions = jnp.reshape(x[:, :, None] * z[:, None, :], (n, d1 * d2))
+    interactions = pairwise_interactions(x, z)
 
     return jnp.einsum("nd,du->nu", interactions, beta)
 
@@ -532,6 +577,66 @@ class FMLayer(BLayer):
         )
         # matmul and return
         return _matmul_factorization_machine(x, theta)
+
+
+class F3MLayer(BLayer):
+    """."""
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
+    ):
+        """
+        Args:
+            lmbda_dist: Distribution for scaling factor λ.
+            coef_dist: Prior for beta parameters.
+            coef_kwargs: Arguments for prior distribution.
+            lmbda_kwargs: Arguments for λ distribution.
+            low_rank_dim: Dimensionality of low-rank approximation.
+        """
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        low_rank_dim: int,
+    ) -> jax.Array:
+        """
+        Forward pass through the factorization machine layer.
+
+        Args:
+            name: Variable name scope.
+            x: Input matrix of shape (n, d).
+
+        Returns:
+            jax.Array: Output array of shape (n,).
+        """
+        # get shapes and reshape if necessary
+        x = add_trailing_dim(x)
+        input_shape = x.shape[1]
+
+        # sampling block
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
+        )
+        theta = sample(
+            name=f"{self.__class__.__name__}_{name}_theta",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape, low_rank_dim, self.units]
+            ),
+        )
+        # matmul and return
+        return _matmul_f3m(x, theta)
 
 
 class LowRankInteractionLayer(BLayer):

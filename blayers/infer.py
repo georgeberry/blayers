@@ -150,6 +150,7 @@ def svi_run_batched(
     batch_size: int,
     num_steps: int | None = None,
     num_epochs: int | None = None,
+    ema_decay: float = 0.95,
     **data: dict[str, jax.Array],
 ) -> SVIRunResult:
     @jax.jit
@@ -165,7 +166,8 @@ def svi_run_batched(
 
     svi_state = svi.init(rng_key, **data)
     losses = []
-    for batch in tqdm.tqdm(
+    ema_loss = None
+    bar = tqdm.tqdm(
         yield_batches(
             data,
             batch_size,
@@ -173,7 +175,18 @@ def svi_run_batched(
             steps_per_epoch,
         ),
         total=total_steps_to_run,
-    ):
+    )
+
+    for batch_idx, batch in enumerate(bar, start=1):
         svi_state, loss = update(svi_state, **batch)
         losses.append(loss)
+
+        loss_val = float(loss)
+        if ema_loss is None:
+            ema_loss = loss_val
+        else:
+            ema_loss = ema_decay * ema_loss + (1 - ema_decay) * loss_val
+        if batch_idx % 100 == 0:
+            bar.set_postfix({"EMA loss": f"{ema_loss/batch_size:.4f}"})
+
     return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
