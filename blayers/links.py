@@ -76,20 +76,21 @@ class LocScaleLink(Link):
         sigma_kwargs: dict[str, float] = {"rate": 1.0},
         obs_dist: dists.Distribution = dists.Normal,
         obs_kwargs: dict[str, float] = {},
-        dependent_outputs: bool = False,
     ) -> None:
         self.sigma_dist = sigma_dist
         self.sigma_kwargs = sigma_kwargs
         self.obs_dist = obs_dist
         self.obs_kwargs = obs_kwargs
-        self.dependent_outputs = dependent_outputs
 
     def __call__(
-        self, y_hat: jax.Array, y: jax.Array | None = None
+        self,
+        y_hat: jax.Array,
+        y: jax.Array | None = None,
+        dependent_outputs: bool = False,
     ) -> jax.Array:
         sigma = sample("sigma", self.sigma_dist(**self.sigma_kwargs))
 
-        if self.dependent_outputs:
+        if dependent_outputs:
             dist = self.obs_dist(
                 loc=y_hat, scale=sigma, **self.obs_kwargs
             ).to_event(1)
@@ -106,15 +107,16 @@ class SingleParamLink(Link):
     def __init__(
         self,
         obs_dist: dists.Distribution = dists.Bernoulli,
-        dependent_outputs: bool = False,
     ) -> None:
         self.obs_dist = obs_dist
-        self.dependent_outputs = dependent_outputs
 
     def __call__(
-        self, y_hat: jax.Array, y: jax.Array | None = None
+        self,
+        y_hat: jax.Array,
+        y: jax.Array | None = None,
+        dependent_outputs: bool = False,
     ) -> jax.Array:
-        if self.dependent_outputs:
+        if dependent_outputs:
             dist = self.obs_dist(y_hat).to_event(1)
         dist = self.obs_dist(y_hat)
 
