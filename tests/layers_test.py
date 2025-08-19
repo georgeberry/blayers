@@ -27,6 +27,7 @@ from blayers.layers import (
     FM3Layer,
     FMLayer,
     InteractionLayer,
+    InterceptLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
     RandomWalkLayer,
@@ -259,7 +260,7 @@ def linear_regression_adaptive_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        beta = AdaptiveLayer()("beta", x1)
+        beta = InterceptLayer("intercept") + AdaptiveLayer()("beta", x1)
         return gaussian_link_exp(beta, y)
 
     return model, [(["AdaptiveLayer_beta_beta"], identity)]
