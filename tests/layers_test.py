@@ -8,7 +8,7 @@ import optax
 import pytest
 import pytest_check
 from _pytest.fixtures import SubRequest
-from numpyro import sample
+from numpyro import deterministic, sample
 from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
@@ -31,7 +31,6 @@ from blayers.layers import (
     RandomEffectsLayer,
     RandomWalkLayer,
     _matmul_factorization_machine,
-    _matmul_fm3,
     _matmul_interaction,
     _matmul_randomwalk,
     _matmul_uv_decomp,
@@ -612,65 +611,44 @@ def test_models_hmc(
 # ---- Special test for FM3 -------------------------------------------------- #
 
 
-@pytest.fixture
-def fm3_regression_model() -> (
-    tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
-):
-    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        theta = FM3Layer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
-        return gaussian_link_exp(theta, y)
-
-    return (
-        model,
-        [
-            (["FM3Layer_theta_theta"], identity),
-        ],
-    )
-
-
 def brute_force_beta(theta: jax.Array) -> jax.Array:
     """
     Compute 3-way FM coefficients from factor matrix.
-    theta: (k, r)
-    returns: (k, k, k) tensor of betas
+    theta: (d, r)
+    returns: (d, d, d) tensor of betas
     """
-    k, r = theta.shape
-    beta = jnp.zeros((k, k, k))
-    for i in range(k):
-        for j in range(k):
-            for l in range(k):
-                beta = beta.at[i, j, l].set(
-                    jnp.sum(theta[i] * theta[j] * theta[l])
+    d, _ = theta.shape
+    beta = jnp.zeros((d, d, d))
+    for i in range(d):
+        for j in range(d):
+            for k in range(d):
+                beta = beta.at[i, j, k].set(
+                    jnp.sum(theta[i, :] * theta[j, :] * theta[k, :])
                 )
     return beta
 
 
-def dgp_fm3(num_obs: int, k: int) -> dict[str, jax.Array]:
-    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
-    lmbda = sample("lambda", dist.HalfNormal(1.0))
-    theta = sample(
-        "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
-    )
+def dgp_fm3(num_obs: int) -> dict[str, jax.Array]:
+    # just 3 features
+    x = sample("x1", dist.Normal(0, 1).expand([num_obs, 3]))
 
-    sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = _matmul_fm3(x1, theta)
+    # fixed cubic interaction: y = x1 * x2 * x3 + noise
+    sigma = sample("sigma", dist.HalfNormal(0.1))
+    mu = x[:, 0] * x[:, 1] * x[:, 2]
+
     y = sample("y", dist.Normal(mu, sigma))
-    return {
-        "x1": x1,
-        "y": y,
-        "theta": theta,
-        "lambda": lmbda,
-        "sigma": sigma,
-    }
+    return {"x1": x, "y": y, "sigma": sigma}
 
 
 def test_fm3() -> None:
-    data = simulated_data(dgp_fm3, num_obs=NUM_OBS, k=10)
+    data = simulated_data(dgp_fm3, num_obs=NUM_OBS)
     model_data = {k: v for k, v in data.items() if k in ("x1", "y")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
 
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        theta = FM3Layer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
-        return gaussian_link_exp(theta, y)
+        mu = FM3Layer()("theta", x1, low_rank_dim=1)
+        deterministic("yhat", mu)
+        return gaussian_link_exp(mu, y)
 
     guide = AutoDiagonalNormal(model)
 
@@ -678,35 +656,39 @@ def test_fm3() -> None:
 
     schedule = optax.cosine_onecycle_schedule(
         transition_steps=num_steps,
-        peak_value=0.005,
+        peak_value=0.05,
         pct_start=0.1,
         div_factor=25,
     )
 
     svi = SVI(model, guide, optax.adam(schedule), loss=Trace_ELBO())
 
-    rng_key = random.PRNGKey(2)
+    rng_key, rng_key2 = jax.random.split(random.PRNGKey(2))
 
     svi_result = svi.run(
         rng_key,
         num_steps=num_steps,
         **model_data,
     )
-    guide_predicitive = Predictive(
+
+    guide_predictive = Predictive(
         guide,
         params=svi_result.params,
         num_samples=1000,
     )
-    guide_samples = guide_predicitive(
+    guide_samples = guide_predictive(
         random.PRNGKey(1),
         **{k: v for k, v in model_data.items() if k != "y"},
     )
+
     guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
 
-    err = rmse(
-        brute_force_beta(guide_means["FM3Layer_theta_theta"].squeeze()),
-        brute_force_beta(data["theta"].squeeze()),
+    a, b, c = (
+        guide_means["FM3Layer_theta_theta"].squeeze()[0],
+        guide_means["FM3Layer_theta_theta"].squeeze()[1],
+        guide_means["FM3Layer_theta_theta"].squeeze()[2],
     )
-    import ipdb
 
-    ipdb.set_trace()
+    val = a * b * c
+
+    assert rmse(val, 1) < 0.05

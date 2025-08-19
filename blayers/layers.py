@@ -580,7 +580,7 @@ class FMLayer(BLayer):
 
 
 class FM3Layer(BLayer):
-    """Order 3 FM."""
+    """Order 3 FM. See `Blondel et al 2016 <https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf>`_."""
 
     def __init__(
         self,
