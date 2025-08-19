@@ -30,6 +30,7 @@ from blayers.layers import (
     RandomEffectsLayer,
     RandomWalkLayer,
     _matmul_factorization_machine,
+    _matmul_fm3,
     _matmul_interaction,
     _matmul_randomwalk,
     _matmul_uv_decomp,
@@ -73,6 +74,25 @@ def dgp_fm(num_obs: int, k: int) -> dict[str, jax.Array]:
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
     mu = _matmul_factorization_machine(x1, theta)
+    y = sample("y", dist.Normal(mu, sigma))
+    return {
+        "x1": x1,
+        "y": y,
+        "theta": theta,
+        "lambda": lmbda,
+        "sigma": sigma,
+    }
+
+
+def dgp_fm3(num_obs: int, k: int) -> dict[str, jax.Array]:
+    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
+    lmbda = sample("lambda", dist.HalfNormal(1.0))
+    theta = sample(
+        "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
+    )
+
+    sigma = sample("sigma", dist.HalfNormal(1.0))
+    mu = _matmul_fm3(x1, theta)
     y = sample("y", dist.Normal(mu, sigma))
     return {
         "x1": x1,
@@ -210,6 +230,11 @@ def simulated_data_simple() -> dict[str, jax.Array]:
 @pytest.fixture
 def simulated_data_fm() -> dict[str, jax.Array]:
     return simulated_data(dgp_fm, num_obs=NUM_OBS, k=10)
+
+
+@pytest.fixture
+def simulated_data_fm3() -> dict[str, jax.Array]:
+    return simulated_data(dgp_fm3, num_obs=NUM_OBS, k=10)
 
 
 @pytest.fixture
@@ -459,6 +484,7 @@ def loss_instance(request: SubRequest) -> Any:
         ("emb_model", "simulated_data_emb"),
         ("re_model", "simulated_data_emb"),
         ("fm_regression_model", "simulated_data_fm"),
+        ("fm3_regression_model", "simulated_data_fm3"),
         ("lowrank_model", "simulated_data_lowrank"),
         ("interaction_model", "simulated_data_interaction"),
         ("rw_model", "simulated_data_rw"),
