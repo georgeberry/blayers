@@ -24,6 +24,7 @@ from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
     FixedPriorLayer,
+    FM3Layer,
     FMLayer,
     InteractionLayer,
     LowRankInteractionLayer,
@@ -74,25 +75,6 @@ def dgp_fm(num_obs: int, k: int) -> dict[str, jax.Array]:
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
     mu = _matmul_factorization_machine(x1, theta)
-    y = sample("y", dist.Normal(mu, sigma))
-    return {
-        "x1": x1,
-        "y": y,
-        "theta": theta,
-        "lambda": lmbda,
-        "sigma": sigma,
-    }
-
-
-def dgp_fm3(num_obs: int, k: int) -> dict[str, jax.Array]:
-    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
-    lmbda = sample("lambda", dist.HalfNormal(1.0))
-    theta = sample(
-        "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
-    )
-
-    sigma = sample("sigma", dist.HalfNormal(1.0))
-    mu = _matmul_fm3(x1, theta)
     y = sample("y", dist.Normal(mu, sigma))
     return {
         "x1": x1,
@@ -230,11 +212,6 @@ def simulated_data_simple() -> dict[str, jax.Array]:
 @pytest.fixture
 def simulated_data_fm() -> dict[str, jax.Array]:
     return simulated_data(dgp_fm, num_obs=NUM_OBS, k=10)
-
-
-@pytest.fixture
-def simulated_data_fm3() -> dict[str, jax.Array]:
-    return simulated_data(dgp_fm3, num_obs=NUM_OBS, k=10)
 
 
 @pytest.fixture
@@ -484,7 +461,6 @@ def loss_instance(request: SubRequest) -> Any:
         ("emb_model", "simulated_data_emb"),
         ("re_model", "simulated_data_emb"),
         ("fm_regression_model", "simulated_data_fm"),
-        ("fm3_regression_model", "simulated_data_fm3"),
         ("lowrank_model", "simulated_data_lowrank"),
         ("interaction_model", "simulated_data_interaction"),
         ("rw_model", "simulated_data_rw"),
@@ -542,7 +518,6 @@ def test_models_vi(
 
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
-            # import ipdb; ipdb.set_trace()
             val = rmse(
                 coef_fn(*[guide_means[x] for x in coef_list]).squeeze(),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]).squeeze(),
@@ -632,3 +607,106 @@ def test_models_hmc(
             )
             < 0.03
         )
+
+
+# ---- Special test for FM3 -------------------------------------------------- #
+
+
+@pytest.fixture
+def fm3_regression_model() -> (
+    tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
+):
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        theta = FM3Layer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
+        return gaussian_link_exp(theta, y)
+
+    return (
+        model,
+        [
+            (["FM3Layer_theta_theta"], identity),
+        ],
+    )
+
+
+def brute_force_beta(theta: jax.Array) -> jax.Array:
+    """
+    Compute 3-way FM coefficients from factor matrix.
+    theta: (k, r)
+    returns: (k, k, k) tensor of betas
+    """
+    k, r = theta.shape
+    beta = jnp.zeros((k, k, k))
+    for i in range(k):
+        for j in range(k):
+            for l in range(k):
+                beta = beta.at[i, j, l].set(
+                    jnp.sum(theta[i] * theta[j] * theta[l])
+                )
+    return beta
+
+
+def dgp_fm3(num_obs: int, k: int) -> dict[str, jax.Array]:
+    x1 = sample("x1", dist.Normal(0, 1).expand([num_obs, k]))
+    lmbda = sample("lambda", dist.HalfNormal(1.0))
+    theta = sample(
+        "theta", dist.Normal(0.0, lmbda).expand([k, LOW_RANK_DIM, 1])
+    )
+
+    sigma = sample("sigma", dist.HalfNormal(1.0))
+    mu = _matmul_fm3(x1, theta)
+    y = sample("y", dist.Normal(mu, sigma))
+    return {
+        "x1": x1,
+        "y": y,
+        "theta": theta,
+        "lambda": lmbda,
+        "sigma": sigma,
+    }
+
+
+def test_fm3() -> None:
+    data = simulated_data(dgp_fm3, num_obs=NUM_OBS, k=10)
+    model_data = {k: v for k, v in data.items() if k in ("x1", "y")}
+
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        theta = FM3Layer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
+        return gaussian_link_exp(theta, y)
+
+    guide = AutoDiagonalNormal(model)
+
+    num_steps = 20000
+
+    schedule = optax.cosine_onecycle_schedule(
+        transition_steps=num_steps,
+        peak_value=0.005,
+        pct_start=0.1,
+        div_factor=25,
+    )
+
+    svi = SVI(model, guide, optax.adam(schedule), loss=Trace_ELBO())
+
+    rng_key = random.PRNGKey(2)
+
+    svi_result = svi.run(
+        rng_key,
+        num_steps=num_steps,
+        **model_data,
+    )
+    guide_predicitive = Predictive(
+        guide,
+        params=svi_result.params,
+        num_samples=1000,
+    )
+    guide_samples = guide_predicitive(
+        random.PRNGKey(1),
+        **{k: v for k, v in model_data.items() if k != "y"},
+    )
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    err = rmse(
+        brute_force_beta(guide_means["FM3Layer_theta_theta"].squeeze()),
+        brute_force_beta(data["theta"].squeeze()),
+    )
+    import ipdb
+
+    ipdb.set_trace()
