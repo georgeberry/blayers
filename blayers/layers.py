@@ -85,7 +85,7 @@ def _matmul_factorization_machine(x: jax.Array, theta: jax.Array) -> jax.Array:
     return 0.5 * jnp.einsum("nlu->nu", vx2 - v2x2)
 
 
-def _matmul_f3m(x: jax.Array, theta: jax.Array) -> jax.Array:
+def _matmul_fm3(x: jax.Array, theta: jax.Array) -> jax.Array:
     """Apply second-order factorization machine interaction.
 
     Based on Rendle (2010). Computes:
@@ -579,8 +579,8 @@ class FMLayer(BLayer):
         return _matmul_factorization_machine(x, theta)
 
 
-class F3MLayer(BLayer):
-    """."""
+class FM3Layer(BLayer):
+    """Order 3 FM."""
 
     def __init__(
         self,
@@ -636,7 +636,7 @@ class F3MLayer(BLayer):
             ),
         )
         # matmul and return
-        return _matmul_f3m(x, theta)
+        return _matmul_fm3(x, theta)
 
 
 class LowRankInteractionLayer(BLayer):
