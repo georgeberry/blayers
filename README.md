@@ -1,4 +1,5 @@
-[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2)](https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/)
+[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2)](https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers)
+
 
 
 # BLayers
