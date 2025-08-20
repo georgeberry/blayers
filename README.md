@@ -1,9 +1,12 @@
-[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2)](https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/)
+[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2)](https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers)
+
 
 
 # BLayers
 
 The missing layers package for Bayesian inference.
+
+**BLayers is in beta, errors are possible! We invite you to contribute on [GitHub](https://github.com/georgeberry/blayers).**
 
 ## Write code immediately
 
@@ -16,15 +19,18 @@ deps are: `numpyro`, `jax`, and `optax`.
 ## Concept
 
 Easily build Bayesian models from parts, abstract away the boilerplate, and
-tweak priors as you wish. Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
+tweak priors as you wish.
 
-Fit models either using Variational Inference (VI) or your sampling method of
-choice. Use BLayer's ELBO implementation to do either batched VI or sampling
-without having to rewrite models.
+Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
 
-BLayers helps you write pure Numpyro, so you can integrate it with any Numpyro
-code to build models of arbitrary complexity. It also gives you a recipe to
-build more complex layers as you wish.
+BLayers provides tools to
+
+- Quickly build Bayesian models from layers which encapsulate useful model parts
+- Fit models either using Variational Inference (VI) or your sampling method of
+choice without having to rewrite models
+- Write pure Numpyro to integrate with all of Numpyro's super powerful tools
+- Add more complex layers (model parts) as you wish
+- Fit models in a greater variety of ways with less code
 
 ## The starting point
 
@@ -37,8 +43,8 @@ beta  ~ Normal(0, lmbda)
 y     ~ Normal(beta * x, 1)
 ```
 
-BLayers takes this as its starting point and most fundamental building block,
-providing the flexible `AdaptiveLayer`.
+BLayers encapsulates a generative model structure like this in a `BLayer`. The
+fundamental building block is the `AdaptiveLayer`.
 
 ```python
 from blayers.layers import AdaptiveLayer
@@ -48,9 +54,8 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-### Pure numpyro
-
-All BLayers is doing is writing Numpyro for you under the hood. This model is exacatly equivalent to writing the following, just using way less code.
+All `AdaptiveLayer` is doing is writing Numpyro for you under the hood. This
+model is exacatly equivalent to writing the following, just using way less code.
 
 ```python
 from numpyro import distributions, sample
@@ -74,49 +79,6 @@ def model(x, y):
     # the link function does this
     sigma = sample(name='sigma', fn=distributions.Exponential(1.))
     return sample('obs', distributions.Normal(mu, sigma), obs=y)
-```
-
-### Reparameterizing
-
-To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
-
-```python
-LocScaleDist = (
-    dist.Normal
-    | dist.LogNormal
-    | dist.StudentT
-    | dist.Cauchy
-    | dist.Laplace
-    | dist.Gumbel
-)
-```
-
-Then, reparam these distributions automatically and fit with Numpyro's built in MCMC methods.
-
-```python
-from blayers.layers import AdaptiveLayer
-from blayers.links import gaussian_link_exp
-from blayers.sampling import autoreparam
-
-data = {...}
-
-@autoreparam
-def model(x, y):
-    mu = AdaptiveLayer()('mu', x)
-    return gaussian_link_exp(mu, y)
-
-kernel = NUTS(model)
-mcmc = MCMC(
-    kernel,
-    num_warmup=500,
-    num_samples=1000,
-    num_chains=1,
-    progress_bar=True,
-)
-    mcmc.run(
-        rng_key,
-        **data,
-    )
 ```
 
 ### Mixing it up
@@ -174,134 +136,38 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-## Additional layers
+## Layers
 
-### Fixed prior layers
+The full set of layers included with BLayers:
 
-For you purists out there, we also provide a `FixedPriorLayer` for standard
-L1/L2 regression.
-
-```python
-from blayers.layers import FixedPriorLayer
-from blayers.links import gaussian_link_exp
-def model(x, y):
-    mu = FixedPriorLayer()('mu', x)
-    return gaussian_link_exp(mu, y)
-```
-
-Very useful when you have an informative prior.
-
-
-### Bayesian embeddings
-
-We'll keep track of your lookup table for you.
-
-```python
-from blayers.layers import EmbeddingLayer
-from blayers.links import gaussian_link_exp
-EMB_DIM = 8
-def model(x, y, x_cat):
-    mu = EmbeddingLayer()('mu', x, x_cats, embedding_dim=EMB_DIM)
-    return gaussian_link_exp(mu, y)
-```
-
-### Old school random effects
-
-A special case of the embedding layer, where `EMB_DIM = 1`, useful for super
-fast one-hot encodings (aka random effects)
-
-```python
-from blayers.layers import RandomEffectsLayer
-from blayers.links import gaussian_link_exp
-def model(x, y, x_cat):
-    mu = RandomEffectsLayer()('mu', x, x_cats)
-    return gaussian_link_exp(mu, y)
-```
-
-
-### Factorization machines
-
-Developed in [Rendle 2010](https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf) and [Rendle 2011](https://www.ismll.uni-hildesheim.de/pub/pdfs/FreudenthalerRendle_BayesianFactorizationMachines.pdf), FMs provide a low-rank approximation to the `x`-by-`x` interaction matrix. For those familiar with R syntax, it is an approximation to `y ~ x:x`, excluding the x^2 terms.
-
-To fit the equivalent of an r model like `y ~ x*x` (all main effects, x^2 terms, and one-way interaction effects), you'd do
-
-```python
-from blayers.layers import AdaptiveLayer, FMLayer
-from blayers.links import gaussian_link_exp
-def model(x, y):
-    mu = (
-        AdaptiveLayer('x', x) +
-        AdaptiveLayer('x2', x**2) +
-        FMLayer(low_rank_dim=3)('xx', x)
-    )
-    return gaussian_link_exp(mu, y)
-```
-
-### UV decomp
-
-We also provide a standard UV deccomp for low rank interaction terms
-
-```python
-from blayers.layers import AdaptiveLayer, LowRankInteractionLayer
-from blayers.links import gaussian_link_exp
-def model(x, z, y):
-    mu = (
-        AdaptiveLayer('x', x) +
-        AdaptiveLayer('z', z) +
-        LowRankInteractionLayer(low_rank_dim=3)('xz', x, z)
-    )
-    return gaussian_link_exp(mu, y)
-```
+- `AdaptiveLayer` — Adaptive prior layer.
+- `FixedPriorLayer` — Fixed prior over coefficients (e.g., Normal or Laplace).
+- `InterceptLayer` — Intercept-only layer (bias term).
+- `EmbeddingLayer` — Bayesian embeddings for sparse categorical features.
+- `RandomEffectsLayer` — Classical random-effects.
+- `FMLayer` — Factorization Machine (order 2).
+- `FM3Layer` — Factorization Machine (order 3).
+- `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
+- `RandomWalkLayer` — Random walk prior over coefficients (e.g., Gaussian walk).
+- `InteractionLayer` — All pairwise interactions between two feature sets.
 
 ## Links
 
-We provide link functions as a convenience to abstract away a bit more Numpyro
-boilerplate. Link functions take model predictions as inputs to a distribution.
+We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available links:
 
-The simplest example is the Gaussian link
-
-```
-mu = ...
-sigma ~ Exp(1)
-y     ~ Normal(mu, sigma)
-```
-
-We currently provide
-
-* `negative_binomial_link`
-* `logit_link`
-* `poission_link`
-* `gaussian_link_exp`
-* `lognormal_link_exp`
-
-Link functions include trainable scale parameters when needed, as in the case
-of Gaussians. We also provide classes for eaisly making additional links via
-the `LocScaleLink` and `SingleParamLink` classes.
-
-For instance, the Poisson link is created like this:
-
-```
-poission_link = SingleParamLink(obs_dist=dists.Poisson)
-```
-
-And implements
-
-```
-rate = ...
-y    ~ Poisson(rate)
-```
-
-In a Numpyro model, you use a link like
-
-```python
-from blayers.layers import AdaptiveLayer
-from blayers.links import poisson_link
-def model(x, y):
-    rate = AdaptiveLayer()('rate', x)
-    return poisson_link(rate, y)
-```
+- `logit_link` — Bernoulli link for logistic regression.
+- `poission_link` — Poisson link with rate `y_hat`.
+- `gaussian_link_exp` — Gaussian link with `Exp` distributed homoskedastic `sigma`.
+- `lognormal_link_exp` — LogNormal link with `Exp` distributed homoskedastic `sigma`
+- `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
 
 ## Batched loss
+
+**⚠️⚠️⚠️ Plates + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
+
+`Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
+1. Batch via `plate` and use the standard `Trace_ELBO`, or
+1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
 me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
@@ -320,9 +186,49 @@ svi_result = svi_run_batched(
     **model_data,
 )
 ```
-<!--
-## Roadmap
 
-1. Loss function callbacks
-2. Helpers for categorical
--->
+`Batched_Trace_ELBO` will warn if you if your model has plates.
+
+
+### Reparameterizing
+
+To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
+
+```python
+LocScaleDist = (
+    dist.Normal
+    | dist.LogNormal
+    | dist.StudentT
+    | dist.Cauchy
+    | dist.Laplace
+    | dist.Gumbel
+)
+```
+
+Then, reparam these distributions automatically and fit with Numpyro's built in MCMC methods.
+
+```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
+from blayers.sampling import autoreparam
+
+data = {...}
+
+@autoreparam
+def model(x, y):
+    mu = AdaptiveLayer()('mu', x)
+    return gaussian_link_exp(mu, y)
+
+kernel = NUTS(model)
+mcmc = MCMC(
+    kernel,
+    num_warmup=500,
+    num_samples=1000,
+    num_chains=1,
+    progress_bar=True,
+)
+    mcmc.run(
+        rng_key,
+        **data,
+    )
+```

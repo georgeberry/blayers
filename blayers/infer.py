@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Callable
 
 import jax
@@ -10,6 +11,17 @@ from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
 from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
+
+
+def _warn_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
+    if any(site["type"] == "plate" for site in model_trace.values()):
+        warnings.warn(
+            "Model contains plates. Batched_Trace_ELBO is known to have"
+            " issues with plates. Please batch via plates if you need"
+            " to use plates for your model.",
+            UserWarning,
+            stacklevel=2,  # makes the warning point to user code
+        )
 
 
 class Batched_Trace_ELBO(ELBO):
@@ -98,6 +110,8 @@ class Batched_Trace_ELBO(ELBO):
                 *args,
                 **kwargs,
             )
+
+            _warn_if_has_plate(model_trace)
 
             # log p(x | z)
             # upscale here by N / B where N is the nubmer of observations and B

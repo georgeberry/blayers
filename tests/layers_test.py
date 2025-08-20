@@ -8,7 +8,7 @@ import optax
 import pytest
 import pytest_check
 from _pytest.fixtures import SubRequest
-from numpyro import sample
+from numpyro import deterministic, sample
 from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
@@ -24,8 +24,10 @@ from blayers.layers import (
     AdaptiveLayer,
     EmbeddingLayer,
     FixedPriorLayer,
+    FM3Layer,
     FMLayer,
     InteractionLayer,
+    InterceptLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
     RandomWalkLayer,
@@ -258,7 +260,7 @@ def linear_regression_adaptive_model() -> (
     tuple[Callable[..., Any], list[tuple[list[str], Callable[..., jax.Array]]]]
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
-        beta = AdaptiveLayer()("beta", x1)
+        beta = InterceptLayer()("intercept") + AdaptiveLayer()("beta", x1)
         return gaussian_link_exp(beta, y)
 
     return model, [(["AdaptiveLayer_beta_beta"], identity)]
@@ -516,7 +518,6 @@ def test_models_vi(
 
     for coef_list, coef_fn in coef_groups:
         with pytest_check.check:
-            # import ipdb; ipdb.set_trace()
             val = rmse(
                 coef_fn(*[guide_means[x] for x in coef_list]).squeeze(),
                 coef_fn(*[data[x.split("_")[2]] for x in coef_list]).squeeze(),
@@ -606,3 +607,89 @@ def test_models_hmc(
             )
             < 0.03
         )
+
+
+# ---- Special test for FM3 -------------------------------------------------- #
+
+
+def brute_force_beta(theta: jax.Array) -> jax.Array:
+    """
+    Compute 3-way FM coefficients from factor matrix.
+    theta: (d, r)
+    returns: (d, d, d) tensor of betas
+    """
+    d, _ = theta.shape
+    beta = jnp.zeros((d, d, d))
+    for i in range(d):
+        for j in range(d):
+            for k in range(d):
+                beta = beta.at[i, j, k].set(
+                    jnp.sum(theta[i, :] * theta[j, :] * theta[k, :])
+                )
+    return beta
+
+
+def dgp_fm3(num_obs: int) -> dict[str, jax.Array]:
+    # just 3 features
+    x = sample("x1", dist.Normal(0, 1).expand([num_obs, 3]))
+
+    # fixed cubic interaction: y = x1 * x2 * x3 + noise
+    sigma = sample("sigma", dist.HalfNormal(0.1))
+    mu = x[:, 0] * x[:, 1] * x[:, 2]
+
+    y = sample("y", dist.Normal(mu, sigma))
+    return {"x1": x, "y": y, "sigma": sigma}
+
+
+def test_fm3() -> None:
+    data = simulated_data(dgp_fm3, num_obs=NUM_OBS)
+    model_data = {k: v for k, v in data.items() if k in ("x1", "y")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
+
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        mu = FM3Layer()("theta", x1, low_rank_dim=1)
+        deterministic("yhat", mu)
+        return gaussian_link_exp(mu, y)
+
+    guide = AutoDiagonalNormal(model)
+
+    num_steps = 20000
+
+    schedule = optax.cosine_onecycle_schedule(
+        transition_steps=num_steps,
+        peak_value=0.05,
+        pct_start=0.1,
+        div_factor=25,
+    )
+
+    svi = SVI(model, guide, optax.adam(schedule), loss=Trace_ELBO())
+
+    rng_key, rng_key2 = jax.random.split(random.PRNGKey(2))
+
+    svi_result = svi.run(
+        rng_key,
+        num_steps=num_steps,
+        **model_data,
+    )
+
+    guide_predictive = Predictive(
+        guide,
+        params=svi_result.params,
+        num_samples=1000,
+    )
+    guide_samples = guide_predictive(
+        random.PRNGKey(1),
+        **{k: v for k, v in model_data.items() if k != "y"},
+    )
+
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    a, b, c = (
+        guide_means["FM3Layer_theta_theta"].squeeze()[0],
+        guide_means["FM3Layer_theta_theta"].squeeze()[1],
+        guide_means["FM3Layer_theta_theta"].squeeze()[2],
+    )
+
+    val = a * b * c
+
+    assert rmse(val, 1) < 0.05
