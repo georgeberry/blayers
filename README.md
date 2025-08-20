@@ -18,15 +18,17 @@ deps are: `numpyro`, `jax`, and `optax`.
 ## Concept
 
 Easily build Bayesian models from parts, abstract away the boilerplate, and
-tweak priors as you wish. Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
+tweak priors as you wish.
 
-Fit models either using Variational Inference (VI) or your sampling method of
-choice. Use BLayer's ELBO implementation to do either batched VI or sampling
-without having to rewrite models.
+Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
 
-BLayers helps you write pure Numpyro, so you can integrate it with any Numpyro
-code to build models of arbitrary complexity. It also gives you a recipe to
-build more complex layers as you wish.
+BLayers provides tools to
+
+- Quickly build Bayesian models from layers which encapsulate useful model parts
+- Fit models either using Variational Inference (VI) or your sampling method of
+choice without having to rewrite models
+- Write pure Numpyro to integrate with all of Numpyro's super powerful tools
+- Add more complex layers (model parts) as you wish
 
 ## The starting point
 
@@ -39,8 +41,8 @@ beta  ~ Normal(0, lmbda)
 y     ~ Normal(beta * x, 1)
 ```
 
-BLayers takes this as its starting point and most fundamental building block,
-providing the flexible `AdaptiveLayer`.
+BLayers encapsulates a generative model structure like this in a `BLayer`. The
+fundamental building block is the `AdaptiveLayer`.
 
 ```python
 from blayers.layers import AdaptiveLayer
@@ -50,9 +52,8 @@ def model(x, y):
     return gaussian_link_exp(mu, y)
 ```
 
-### Pure numpyro
-
-All BLayers is doing is writing Numpyro for you under the hood. This model is exacatly equivalent to writing the following, just using way less code.
+All `AdaptiveLayer` is doing is writing Numpyro for you under the hood. This
+model is exacatly equivalent to writing the following, just using way less code.
 
 ```python
 from numpyro import distributions, sample
@@ -135,35 +136,36 @@ def model(x, y):
 
 ## Layers
 
-The full set of layers shipped in `layers.py`:
+The full set of layers included with BLayers:
 
-- `BLayer` — Abstract base class for Bayesian layers; defines the interface.
-- `AdaptiveLayer` — Adaptive prior layer: hp ~ HalfNormal(1), beta ~ Normal(0, hp).
+- `AdaptiveLayer` — Adaptive prior layer.
 - `FixedPriorLayer` — Fixed prior over coefficients (e.g., Normal or Laplace).
 - `InterceptLayer` — Intercept-only layer (bias term).
-- `EmbeddingLayer` — Bayesian embeddings for sparse categorical features (set embedding_dim).
-- `RandomEffectsLayer` — Classical random-effects as embeddings with embedding_dim=1.
-- `FMLayer` — Factorization Machine (order 2) with adaptive priors.
+- `EmbeddingLayer` — Bayesian embeddings for sparse categorical features.
+- `RandomEffectsLayer` — Classical random-effects.
+- `FMLayer` — Factorization Machine (order 2).
 - `FM3Layer` — Factorization Machine (order 3).
-- `LowRankInteractionLayer` — Learns a low-rank interaction matrix between two feature sets.
+- `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
 - `RandomWalkLayer` — Random walk prior over coefficients (e.g., Gaussian walk).
 - `InteractionLayer` — All pairwise interactions between two feature sets.
+
 ## Links
 
 We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available links:
 
-- `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
-- `logit_link` — Bernoulli link (pass the linear predictor `y_hat`).
+- `logit_link` — Bernoulli link for logistic regression.
 - `poission_link` — Poisson link with rate `y_hat`.
-- `gaussian_link_exp` — Gaussian link with `sigma ~ Exponential(1)`.
-- `lognormal_link_exp` — LogNormal link with `sigma ~ Exponential(1)`.
+- `gaussian_link_exp` — Gaussian link with `Exp` distributed homoskedastic `sigma`.
+- `lognormal_link_exp` — LogNormal link with `Exp` distributed homoskedastic `sigma`
+- `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
+
 ## Batched loss
 
-> **⚠️ Plates + `Batched_Trace_ELBO` do not mix.**
->
-> `Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
-> 1) batch via `plate` and use the standard `Trace_ELBO`, or
-> 2) remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
+**⚠️ Plates + `Batched_Trace_ELBO` do not mix.**
+
+`Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
+1. batch via `plate` and use the standard `Trace_ELBO`, or
+1. remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
 me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
