@@ -5,7 +5,7 @@
 
 The missing layers package for Bayesian inference.
 
-**BLayers is in beta, errors are possible!**
+**BLayers is in beta, errors are possible! We invite you to contribute on [GitHub](https://github.com/georgeberry/blayers).**
 
 ## Write code immediately
 
