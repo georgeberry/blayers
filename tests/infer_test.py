@@ -1,13 +1,17 @@
+import warnings
+
 import jax
 import jax.numpy as jnp
 import numpyro
 import numpyro.distributions as dist
 import pytest
 import pytest_check
+from numpyro import plate, sample
+from numpyro.handlers import seed, substitute, trace
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.infer import Batched_Trace_ELBO
+from blayers.infer import Batched_Trace_ELBO, _warn_if_has_plate
 
 
 def test_builtin_vs_batched_elbo_simple() -> None:
@@ -119,3 +123,38 @@ def test_no_batch_error() -> None:
     state_batched = svi_batched.init(rng_key)
     with pytest.raises(ValueError):
         svi_batched.evaluate(state_batched)
+
+
+def test_plate_warning() -> None:
+    key = jax.random.PRNGKey(0)
+    data = jnp.ones(10)
+
+    def model_with_plate(data: jax.Array) -> None:
+        mu = sample("mu", dist.Normal(0, 1))
+        with plate("data", len(data)):
+            sample("obs", dist.Normal(mu, 1), obs=data)
+
+    model_trace = trace(substitute(seed(model_with_plate, key), {})).get_trace(
+        data
+    )
+
+    with pytest.warns(UserWarning, match="Model contains plates"):
+        _warn_if_has_plate(model_trace)
+
+
+def test_no_plate_no_warning() -> None:
+    key = jax.random.PRNGKey(0)
+    data = jnp.ones(10)
+
+    def model_no_plate(data: jax.Array) -> None:
+        mu = sample("mu", dist.Normal(0, 1))
+        sample("obs", dist.Normal(mu, 1), obs=data)
+
+    model_trace = trace(substitute(seed(model_no_plate, key), {})).get_trace(
+        data
+    )
+
+    with warnings.catch_warnings(record=True) as w:
+        _warn_if_has_plate(model_trace)
+
+    assert len(w) == 0

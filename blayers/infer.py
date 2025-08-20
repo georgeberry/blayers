@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Callable
 
 import jax
@@ -10,6 +11,17 @@ from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 
 from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
+
+
+def _warn_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
+    if any(site["type"] == "plate" for site in model_trace.values()):
+        warnings.warn(
+            "Model contains plates. Batched_Trace_ELBO is known to have"
+            " issues with plates. Please batch via plates if you need"
+            " to use plates for your model.",
+            UserWarning,
+            stacklevel=2,  # makes the warning point to user code
+        )
 
 
 class Batched_Trace_ELBO(ELBO):
@@ -99,6 +111,8 @@ class Batched_Trace_ELBO(ELBO):
                 **kwargs,
             )
 
+            _warn_if_has_plate(model_trace)
+
             # log p(x | z)
             # upscale here by N / B where N is the nubmer of observations and B
             # is the batch size. This provides an estimator of the full dataset
@@ -150,7 +164,6 @@ def svi_run_batched(
     batch_size: int,
     num_steps: int | None = None,
     num_epochs: int | None = None,
-    ema_decay: float = 0.95,
     **data: dict[str, jax.Array],
 ) -> SVIRunResult:
     @jax.jit
@@ -166,8 +179,7 @@ def svi_run_batched(
 
     svi_state = svi.init(rng_key, **data)
     losses = []
-    ema_loss = None
-    bar = tqdm.tqdm(
+    for batch in tqdm.tqdm(
         yield_batches(
             data,
             batch_size,
@@ -175,18 +187,7 @@ def svi_run_batched(
             steps_per_epoch,
         ),
         total=total_steps_to_run,
-    )
-
-    for batch_idx, batch in enumerate(bar, start=1):
+    ):
         svi_state, loss = update(svi_state, **batch)
         losses.append(loss)
-
-        loss_val = float(loss)
-        if ema_loss is None:
-            ema_loss = loss_val
-        else:
-            ema_loss = ema_decay * ema_loss + (1 - ema_decay) * loss_val
-        if batch_idx % 100 == 0:
-            bar.set_postfix({"EMA loss": f"{ema_loss/batch_size:.4f}"})
-
     return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
