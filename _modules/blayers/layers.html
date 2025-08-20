@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.layers &#8212; blayers v0.2.0 documentation</title>
+    <title>blayers.layers &#8212; blayers v0.2.2 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=0a6a6ad3"></script>
+    <script src="../../_static/documentation_options.js?v=a6e268a8"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.0 documentation</p>
+    <p class="title logo__title">blayers v0.2.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -307,6 +307,26 @@ document.write(`
 <span class="c1"># ---- Matmul functions ------------------------------------------------------ #</span>
 
 
+<div class="viewcode-block" id="pairwise_interactions">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.pairwise_interactions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute all pairwise interactions between features in X and Y.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        X: (n_samples, n_features1)</span>
+<span class="sd">        Y: (n_samples, n_features2)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        interactions: (n_samples, n_features1 * n_features2)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard dot product between beta and x.</span>
 
@@ -338,6 +358,37 @@ document.write(`
     <span class="n">vx2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,dlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">v2x2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,dlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">theta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nlu-&gt;nu&quot;</span><span class="p">,</span> <span class="n">vx2</span> <span class="o">-</span> <span class="n">v2x2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_matmul_fm3</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply second-order factorization machine interaction.</span>
+
+<span class="sd">    Based on Rendle (2010). Computes:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        0.5 * sum((xV)^2 - (x^2 V^2))</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        theta: Weight matrix of shape `(d, l, u)`.</span>
+<span class="sd">        x: Input data of shape `(n, d)`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        jax.Array: Output of shape `(n, u)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># x: (n_features,)</span>
+    <span class="c1"># E: (n_features, k)  embedding matrix</span>
+    <span class="n">linear_sum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,dlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>  <span class="c1"># jnp.dot(x, theta)</span>
+    <span class="n">square_sum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;nd,dlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">theta</span><span class="o">**</span><span class="mi">2</span>
+    <span class="p">)</span>  <span class="c1"># jnp.dot(x**2, theta**2)</span>
+    <span class="n">cube_sum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;nd,dlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">3</span><span class="p">,</span> <span class="n">theta</span><span class="o">**</span><span class="mi">3</span>
+    <span class="p">)</span>  <span class="c1"># jnp.dot(x**3, theta**3)</span>
+
+    <span class="n">term</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">linear_sum</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">square_sum</span> <span class="o">*</span> <span class="n">linear_sum</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">cube_sum</span>
+    <span class="p">)</span> <span class="o">/</span> <span class="mf">6.0</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nlu-&gt;nu&quot;</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>  <span class="c1"># scalar</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_matmul_uv_decomp</span><span class="p">(</span>
@@ -408,11 +459,8 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span>
-
     <span class="c1"># thanks chat GPT</span>
-    <span class="n">interactions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span>
+    <span class="n">interactions</span> <span class="o">=</span> <span class="n">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,du-&gt;nu&quot;</span><span class="p">,</span> <span class="n">interactions</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
@@ -865,6 +913,75 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
         <span class="k">return</span> <span class="n">_matmul_factorization_machine</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FM3Layer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.FM3Layer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FM3Layer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order 3 FM. See `Blondel et al 2016 &lt;https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf&gt;`_.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FM3Layer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.FM3Layer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lmbda_dist: Distribution for scaling factor λ.</span>
+<span class="sd">            coef_dist: Prior for beta parameters.</span>
+<span class="sd">            coef_kwargs: Arguments for prior distribution.</span>
+<span class="sd">            lmbda_kwargs: Arguments for λ distribution.</span>
+<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+
+
+<div class="viewcode-block" id="FM3Layer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.FM3Layer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">low_rank_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass through the factorization machine layer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input matrix of shape (n, d).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Output array of shape (n,).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get shapes and reshape if necessary</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">input_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># sampling block</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_theta&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># matmul and return</span>
+        <span class="k">return</span> <span class="n">_matmul_fm3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
 </div>
 
 

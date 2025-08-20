@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.links &#8212; blayers v0.2.0 documentation</title>
+    <title>blayers.links &#8212; blayers v0.2.2 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=0a6a6ad3"></script>
+    <script src="../../_static/documentation_options.js?v=a6e268a8"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.0 documentation</p>
+    <p class="title logo__title">blayers v0.2.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -361,23 +361,24 @@ document.write(`
         <span class="n">sigma_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
         <span class="n">obs_dist</span><span class="p">:</span> <span class="n">dists</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">dists</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">obs_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
-        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_dist</span> <span class="o">=</span> <span class="n">sigma_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_kwargs</span> <span class="o">=</span> <span class="n">sigma_kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span> <span class="o">=</span> <span class="n">obs_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span> <span class="o">=</span> <span class="n">obs_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span> <span class="o">=</span> <span class="n">dependent_outputs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span> <span class="o">=</span> <span class="n">obs_kwargs</span></div>
 
 
 <div class="viewcode-block" id="LocScaleLink.__call__">
 <a class="viewcode-back" href="../../api/links.html#blayers.links.LocScaleLink.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_kwargs</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dependent_outputs</span><span class="p">:</span>
             <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span>
                 <span class="n">loc</span><span class="o">=</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">obs_kwargs</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to_event</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -400,18 +401,19 @@ document.write(`
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">obs_dist</span><span class="p">:</span> <span class="n">dists</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">dists</span><span class="o">.</span><span class="n">Bernoulli</span><span class="p">,</span>
-        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span> <span class="o">=</span> <span class="n">obs_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span> <span class="o">=</span> <span class="n">dependent_outputs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span> <span class="o">=</span> <span class="n">obs_dist</span></div>
 
 
 <div class="viewcode-block" id="SingleParamLink.__call__">
 <a class="viewcode-back" href="../../api/links.html#blayers.links.SingleParamLink.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y_hat</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dependent_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependent_outputs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dependent_outputs</span><span class="p">:</span>
             <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span><span class="n">y_hat</span><span class="p">)</span><span class="o">.</span><span class="n">to_event</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_dist</span><span class="p">(</span><span class="n">y_hat</span><span class="p">)</span>
 

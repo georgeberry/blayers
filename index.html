@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BLayers &#8212; blayers v0.2.0 documentation</title>
+    <title>BLayers &#8212; blayers v0.2.2 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=0a6a6ad3"></script>
+    <script src="_static/documentation_options.js?v=a6e268a8"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -133,7 +133,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.0 documentation</p>
+    <p class="title logo__title">blayers v0.2.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -353,22 +353,16 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-code-immediately">Write code immediately</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#concept">Concept</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-starting-point">The starting point</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pure-numpyro">Pure numpyro</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mixing-it-up">Mixing it up</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#factories">“Factories”</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#additional-layers">Additional layers</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed-prior-layers">Fixed prior layers</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bayesian-embeddings">Bayesian embeddings</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#old-school-random-effects">Old school random effects</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#factorization-machines">Factorization machines</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uv-decomp">UV decomp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#resources">Resources</a></li>
@@ -385,10 +379,11 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p><a class="reference external" href="https://codecov.io/gh/georgeberry/blayers"><img alt="codecov" src="https://codecov.io/gh/georgeberry/blayers/graph/badge.svg?token=ZDGT0C39QM" /></a> <a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></span></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a></p>
+  <p><a class="reference external" href="https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2"><img alt="Coverage Status" src="https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2" /></a> <a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></span></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a> <a class="reference external" href="https://georgeberry.github.io/blayers/"><img alt="Read - Docs" src="https://img.shields.io/badge/Read-Docs-2ea44f" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers"><img alt="View - GitHub" src="https://img.shields.io/badge/View-GitHub-89CFF0" /></a></p>
 <section id="blayers">
 <h1>BLayers<a class="headerlink" href="#blayers" title="Link to this heading">#</a></h1>
 <p>The missing layers package for Bayesian inference.</p>
+<p><strong>BLayers is in beta, errors are possible! We invite you to contribute on <a class="reference external" href="https://github.com/georgeberry/blayers">GitHub</a>.</strong></p>
 <section id="write-code-immediately">
 <h2>Write code immediately<a class="headerlink" href="#write-code-immediately" title="Link to this heading">#</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">blayers</span>
@@ -399,13 +394,17 @@ document.write(`
 <section id="concept">
 <h2>Concept<a class="headerlink" href="#concept" title="Link to this heading">#</a></h2>
 <p>Easily build Bayesian models from parts, abstract away the boilerplate, and
-tweak priors as you wish. Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.</p>
-<p>Fit models either using Variational Inference (VI) or your sampling method of
-choice. Use BLayer’s ELBO implementation to do either batched VI or sampling
-without having to rewrite models.</p>
-<p>BLayers helps you write pure Numpyro, so you can integrate it with any Numpyro
-code to build models of arbitrary complexity. It also gives you a recipe to
-build more complex layers as you wish.</p>
+tweak priors as you wish.</p>
+<p>Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.</p>
+<p>BLayers provides tools to</p>
+<ul class="simple">
+<li><p>Quickly build Bayesian models from layers which encapsulate useful model parts</p></li>
+<li><p>Fit models either using Variational Inference (VI) or your sampling method of
+choice without having to rewrite models</p></li>
+<li><p>Write pure Numpyro to integrate with all of Numpyro’s super powerful tools</p></li>
+<li><p>Add more complex layers (model parts) as you wish</p></li>
+<li><p>Fit models in a greater variety of ways with less code</p></li>
+</ul>
 </section>
 <section id="the-starting-point">
 <h2>The starting point<a class="headerlink" href="#the-starting-point" title="Link to this heading">#</a></h2>
@@ -416,8 +415,8 @@ the adaptive prior,</p>
 <span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>BLayers takes this as its starting point and most fundamental building block,
-providing the flexible <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code>.</p>
+<p>BLayers encapsulates a generative model structure like this in a <code class="docutils literal notranslate"><span class="pre">BLayer</span></code>. The
+fundamental building block is the <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -425,9 +424,8 @@ providing the flexible <code class="docutils literal notranslate"><span class="p
     <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
-<section id="pure-numpyro">
-<h3>Pure numpyro<a class="headerlink" href="#pure-numpyro" title="Link to this heading">#</a></h3>
-<p>All BLayers is doing is writing Numpyro for you under the hood. This model is exacatly equivalent to writing the following, just using way less code.</p>
+<p>All <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> is doing is writing Numpyro for you under the hood. This
+model is exacatly equivalent to writing the following, just using way less code.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -451,47 +449,6 @@ providing the flexible <code class="docutils literal notranslate"><span class="p
     <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="s1">&#39;obs&#39;</span><span class="p">,</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="reparameterizing">
-<h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
-<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparamterize</a>. BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">StudentT</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Cauchy</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Laplace</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gumbel</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p>Then, reparam these distributions automatically and fit with Numpyro’s built in MCMC methods.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
-
-<span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
-
-<span class="nd">@autoreparam</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="n">mcmc</span> <span class="o">=</span> <span class="n">MCMC</span><span class="p">(</span>
-    <span class="n">kernel</span><span class="p">,</span>
-    <span class="n">num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-    <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="n">num_chains</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-    <span class="n">mcmc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="n">rng_key</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">data</span><span class="p">,</span>
-    <span class="p">)</span>
-</pre></div>
-</div>
-</section>
 <section id="mixing-it-up">
 <h3>Mixing it up<a class="headerlink" href="#mixing-it-up" title="Link to this heading">#</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> is also fully parameterizable via arguments to the class, so let’s say you wanted to change the model from</p>
@@ -542,118 +499,41 @@ providing the flexible <code class="docutils literal notranslate"><span class="p
 </div>
 </section>
 </section>
-<section id="additional-layers">
-<h2>Additional layers<a class="headerlink" href="#additional-layers" title="Link to this heading">#</a></h2>
-<section id="fixed-prior-layers">
-<h3>Fixed prior layers<a class="headerlink" href="#fixed-prior-layers" title="Link to this heading">#</a></h3>
-<p>For you purists out there, we also provide a <code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code> for standard
-L1/L2 regression.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedPriorLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">FixedPriorLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Very useful when you have an informative prior.</p>
-</section>
-<section id="bayesian-embeddings">
-<h3>Bayesian embeddings<a class="headerlink" href="#bayesian-embeddings" title="Link to this heading">#</a></h3>
-<p>We’ll keep track of your lookup table for you.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="n">EMB_DIM</span> <span class="o">=</span> <span class="mi">8</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x_cat</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">EmbeddingLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_cats</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="n">EMB_DIM</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="old-school-random-effects">
-<h3>Old school random effects<a class="headerlink" href="#old-school-random-effects" title="Link to this heading">#</a></h3>
-<p>A special case of the embedding layer, where <code class="docutils literal notranslate"><span class="pre">EMB_DIM</span> <span class="pre">=</span> <span class="pre">1</span></code>, useful for super
-fast one-hot encodings (aka random effects)</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomEffectsLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x_cat</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">RandomEffectsLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_cats</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="factorization-machines">
-<h3>Factorization machines<a class="headerlink" href="#factorization-machines" title="Link to this heading">#</a></h3>
-<p>Developed in <a class="reference external" href="https://jame-zhang.github.io/assets/algo/Factorization-Machines-Rendle2010.pdf">Rendle 2010</a> and <a class="reference external" href="https://www.ismll.uni-hildesheim.de/pub/pdfs/FreudenthalerRendle_BayesianFactorizationMachines.pdf">Rendle 2011</a>, FMs provide a low-rank approximation to the <code class="docutils literal notranslate"><span class="pre">x</span></code>-by-<code class="docutils literal notranslate"><span class="pre">x</span></code> interaction matrix. For those familiar with R syntax, it is an approximation to <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">~</span> <span class="pre">x:x</span></code>, excluding the x^2 terms.</p>
-<p>To fit the equivalent of an r model like <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">~</span> <span class="pre">x*x</span></code> (all main effects, x^2 terms, and one-way interaction effects), you’d do</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">FMLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">AdaptiveLayer</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span>
-        <span class="n">AdaptiveLayer</span><span class="p">(</span><span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
-        <span class="n">FMLayer</span><span class="p">(</span><span class="n">low_rank_dim</span><span class="o">=</span><span class="mi">3</span><span class="p">)(</span><span class="s1">&#39;xx&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="uv-decomp">
-<h3>UV decomp<a class="headerlink" href="#uv-decomp" title="Link to this heading">#</a></h3>
-<p>We also provide a standard UV deccomp for low rank interaction terms</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">LowRankInteractionLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">AdaptiveLayer</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span>
-        <span class="n">AdaptiveLayer</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">+</span>
-        <span class="n">LowRankInteractionLayer</span><span class="p">(</span><span class="n">low_rank_dim</span><span class="o">=</span><span class="mi">3</span><span class="p">)(</span><span class="s1">&#39;xz&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
+<section id="layers">
+<h2>Layers<a class="headerlink" href="#layers" title="Link to this heading">#</a></h2>
+<p>The full set of layers included with BLayers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> — Adaptive prior layer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code> — Fixed prior over coefficients (e.g., Normal or Laplace).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code> — Intercept-only layer (bias term).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code> — Bayesian embeddings for sparse categorical features.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code> — Factorization Machine (order 2).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code> — Factorization Machine (order 3).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code> — Low-rank interaction between two feature sets.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Random walk prior over coefficients (e.g., Gaussian walk).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InteractionLayer</span></code> — All pairwise interactions between two feature sets.</p></li>
+</ul>
 </section>
 <section id="links">
 <h2>Links<a class="headerlink" href="#links" title="Link to this heading">#</a></h2>
-<p>We provide link functions as a convenience to abstract away a bit more Numpyro
-boilerplate. Link functions take model predictions as inputs to a distribution.</p>
-<p>The simplest example is the Gaussian link</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">sigma</span> <span class="o">~</span> <span class="n">Exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>We currently provide</p>
+<p>We provide link helpers in <code class="docutils literal notranslate"><span class="pre">links.py</span></code> to reduce Numpyro boilerplate. Available links:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for logistic regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code> — Poisson link with rate <code class="docutils literal notranslate"><span class="pre">y_hat</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code> — Gaussian link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code> — LogNormal link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — Uses <code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">~</span> <span class="pre">Exponential(rate)</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">~</span> <span class="pre">NegativeBinomial2(mean=y_hat,</span> <span class="pre">concentration=sigma)</span></code>.</p></li>
 </ul>
-<p>Link functions include trainable scale parameters when needed, as in the case
-of Gaussians. We also provide classes for eaisly making additional links via
-the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</span></code> and <code class="docutils literal notranslate"><span class="pre">SingleParamLink</span></code> classes.</p>
-<p>For instance, the Poisson link is created like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">poission_link</span> <span class="o">=</span> <span class="n">SingleParamLink</span><span class="p">(</span><span class="n">obs_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">Poisson</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>And implements</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">y</span>    <span class="o">~</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>In a Numpyro model, you use a link like</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">poisson_link</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">rate</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;rate&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">poisson_link</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
 </section>
 <section id="batched-loss">
 <h2>Batched loss<a class="headerlink" href="#batched-loss" title="Link to this heading">#</a></h2>
+<p><strong>⚠️⚠️⚠️ Plates + <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> do not mix. ⚠️⚠️⚠️</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> is known to have issues when your model uses <code class="docutils literal notranslate"><span class="pre">plate</span></code>. If your model needs plates, either:</p>
+<ol class="arabic simple">
+<li><p>Batch via <code class="docutils literal notranslate"><span class="pre">plate</span></code> and use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code>, or</p></li>
+<li><p>Remove plates and use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code>.</p></li>
+</ol>
 <p>The default Numpyro way to fit batched VI models is to use <code class="docutils literal notranslate"><span class="pre">plate</span></code>, which confuses
 me a lot. Instead, BLayers provides <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> which does not require
 you to use <code class="docutils literal notranslate"><span class="pre">plate</span></code> to batch in VI. Just drop your model in.</p>
@@ -670,12 +550,48 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <span class="p">)</span>
 </pre></div>
 </div>
-<!--
-## Roadmap
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if you if your model has plates.</p>
+<section id="reparameterizing">
+<h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
+<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparamterize</a>. BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">StudentT</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Cauchy</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Laplace</span>
+    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gumbel</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, reparam these distributions automatically and fit with Numpyro’s built in MCMC methods.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
 
-1. Loss function callbacks
-2. Helpers for categorical
---></section>
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+
+<span class="nd">@autoreparam</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">mcmc</span> <span class="o">=</span> <span class="n">MCMC</span><span class="p">(</span>
+    <span class="n">kernel</span><span class="p">,</span>
+    <span class="n">num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">num_chains</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+    <span class="n">mcmc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">data</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
 </section>
 <section id="resources">
 <h1>Resources<a class="headerlink" href="#resources" title="Link to this heading">#</a></h1>
@@ -689,6 +605,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/layers.html">Layers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.pairwise_interactions"><code class="docutils literal notranslate"><span class="pre">pairwise_interactions()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FixedPriorLayer"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code></a></li>
@@ -696,6 +613,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FM3Layer"><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.InteractionLayer"><code class="docutils literal notranslate"><span class="pre">InteractionLayer</span></code></a></li>
@@ -765,22 +683,16 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-code-immediately">Write code immediately</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#concept">Concept</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-starting-point">The starting point</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pure-numpyro">Pure numpyro</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mixing-it-up">Mixing it up</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#factories">“Factories”</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#additional-layers">Additional layers</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fixed-prior-layers">Fixed prior layers</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bayesian-embeddings">Bayesian embeddings</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#old-school-random-effects">Old school random effects</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#factorization-machines">Factorization machines</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#uv-decomp">UV decomp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a></li>
 </ul>
 </li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#resources">Resources</a></li>
