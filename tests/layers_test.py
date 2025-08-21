@@ -612,23 +612,6 @@ def test_models_hmc(
 # ---- Special test for FM3 -------------------------------------------------- #
 
 
-def brute_force_beta(theta: jax.Array) -> jax.Array:
-    """
-    Compute 3-way FM coefficients from factor matrix.
-    theta: (d, r)
-    returns: (d, d, d) tensor of betas
-    """
-    d, _ = theta.shape
-    beta = jnp.zeros((d, d, d))
-    for i in range(d):
-        for j in range(d):
-            for k in range(d):
-                beta = beta.at[i, j, k].set(
-                    jnp.sum(theta[i, :] * theta[j, :] * theta[k, :])
-                )
-    return beta
-
-
 def dgp_fm3(num_obs: int) -> dict[str, jax.Array]:
     # just 3 features
     x = sample("x1", dist.Normal(0, 1).expand([num_obs, 3]))
@@ -693,3 +676,151 @@ def test_fm3() -> None:
     val = a * b * c
 
     assert rmse(val, 1) < 0.05
+
+
+# ---- Do we learn the lmbdas ------------------------------------------------ #
+
+
+def test_simple_lambda() -> None:
+    data = simulated_data(dgp_simple, num_obs=NUM_OBS, k=100)
+    model_data = {k: v for k, v in data.items() if k in ("x1", "y")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
+
+    def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
+        beta = AdaptiveLayer()("beta", x1)
+        return gaussian_link_exp(beta, y)
+
+    guide = AutoDiagonalNormal(model)
+
+    num_steps = 20000
+
+    schedule = optax.cosine_onecycle_schedule(
+        transition_steps=num_steps,
+        peak_value=0.05,
+        pct_start=0.1,
+        div_factor=25,
+    )
+
+    svi = SVI(
+        model,
+        guide,
+        optax.adam(schedule),
+        loss=Batched_Trace_ELBO(num_obs=NUM_OBS),
+    )
+
+    rng_key, rng_key2 = jax.random.split(random.PRNGKey(2))
+
+    svi_result = svi_run_batched(
+        svi,
+        rng_key,
+        1000,
+        num_steps,
+        **model_data,
+    )
+
+    guide_predictive = Predictive(
+        guide,
+        params=svi_result.params,
+        num_samples=1000,
+    )
+    guide_samples = guide_predictive(
+        random.PRNGKey(1),
+        **{k: v for k, v in model_data.items() if k != "y"},
+    )
+
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    with pytest_check.check:
+        rmse(guide_means["AdaptiveLayer_beta_lmbda"], data["lambda1"]) < 0.1
+
+
+def dgp_stacked(num_obs: int, k: int, hidden_dim: int) -> dict[str, jax.Array]:
+    """
+    Two-layer adaptive model:
+        x -> beta1 -> hidden -> sigmoid -> beta2 -> mu -> y
+    """
+
+    # --- Layer 1 ---
+    lambda1 = sample("lambda1", dist.HalfNormal(1.0))
+    beta1 = sample("beta1", dist.Normal(0, lambda1).expand([k, hidden_dim]))
+    x = sample("x", dist.Normal(0, 1).expand([num_obs, k]))
+    hidden = jnp.dot(x, beta1)  # [num_obs, hidden_dim]
+    hidden_act = jax.nn.sigmoid(hidden)
+
+    # --- Layer 2 ---
+    lambda2 = sample("lambda2", dist.HalfNormal(1.0))
+    beta2 = sample("beta2", dist.Normal(0, lambda2).expand([hidden_dim]))
+    mu = jnp.dot(hidden_act, beta2)  # [num_obs]
+
+    # Observation noise
+    sigma = sample("sigma", dist.HalfNormal(1.0))
+    y = sample("y", dist.Normal(mu, sigma))
+
+    return {
+        "x": x,
+        "y": y,
+        "beta1": beta1,
+        "beta2": beta2,
+        "lambda1": lambda1,
+        "lambda2": lambda2,
+        "sigma": sigma,
+        "hidden": hidden,
+        "hidden_act": hidden_act,
+    }
+
+
+def test_stacked_lambda() -> None:
+    data = simulated_data(dgp_stacked, num_obs=NUM_OBS, k=100, hidden_dim=30)
+    model_data = {k: v for k, v in data.items() if k in ("x", "y")}
+    model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
+
+    def model(x: jax.Array, y: jax.Array | None = None) -> Any:
+        beta1 = AdaptiveLayer(units=30)("beta1", x)
+        beta2 = AdaptiveLayer()("beta2", jax.nn.sigmoid(beta1))
+        return gaussian_link_exp(beta2, y)
+
+    guide = AutoDiagonalNormal(model)
+
+    num_steps = 20000
+
+    schedule = optax.cosine_onecycle_schedule(
+        transition_steps=num_steps,
+        peak_value=0.05,
+        pct_start=0.1,
+        div_factor=25,
+    )
+
+    svi = SVI(
+        model,
+        guide,
+        optax.adam(schedule),
+        loss=Batched_Trace_ELBO(num_obs=NUM_OBS),
+    )
+
+    rng_key, rng_key2 = jax.random.split(random.PRNGKey(2))
+
+    svi_result = svi_run_batched(
+        svi,
+        rng_key,
+        1000,
+        num_steps,
+        **model_data,
+    )
+
+    guide_predictive = Predictive(
+        guide,
+        params=svi_result.params,
+        num_samples=1000,
+    )
+    guide_samples = guide_predictive(
+        random.PRNGKey(1),
+        **{k: v for k, v in model_data.items() if k != "y"},
+    )
+
+    guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
+
+    with pytest_check.check:
+        rmse(guide_means["AdaptiveLayer_beta1_lmbda"], data["lambda1"]) < 0.1
+
+    with pytest_check.check:
+        rmse(guide_means["AdaptiveLayer_beta2_lmbda"], data["lambda2"]) < 0.1
