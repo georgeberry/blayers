@@ -777,3 +777,109 @@ class InteractionLayer(BLayer):
         )
 
         return _matmul_interaction(beta, x, z)
+
+
+class BilinearLayer(BLayer):
+    """Bayesian bilinear interaction layer: computes x^T W z."""
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
+    ):
+        """
+        Args:
+            lmbda_dist: prior on scale of coefficients
+            coef_dist: distribution for coefficients
+            coef_kwargs: kwargs for coef distribution
+            lmbda_kwargs: kwargs for scale prior
+            units: number of output dimensions
+        """
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
+
+    def __call__(self, name: str, x: jax.Array, z: jax.Array) -> jax.Array:
+        # ensure inputs are [batch, dim]
+        x = add_trailing_dim(x)
+        z = add_trailing_dim(z)
+        input_shape1, input_shape2 = x.shape[1], z.shape[1]
+
+        # sample coefficient scales
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
+        )
+        # full W: [input_shape1, input_shape2, units]
+        W = sample(
+            name=f"{self.__class__.__name__}_{name}_W",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape1, input_shape2, self.units]
+            ),
+        )
+        # bilinear form: x^T W z for each unit
+        return jnp.einsum("bi,ijc,bj->bc", x, W, z)
+
+
+class LowRankBilinearLayer(BLayer):
+    """Bayesian bilinear interaction layer: computes x^T W z. W low rank."""
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        units: int = 1,
+    ):
+        """
+        Args:
+            lmbda_dist: prior on scale of coefficients
+            coef_dist: distribution for coefficients
+            coef_kwargs: kwargs for coef distribution
+            lmbda_kwargs: kwargs for scale prior
+            units: number of output dimensions
+        """
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+        self.units = units
+
+    def __call__(
+        self, name: str, x: jax.Array, z: jax.Array, low_rank_dim: int
+    ) -> jax.Array:
+        # ensure inputs are [batch, dim]
+        x = add_trailing_dim(x)
+        z = add_trailing_dim(z)
+        input_shape1, input_shape2 = x.shape[1], z.shape[1]
+
+        # sample coefficient scales
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([self.units]),
+        )
+
+        A = sample(
+            name=f"{self.__class__.__name__}_{name}_A",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape1, low_rank_dim, self.units]
+            ),
+        )
+        B = sample(
+            name=f"{self.__class__.__name__}_{name}_B",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [input_shape2, low_rank_dim, self.units]
+            ),
+        )
+        # project x and z into rank-r space, then take dot product
+        x_proj = jnp.einsum("bi,irk->brk", x, A)  # [batch, rank, units]
+        z_proj = jnp.einsum("bj,jrk->brk", z, B)  # [batch, rank, units]
+        out = jnp.sum(x_proj * z_proj, axis=1)  # [batch, units]
+
+        return out
