@@ -181,7 +181,7 @@ svi_result = svi_run_batched(
 )
 ```
 
-**⚠️⚠️⚠️ Plates + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
+**⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
 
 `Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
 1. Batch via `plate` and use the standard `Trace_ELBO`, or
