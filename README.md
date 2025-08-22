@@ -163,12 +163,6 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 
 ## Batched loss
 
-**⚠️⚠️⚠️ Plates + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
-
-`Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
-1. Batch via `plate` and use the standard `Trace_ELBO`, or
-1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
-
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
 me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
 you to use `plate` to batch in VI. Just drop your model in.
@@ -186,6 +180,12 @@ svi_result = svi_run_batched(
     **model_data,
 )
 ```
+
+**⚠️⚠️⚠️ Plates + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
+
+`Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
+1. Batch via `plate` and use the standard `Trace_ELBO`, or
+1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
 `Batched_Trace_ELBO` will warn if you if your model has plates.
 
