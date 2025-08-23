@@ -775,7 +775,7 @@ def test_stacked_lambda() -> None:
     model_data["y"] = jnp.reshape(model_data["y"], (-1, 1))
 
     def model(x: jax.Array, y: jax.Array | None = None) -> Any:
-        beta1 = AdaptiveLayer(units=30)("beta1", x)
+        beta1 = AdaptiveLayer()("beta1", x, units=30)
         beta2 = AdaptiveLayer()("beta2", jax.nn.sigmoid(beta1))
         return gaussian_link_exp(beta2, y)
 
