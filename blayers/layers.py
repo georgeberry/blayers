@@ -315,6 +315,7 @@ class FixedPriorLayer(BLayer):
         name: str,
         x: jax.Array,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass with fixed prior.
@@ -336,7 +337,7 @@ class FixedPriorLayer(BLayer):
             fn=self.coef_dist(**self.coef_kwargs).expand([input_shape, units]),
         )
         # matmul and return
-        return _matmul_dot_product(x, beta)
+        return activation(_matmul_dot_product(x, beta))
 
 
 class InterceptLayer(BLayer):
@@ -353,7 +354,6 @@ class InterceptLayer(BLayer):
         self,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -367,6 +367,7 @@ class InterceptLayer(BLayer):
         self,
         name: str,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass with fixed prior.
@@ -383,7 +384,7 @@ class InterceptLayer(BLayer):
             name=f"{self.__class__.__name__}_{name}_beta",
             fn=self.coef_dist(**self.coef_kwargs).expand([1, units]),
         )
-        return beta
+        return activation(beta)
 
 
 class EmbeddingLayer(BLayer):
@@ -395,7 +396,6 @@ class EmbeddingLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -415,7 +415,7 @@ class EmbeddingLayer(BLayer):
         x: jax.Array,
         num_categories: int,
         embedding_dim: int,
-        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through embedding lookup.
@@ -442,7 +442,7 @@ class EmbeddingLayer(BLayer):
             ),
         )
         # matmul and return
-        return beta[x.squeeze()]
+        return activation(beta[x.squeeze()])
 
 
 class RandomEffectsLayer(BLayer):
@@ -454,7 +454,6 @@ class RandomEffectsLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -473,7 +472,7 @@ class RandomEffectsLayer(BLayer):
         name: str,
         x: jax.Array,
         num_categories: int,
-        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through embedding lookup.
@@ -498,7 +497,7 @@ class RandomEffectsLayer(BLayer):
                 [num_categories, 1]
             ),
         )
-        return beta[x.squeeze()]
+        return activation(beta[x.squeeze()])
 
 
 class FMLayer(BLayer):
@@ -526,7 +525,6 @@ class FMLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -547,6 +545,7 @@ class FMLayer(BLayer):
         x: jax.Array,
         low_rank_dim: int,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through the factorization machine layer.
@@ -574,7 +573,7 @@ class FMLayer(BLayer):
             ),
         )
         # matmul and return
-        return _matmul_factorization_machine(x, theta)
+        return activation(_matmul_factorization_machine(x, theta))
 
 
 class FM3Layer(BLayer):
@@ -586,7 +585,6 @@ class FM3Layer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -607,6 +605,7 @@ class FM3Layer(BLayer):
         x: jax.Array,
         low_rank_dim: int,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through the factorization machine layer.
@@ -634,7 +633,7 @@ class FM3Layer(BLayer):
             ),
         )
         # matmul and return
-        return _matmul_fm3(x, theta)
+        return activation(_matmul_fm3(x, theta))
 
 
 class LowRankInteractionLayer(BLayer):
@@ -660,6 +659,7 @@ class LowRankInteractionLayer(BLayer):
         z: jax.Array,
         low_rank_dim: int,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         # get shapes and reshape if necessary
         x = add_trailing_dim(x)
@@ -688,7 +688,7 @@ class LowRankInteractionLayer(BLayer):
                 [input_shape2, low_rank_dim, units]
             ),
         )
-        return _matmul_uv_decomp(theta1, theta2, x, z)
+        return activation(_matmul_uv_decomp(theta1, theta2, x, z))
 
 
 class RandomWalkLayer(BLayer):
@@ -712,7 +712,7 @@ class RandomWalkLayer(BLayer):
         x: jax.Array,
         num_categories: int,
         embedding_dim: int,
-        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """ """
 
@@ -731,7 +731,7 @@ class RandomWalkLayer(BLayer):
             ),
         )
         # matmul and return
-        return _matmul_randomwalk(theta, x)
+        return activation(_matmul_randomwalk(theta, x))
 
 
 class InteractionLayer(BLayer):
@@ -743,7 +743,6 @@ class InteractionLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
@@ -756,6 +755,7 @@ class InteractionLayer(BLayer):
         x: jax.Array,
         z: jax.Array,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         # get shapes and reshape if necessary
         x = add_trailing_dim(x)
@@ -775,7 +775,7 @@ class InteractionLayer(BLayer):
             ),
         )
 
-        return _matmul_interaction(beta, x, z)
+        return activation(_matmul_interaction(beta, x, z))
 
 
 class BilinearLayer(BLayer):
@@ -787,7 +787,6 @@ class BilinearLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -808,6 +807,7 @@ class BilinearLayer(BLayer):
         x: jax.Array,
         z: jax.Array,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         # ensure inputs are [batch, dim]
         x = add_trailing_dim(x)
@@ -827,7 +827,7 @@ class BilinearLayer(BLayer):
             ),
         )
         # bilinear form: x^T W z for each unit
-        return jnp.einsum("bi,ijc,bj->bc", x, W, z)
+        return activation(jnp.einsum("bi,ijc,bj->bc", x, W, z))
 
 
 class LowRankBilinearLayer(BLayer):
@@ -839,7 +839,6 @@ class LowRankBilinearLayer(BLayer):
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-        units: int = 1,
     ):
         """
         Args:
@@ -861,6 +860,7 @@ class LowRankBilinearLayer(BLayer):
         z: jax.Array,
         low_rank_dim: int,
         units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         # ensure inputs are [batch, dim]
         x = add_trailing_dim(x)
@@ -890,4 +890,4 @@ class LowRankBilinearLayer(BLayer):
         z_proj = jnp.einsum("bj,jrk->brk", z, B)  # [batch, rank, units]
         out = jnp.sum(x_proj * z_proj, axis=1)  # [batch, units]
 
-        return out
+        return activation(out)
