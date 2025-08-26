@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main)](https://coveralls.io/github/georgeberry/blayers?branch=main) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers)
+[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main)](https://coveralls.io/github/georgeberry/blayers?branch=main) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers) [![PyPI Downloads](https://static.pepy.tech/badge/blayers)](https://pepy.tech/projects/blayers)
 
 
 
@@ -163,12 +163,6 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 
 ## Batched loss
 
-**⚠️⚠️⚠️ Plates + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
-
-`Batched_Trace_ELBO` is known to have issues when your model uses `plate`. If your model needs plates, either:
-1. Batch via `plate` and use the standard `Trace_ELBO`, or
-1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
-
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
 me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
 you to use `plate` to batch in VI. Just drop your model in.
@@ -186,6 +180,12 @@ svi_result = svi_run_batched(
     **model_data,
 )
 ```
+
+**⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
+
+`Batched_Trace_ELBO` is known to have issues when your model uses `numpyro.plate`. If your model needs plates, either:
+1. Batch via `plate` and use the standard `Trace_ELBO`, or
+1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
 `Batched_Trace_ELBO` will warn if you if your model has plates.
 
