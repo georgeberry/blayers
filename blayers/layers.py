@@ -843,7 +843,7 @@ class LowRankBilinearLayer(BLayer):
             coef_dist: distribution for coefficients
             coef_kwargs: kwargs for coef distribution
             lmbda_kwargs: kwargs for scale prior
-            units: number of output dimensions
+            units: number of output  dimensions
         """
         self.lmbda_dist = lmbda_dist
         self.coef_dist = coef_dist
