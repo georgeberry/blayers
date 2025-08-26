@@ -415,7 +415,6 @@ class EmbeddingLayer(BLayer):
         x: jax.Array,
         num_categories: int,
         embedding_dim: int,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through embedding lookup.
@@ -442,7 +441,7 @@ class EmbeddingLayer(BLayer):
             ),
         )
         # matmul and return
-        return activation(beta[x.squeeze()])
+        return beta[x.squeeze()]
 
 
 class RandomEffectsLayer(BLayer):
@@ -472,7 +471,6 @@ class RandomEffectsLayer(BLayer):
         name: str,
         x: jax.Array,
         num_categories: int,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
         Forward pass through embedding lookup.
@@ -497,7 +495,7 @@ class RandomEffectsLayer(BLayer):
                 [num_categories, 1]
             ),
         )
-        return activation(beta[x.squeeze()])
+        return beta[x.squeeze()]
 
 
 class FMLayer(BLayer):
@@ -712,7 +710,6 @@ class RandomWalkLayer(BLayer):
         x: jax.Array,
         num_categories: int,
         embedding_dim: int,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """ """
 
@@ -731,7 +728,7 @@ class RandomWalkLayer(BLayer):
             ),
         )
         # matmul and return
-        return activation(_matmul_randomwalk(theta, x))
+        return _matmul_randomwalk(theta, x)
 
 
 class InteractionLayer(BLayer):
@@ -827,7 +824,7 @@ class BilinearLayer(BLayer):
             ),
         )
         # bilinear form: x^T W z for each unit
-        return activation(jnp.einsum("bi,ijc,bj->bc", x, W, z))
+        return activation(jnp.einsum("ni,iju,nj->nu", x, W, z))
 
 
 class LowRankBilinearLayer(BLayer):
@@ -886,8 +883,8 @@ class LowRankBilinearLayer(BLayer):
             ),
         )
         # project x and z into rank-r space, then take dot product
-        x_proj = jnp.einsum("bi,irk->brk", x, A)  # [batch, rank, units]
-        z_proj = jnp.einsum("bj,jrk->brk", z, B)  # [batch, rank, units]
+        x_proj = jnp.einsum("ni,ilu->nlu", x, A)  # [batch, rank, units]
+        z_proj = jnp.einsum("nj,jlu->nlu", z, B)  # [batch, rank, units]
         out = jnp.sum(x_proj * z_proj, axis=1)  # [batch, units]
 
         return activation(out)
