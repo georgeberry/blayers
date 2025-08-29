@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BLayers &#8212; blayers v0.2.2 documentation</title>
+    <title>BLayers &#8212; blayers v0.2.3 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=a6e268a8"></script>
+    <script src="_static/documentation_options.js?v=1d1eeab5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -133,7 +133,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.2 documentation</p>
+    <p class="title logo__title">blayers v0.2.3 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -379,7 +379,7 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p><a class="reference external" href="https://coveralls.io/github/georgeberry/blayers?branch=gb-fix-coverage-2"><img alt="Coverage Status" src="https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=gb-fix-coverage-2" /></a> <a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></span></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a> <a class="reference external" href="https://georgeberry.github.io/blayers/"><img alt="Read - Docs" src="https://img.shields.io/badge/Read-Docs-2ea44f" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers"><img alt="View - GitHub" src="https://img.shields.io/badge/View-GitHub-89CFF0" /></a></p>
+  <p><a class="reference external" href="https://coveralls.io/github/georgeberry/blayers?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main" /></a> <a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></span></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a> <a class="reference external" href="https://georgeberry.github.io/blayers/"><img alt="Read - Docs" src="https://img.shields.io/badge/Read-Docs-2ea44f" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers"><img alt="View - GitHub" src="https://img.shields.io/badge/View-GitHub-89CFF0" /></a> <a class="reference external" href="https://pepy.tech/projects/blayers"><img alt="PyPI Downloads" src="https://static.pepy.tech/badge/blayers" /></a></p>
 <section id="blayers">
 <h1>BLayers<a class="headerlink" href="#blayers" title="Link to this heading">#</a></h1>
 <p>The missing layers package for Bayesian inference.</p>
@@ -528,12 +528,6 @@ model is exacatly equivalent to writing the following, just using way less code.
 </section>
 <section id="batched-loss">
 <h2>Batched loss<a class="headerlink" href="#batched-loss" title="Link to this heading">#</a></h2>
-<p><strong>⚠️⚠️⚠️ Plates + <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> do not mix. ⚠️⚠️⚠️</strong></p>
-<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> is known to have issues when your model uses <code class="docutils literal notranslate"><span class="pre">plate</span></code>. If your model needs plates, either:</p>
-<ol class="arabic simple">
-<li><p>Batch via <code class="docutils literal notranslate"><span class="pre">plate</span></code> and use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code>, or</p></li>
-<li><p>Remove plates and use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code>.</p></li>
-</ol>
 <p>The default Numpyro way to fit batched VI models is to use <code class="docutils literal notranslate"><span class="pre">plate</span></code>, which confuses
 me a lot. Instead, BLayers provides <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> which does not require
 you to use <code class="docutils literal notranslate"><span class="pre">plate</span></code> to batch in VI. Just drop your model in.</p>
@@ -550,6 +544,12 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>⚠️⚠️⚠️ <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code> + <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> do not mix. ⚠️⚠️⚠️</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> is known to have issues when your model uses <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>. If your model needs plates, either:</p>
+<ol class="arabic simple">
+<li><p>Batch via <code class="docutils literal notranslate"><span class="pre">plate</span></code> and use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code>, or</p></li>
+<li><p>Remove plates and use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code>.</p></li>
+</ol>
 <p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if you if your model has plates.</p>
 <section id="reparameterizing">
 <h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
@@ -605,18 +605,19 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/layers.html">Layers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.pairwise_interactions"><code class="docutils literal notranslate"><span class="pre">pairwise_interactions()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AdaptiveLayer"><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FixedPriorLayer"><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.InterceptLayer"><code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FMLayer"><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FM3Layer"><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankInteractionLayer"><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.InteractionLayer"><code class="docutils literal notranslate"><span class="pre">InteractionLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.BilinearLayer"><code class="docutils literal notranslate"><span class="pre">BilinearLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankBilinearLayer"><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a><ul>

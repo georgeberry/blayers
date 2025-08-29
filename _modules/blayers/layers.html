@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.layers &#8212; blayers v0.2.2 documentation</title>
+    <title>blayers.layers &#8212; blayers v0.2.3 documentation</title>
   
   
   
@@ -35,7 +35,7 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=a6e268a8"></script>
+    <script src="../../_static/documentation_options.js?v=1d1eeab5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.2 documentation</p>
+    <p class="title logo__title">blayers v0.2.3 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -296,9 +296,10 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
@@ -307,9 +308,7 @@ document.write(`
 <span class="c1"># ---- Matmul functions ------------------------------------------------------ #</span>
 
 
-<div class="viewcode-block" id="pairwise_interactions">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.pairwise_interactions">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute all pairwise interactions between features in X and Y.</span>
 
@@ -323,8 +322,7 @@ document.write(`
 
     <span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span></div>
-
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -460,7 +458,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># thanks chat GPT</span>
-    <span class="n">interactions</span> <span class="o">=</span> <span class="n">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">interactions</span> <span class="o">=</span> <span class="n">_pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,du-&gt;nu&quot;</span><span class="p">,</span> <span class="n">interactions</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
@@ -477,7 +475,7 @@ document.write(`
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.BLayer.__init__">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize layer parameters.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize layer parameters. This is the Bayesian model.&quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="BLayer.__call__">
@@ -488,8 +486,6 @@ document.write(`
 <span class="sd">        Run the layer&#39;s forward pass.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            name: Name scope for sampled variables. Note due to mypy stuff we</span>
-<span class="sd">                  only write the `name` arg explicitly in subclass.</span>
 <span class="sd">            *args: Inputs to the layer.</span>
 
 <span class="sd">        Returns:</span>
@@ -521,7 +517,6 @@ document.write(`
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
         <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -530,14 +525,11 @@ document.write(`
 <span class="sd">            coef_dist: NumPyro distribution class for the coefficient prior.</span>
 <span class="sd">            coef_kwargs: Parameters for the prior distribution.</span>
 <span class="sd">            lmbda_kwargs: Parameters for the scale distribution.</span>
-<span class="sd">            units: The number of outputs</span>
-<span class="sd">            dependent_outputs: For multi-output models whether to treat the outputs as dependent. By deafult they are independent.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveLayer.__call__">
@@ -546,16 +538,20 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass with adaptive prior on coefficients.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Input data array of shape (n, d, u).</span>
+<span class="sd">            name: Variable name.</span>
+<span class="sd">            x: Input data array of shape ``(n, d)``.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Output array of shape (n, u).</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -564,17 +560,17 @@ document.write(`
         <span class="c1"># sampling block</span>
         <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
             <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
 
         <span class="c1"># matmul and return</span>
-        <span class="k">return</span> <span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span></div>
 </div>
 
 
@@ -597,7 +593,6 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -605,8 +600,7 @@ document.write(`
 <span class="sd">            coef_kwargs: Parameters to initialize the prior distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span></div>
 
 
 <div class="viewcode-block" id="FixedPriorLayer.__call__">
@@ -615,16 +609,20 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass with fixed prior.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            name: Variable name prefix.</span>
-<span class="sd">            x: Input data array of shape (n, d).</span>
+<span class="sd">            name: Variable name.</span>
+<span class="sd">            x: Input data array of shape ``(n, d)``.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Output array of shape (n, u).</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -633,12 +631,10 @@ document.write(`
         <span class="c1"># sampling block</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
-            <span class="p">),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
-        <span class="k">return</span> <span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span></div>
 </div>
 
 
@@ -661,7 +657,6 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -669,8 +664,7 @@ document.write(`
 <span class="sd">            ``coef_kwargs``: Parameters to initialize the prior distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span></div>
 
 
 <div class="viewcode-block" id="InterceptLayer.__call__">
@@ -678,156 +672,27 @@ document.write(`
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass with fixed prior.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            name: Variable name prefix.</span>
+<span class="sd">            name: Variable name.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Output array of shape (1, u).</span>
+<span class="sd">            jax.Array: Output array of shape ``(1, u)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># sampling block</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">beta</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="EmbeddingLayer">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian embedding layer for sparse categorical features.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="EmbeddingLayer.__init__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
-        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
-        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
-        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            num_embeddings: Total number of discrete embedding entries.</span>
-<span class="sd">            embedding_dim: Dimensionality of each embedding vector.</span>
-<span class="sd">            coef_dist: Prior distribution for embedding weights.</span>
-<span class="sd">            coef_kwargs: Parameters for the prior distribution.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
-
-
-<div class="viewcode-block" id="EmbeddingLayer.__call__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer.__call__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Forward pass through embedding lookup.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Integer indices of shape (n,) indicating embeddings to use.</span>
-<span class="sd">            num_categories: The number of distinct things getting an embedding</span>
-<span class="sd">            embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Embedding vectors of shape (n, m).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># sampling block</span>
-        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">num_categories</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">]</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-        <span class="c1"># matmul and return</span>
-        <span class="k">return</span> <span class="n">beta</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()]</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="RandomEffectsLayer">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">RandomEffectsLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exactly like the EmbeddingLayer but with ``embedding_dim=1``.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="RandomEffectsLayer.__init__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
-        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
-        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
-        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            ``num_embeddings``: Total number of discrete embedding entries.</span>
-<span class="sd">            ``embedding_dim``: Dimensionality of each embedding vector.</span>
-<span class="sd">            ``coef_dist``: Prior distribution for embedding weights.</span>
-<span class="sd">            ``coef_kwargs``: Parameters for the prior distribution.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
-
-
-<div class="viewcode-block" id="RandomEffectsLayer.__call__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer.__call__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Forward pass through embedding lookup.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Integer indices of shape (n,) indicating embeddings to use.</span>
-<span class="sd">            num_categories: The number of distinct things getting an embedding</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Embedding vectors of shape (n, embedding_dim).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># sampling block</span>
-        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">num_categories</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">beta</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()]</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span></div>
 </div>
 
 
@@ -861,7 +726,6 @@ document.write(`
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
         <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -869,13 +733,11 @@ document.write(`
 <span class="sd">            coef_dist: Prior for beta parameters.</span>
 <span class="sd">            coef_kwargs: Arguments for prior distribution.</span>
 <span class="sd">            lmbda_kwargs: Arguments for λ distribution.</span>
-<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
 
 
 <div class="viewcode-block" id="FMLayer.__call__">
@@ -885,16 +747,21 @@ document.write(`
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">low_rank_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass through the factorization machine layer.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Input matrix of shape (n, d).</span>
+<span class="sd">            x: Input matrix of shape ``(n, d)``.</span>
+<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Output array of shape (n,).</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get shapes and reshape if necessary</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -903,16 +770,16 @@ document.write(`
         <span class="c1"># sampling block</span>
         <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_theta&quot;</span><span class="p">,</span>
             <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
-        <span class="k">return</span> <span class="n">_matmul_factorization_machine</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_factorization_machine</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">))</span></div>
 </div>
 
 
@@ -930,7 +797,6 @@ document.write(`
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
         <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -938,13 +804,11 @@ document.write(`
 <span class="sd">            coef_dist: Prior for beta parameters.</span>
 <span class="sd">            coef_kwargs: Arguments for prior distribution.</span>
 <span class="sd">            lmbda_kwargs: Arguments for λ distribution.</span>
-<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
 
 
 <div class="viewcode-block" id="FM3Layer.__call__">
@@ -954,16 +818,21 @@ document.write(`
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">low_rank_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass through the factorization machine layer.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Input matrix of shape (n, d).</span>
+<span class="sd">            x: Input matrix of shape ``(n, d)``.</span>
+<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            jax.Array: Output array of shape (n,).</span>
+<span class="sd">            jax.Array: Output array of shape ``(n,)``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get shapes and reshape if necessary</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -972,16 +841,16 @@ document.write(`
         <span class="c1"># sampling block</span>
         <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_theta&quot;</span><span class="p">,</span>
             <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
-        <span class="k">return</span> <span class="n">_matmul_fm3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_fm3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">theta</span><span class="p">))</span></div>
 </div>
 
 
@@ -999,13 +868,11 @@ document.write(`
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
         <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
         <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
 
 
 <div class="viewcode-block" id="LowRankInteractionLayer.__call__">
@@ -1016,7 +883,23 @@ document.write(`
         <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">low_rank_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interaction between feature matrices X and Z in a low rank way. UV decomp.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input matrix of shape ``(n, d1)``.</span>
+<span class="sd">            z: Input matrix of shape ``(n, d2)``.</span>
+<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get shapes and reshape if necessary</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">z</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
@@ -1026,25 +909,382 @@ document.write(`
         <span class="c1"># sampling block</span>
         <span class="n">lmbda1</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda1&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="n">theta1</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_theta1&quot;</span><span class="p">,</span>
             <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda1</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape1</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">input_shape1</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="n">lmbda2</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda2&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="n">theta2</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_theta2&quot;</span><span class="p">,</span>
             <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda2</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape2</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">input_shape2</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">_matmul_uv_decomp</span><span class="p">(</span><span class="n">theta1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_uv_decomp</span><span class="p">(</span><span class="n">theta1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="InteractionLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InteractionLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes every interaction coefficient between two sets of inputs.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InteractionLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+
+
+<div class="viewcode-block" id="InteractionLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interaction between feature matrices X and Z in a low rank way. UV decomp.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input matrix of shape ``(n, d1)``.</span>
+<span class="sd">            z: Input matrix of shape ``(n, d2)``.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get shapes and reshape if necessary</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">input_shape1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">input_shape2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># sampling block</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda1&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta1&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">input_shape1</span> <span class="o">*</span> <span class="n">input_shape2</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_interaction</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BilinearLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.BilinearLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BilinearLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian bilinear interaction layer: computes x^T W z.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BilinearLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.BilinearLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lmbda_dist: prior on scale of coefficients</span>
+<span class="sd">            coef_dist: distribution for coefficients</span>
+<span class="sd">            coef_kwargs: kwargs for coef distribution</span>
+<span class="sd">            lmbda_kwargs: kwargs for scale prior</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+
+
+<div class="viewcode-block" id="BilinearLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.BilinearLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interaction between feature matrices X and Z in a low rank way. UV decomp.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input matrix of shape ``(n, d1)``.</span>
+<span class="sd">            z: Input matrix of shape ``(n, d2)``.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># ensure inputs are [batch, dim]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">input_shape1</span><span class="p">,</span> <span class="n">input_shape2</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># sample coefficient scales</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="c1"># full W: [input_shape1, input_shape2, units]</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">input_shape1</span><span class="p">,</span> <span class="n">input_shape2</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># bilinear form: x^T W z for each unit</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ni,iju,nj-&gt;nu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LowRankBilinearLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankBilinearLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LowRankBilinearLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian bilinear interaction layer: computes x^T W z. W low rank.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LowRankBilinearLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankBilinearLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lmbda_dist: prior on scale of coefficients</span>
+<span class="sd">            coef_dist: distribution for coefficients</span>
+<span class="sd">            coef_kwargs: kwargs for coef distribution</span>
+<span class="sd">            lmbda_kwargs: kwargs for scale prior</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+
+
+<div class="viewcode-block" id="LowRankBilinearLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankBilinearLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">low_rank_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interaction between feature matrices X and Z in a low rank way. UV decomp.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input matrix of shape ``(n, d1)``.</span>
+<span class="sd">            z: Input matrix of shape ``(n, d2)``.</span>
+<span class="sd">            low_rank_dim: Dimensionality of low-rank approximation.</span>
+<span class="sd">            units: Number of outputs.</span>
+<span class="sd">            activation: Activation function to apply to output.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Output array of shape ``(n, u)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># ensure inputs are [batch, dim]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">input_shape1</span><span class="p">,</span> <span class="n">input_shape2</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># sample coefficient scales</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_A&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">input_shape1</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_B&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">input_shape2</span><span class="p">,</span> <span class="n">low_rank_dim</span><span class="p">,</span> <span class="n">units</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># project x and z into rank-r space, then take dot product</span>
+        <span class="n">x_proj</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ni,ilu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>  <span class="c1"># [batch, rank, units]</span>
+        <span class="n">z_proj</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nj,jlu-&gt;nlu&quot;</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>  <span class="c1"># [batch, rank, units]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x_proj</span> <span class="o">*</span> <span class="n">z_proj</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, units]</span>
+
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---- Embeddings ------------------------------------------------------------ #</span>
+
+
+<div class="viewcode-block" id="EmbeddingLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian embedding layer for sparse categorical features.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EmbeddingLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lmbda_dist: NumPyro distribution class for the scale (λ) of the</span>
+<span class="sd">                prior.</span>
+<span class="sd">            coef_dist: NumPyro distribution class for the coefficient prior.</span>
+<span class="sd">            coef_kwargs: Parameters for the prior distribution.</span>
+<span class="sd">            lmbda_kwargs: Parameters for the scale distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+
+
+<div class="viewcode-block" id="EmbeddingLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass through embedding lookup.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Integer indices indicating embeddings to use.</span>
+<span class="sd">            num_categories: The number of distinct things getting an embedding</span>
+<span class="sd">            embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Embedding vectors of shape ``(n, m)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># sampling block</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">num_categories</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># matmul and return</span>
+        <span class="k">return</span> <span class="n">beta</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RandomEffectsLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RandomEffectsLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exactly like the EmbeddingLayer but with ``embedding_dim=1``.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RandomEffectsLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            num_embeddings: Total number of discrete embedding entries.</span>
+<span class="sd">            embedding_dim: Dimensionality of each embedding vector.</span>
+<span class="sd">            coef_dist: Prior distribution for embedding weights.</span>
+<span class="sd">            coef_kwargs: Parameters for the prior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+
+
+<div class="viewcode-block" id="RandomEffectsLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass through embedding lookup.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Integer indicating embeddings to use.</span>
+<span class="sd">            num_categories: The number of distinct things getting an embedding</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Embedding vectors of shape (n, embedding_dim).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># sampling block</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">num_categories</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">beta</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()]</span></div>
 </div>
 
 
@@ -1078,7 +1318,18 @@ document.write(`
         <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass through embedding lookup.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Integer indices indicating embeddings to use.</span>
+<span class="sd">            num_categories: The number of distinct things getting an embedding</span>
+<span class="sd">            embedding_dim: The size of each embedding, e.g. 2, 4, 8, etc.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array: Embedding vectors of shape ``(n, m)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># sampling block</span>
         <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
@@ -1096,59 +1347,6 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
         <span class="k">return</span> <span class="n">_matmul_randomwalk</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="InteractionLayer">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InteractionLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes every interaction coefficient between two sets of inputs.&quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="InteractionLayer.__init__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
-        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
-        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
-        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="n">units</span></div>
-
-
-<div class="viewcode-block" id="InteractionLayer.__call__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer.__call__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="c1"># get shapes and reshape if necessary</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-        <span class="n">input_shape1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">input_shape2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-
-        <span class="c1"># sampling block</span>
-        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda1&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]),</span>
-        <span class="p">)</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta1&quot;</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">input_shape1</span> <span class="o">*</span> <span class="n">input_shape2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">]</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">_matmul_interaction</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
