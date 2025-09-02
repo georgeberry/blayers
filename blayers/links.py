@@ -47,6 +47,8 @@ In a Numpyro model, you use a link like
         rate = AdaptiveLayer()('rate', x)
         return poisson_link(rate, y)
 
+
+we can make this more like layers
 """
 
 from abc import ABC, abstractmethod
