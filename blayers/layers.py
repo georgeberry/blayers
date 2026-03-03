@@ -913,7 +913,7 @@ class RandomEffectsLayer(BLayer):
 # ---- Spline utilities ------------------------------------------------------ #
 
 
-def _bspline_basis(x: jax.Array, knots: jax.Array, degree: int = 3) -> jax.Array:
+def bspline_basis(x: jax.Array, knots: jax.Array, degree: int = 3) -> jax.Array:
     """Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).
 
     Args:
@@ -1058,101 +1058,3 @@ class RandomWalkLayer(BLayer):
         )
         # matmul and return
         return _matmul_randomwalk(theta, x)
-
-
-class SplineLayer(BLayer):
-    """Bayesian B-spline layer for smooth nonlinear transformations.
-
-    Maps each input feature through a B-spline basis expansion and places
-    an adaptive hierarchical prior on the spline coefficients.  For
-    ``d``-dimensional input, independent spline bases are applied to each
-    column (additive / GAM-style structure) and the results are handled by
-    a shared coefficient matrix.
-
-    Knot positions are fixed (non-random) and must be provided at
-    construction time.  Use :func:`make_knots` to compute them from your
-    training data once, then reuse the same ``SplineLayer`` instance.
-
-    Typical usage::
-
-        knots = make_knots(x_train, num_knots=5)
-
-        @autoreshape
-        def model(x, y=None):
-            mu = SplineLayer(knots)("f", x)
-            return gaussian_link_exp(mu, y)
-    """
-
-    def __init__(
-        self,
-        knots: jax.Array,
-        degree: int = 3,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
-        coef_dist: distributions.Distribution = distributions.Normal,
-        coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
-    ):
-        """
-        Args:
-            knots: Full clamped knot vector.  Build with :func:`make_knots`.
-            degree: B-spline degree (default 3 for cubic splines).
-            lmbda_dist: Distribution for the adaptive scale λ.
-            coef_dist: Prior distribution for spline coefficients.
-            coef_kwargs: Arguments for the coefficient prior.
-            lmbda_kwargs: Arguments for the scale prior.
-        """
-        self.knots = jnp.asarray(knots)
-        self.degree = degree
-        self.num_basis = int(self.knots.shape[0]) - degree - 1
-        self.lmbda_dist = lmbda_dist
-        self.coef_dist = coef_dist
-        self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        units: int = 1,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
-    ) -> jax.Array:
-        """
-        Forward pass: expand inputs through B-spline basis, then apply
-        a Bayesian linear layer on the expanded features.
-
-        Args:
-            name: Variable name scope (used for NumPyro sample site names).
-            x: Input array of shape ``(n, d)`` or ``(n,)``.  Each column
-                receives its own B-spline basis expansion.
-            units: Number of output dimensions.
-            activation: Activation function applied to the output.
-
-        Returns:
-            jax.Array of shape ``(n, units)``.
-        """
-        x = add_trailing_dim(x)  # (n, d)
-        d = x.shape[1]
-
-        # Compute B-spline basis for each input column via vmap.
-        # basis_fn: (n,) → (n, num_basis)
-        # vmap over axis-1 of x (the d features) with out_axes=1
-        # → output shape (n, d, num_basis)
-        basis_fn = lambda col: _bspline_basis(col, self.knots, self.degree)
-        B = jax.vmap(basis_fn, in_axes=1, out_axes=1)(x)  # (n, d, num_basis)
-        B = B.reshape(x.shape[0], d * self.num_basis)  # (n, d * num_basis)
-
-        total_basis = d * self.num_basis
-
-        # Adaptive prior on spline coefficients
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
-        )
-        beta = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
-                [total_basis, units]
-            ),
-        )
-
-        return activation(_matmul_dot_product(B, beta))

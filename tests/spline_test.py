@@ -1,4 +1,4 @@
-"""Tests for SplineLayer, _bspline_basis, and make_knots."""
+"""Tests for bspline_basis and make_knots spline utilities."""
 
 import jax
 import jax.numpy as jnp
@@ -10,7 +10,7 @@ from numpyro.infer import Predictive
 
 from blayers._utils import rmse
 from blayers.fit import fit
-from blayers.layers import SplineLayer, _bspline_basis, make_knots
+from blayers.layers import AdaptiveLayer, bspline_basis, make_knots
 from blayers.links import gaussian_link_exp
 from blayers.sampling import autoreshape
 
@@ -63,13 +63,11 @@ class TestMakeKnots:
 
 
 # --------------------------------------------------------------------------- #
-# _bspline_basis
+# bspline_basis
 # --------------------------------------------------------------------------- #
 
 
 class TestBsplineBasis:
-    """Unit tests for the low-level basis function."""
-
     def _make_knots(self, x_min=0.0, x_max=1.0, num_knots=3, degree=3) -> jax.Array:
         x = jnp.linspace(x_min, x_max, 200)
         return make_knots(x, num_knots=num_knots, degree=degree)
@@ -77,7 +75,7 @@ class TestBsplineBasis:
     def test_output_shape(self) -> None:
         knots = self._make_knots(num_knots=5, degree=3)
         x = jnp.linspace(0.0, 1.0, 50)
-        B = _bspline_basis(x, knots, degree=3)
+        B = bspline_basis(x, knots, degree=3)
         num_basis = knots.shape[0] - 3 - 1
         assert B.shape == (50, num_basis)
 
@@ -85,20 +83,19 @@ class TestBsplineBasis:
         """Each row of the basis matrix should sum to 1 for interior points."""
         knots = self._make_knots(num_knots=4, degree=3)
         x = jnp.linspace(0.01, 0.99, 100)
-        B = _bspline_basis(x, knots, degree=3)
-        row_sums = B.sum(axis=1)
-        assert jnp.allclose(row_sums, 1.0, atol=1e-5)
+        B = bspline_basis(x, knots, degree=3)
+        assert jnp.allclose(B.sum(axis=1), 1.0, atol=1e-5)
 
     def test_partition_of_unity_at_boundaries(self) -> None:
         knots = self._make_knots(num_knots=3, degree=3)
         x = jnp.array([0.0, 1.0])  # exact boundary points
-        B = _bspline_basis(x, knots, degree=3)
+        B = bspline_basis(x, knots, degree=3)
         assert jnp.allclose(B.sum(axis=1), 1.0, atol=1e-5)
 
     def test_non_negative(self) -> None:
         knots = self._make_knots(num_knots=5, degree=3)
         x = jnp.linspace(0.0, 1.0, 100)
-        B = _bspline_basis(x, knots, degree=3)
+        B = bspline_basis(x, knots, degree=3)
         assert jnp.all(B >= -1e-8)
 
     def test_linear_degree(self) -> None:
@@ -106,7 +103,7 @@ class TestBsplineBasis:
         x = jnp.linspace(0.0, 1.0, 200)
         knots = make_knots(x, num_knots=4, degree=1)
         x_eval = jnp.linspace(0.01, 0.99, 50)
-        B = _bspline_basis(x_eval, knots, degree=1)
+        B = bspline_basis(x_eval, knots, degree=1)
         assert jnp.allclose(B.sum(axis=1), 1.0, atol=1e-5)
 
     def test_constant_degree(self) -> None:
@@ -114,9 +111,8 @@ class TestBsplineBasis:
         x = jnp.linspace(0.0, 1.0, 200)
         knots = make_knots(x, num_knots=3, degree=0)
         x_eval = jnp.linspace(0.01, 0.99, 50)
-        B = _bspline_basis(x_eval, knots, degree=0)
+        B = bspline_basis(x_eval, knots, degree=0)
         assert jnp.allclose(B.sum(axis=1), 1.0, atol=1e-5)
-        # Each row should be a one-hot vector
         assert jnp.all((B == 0.0) | (B == 1.0))
 
     def test_no_interior_knots(self) -> None:
@@ -124,73 +120,13 @@ class TestBsplineBasis:
         x = jnp.linspace(0.0, 1.0, 200)
         knots = make_knots(x, num_knots=0, degree=3)
         x_eval = jnp.linspace(0.01, 0.99, 30)
-        B = _bspline_basis(x_eval, knots, degree=3)
+        B = bspline_basis(x_eval, knots, degree=3)
         assert B.shape == (30, 4)
         assert jnp.allclose(B.sum(axis=1), 1.0, atol=1e-5)
 
 
 # --------------------------------------------------------------------------- #
-# SplineLayer
-# --------------------------------------------------------------------------- #
-
-
-class TestSplineLayerShapes:
-    """Check that SplineLayer produces the expected output shapes."""
-
-    def _run_model(self, model_fn, x, y=None, num_samples=5):
-        predictive = Predictive(model_fn, num_samples=num_samples)
-        return predictive(random.PRNGKey(0), x=x, y=y)
-
-    def test_output_shape_1d(self) -> None:
-        x = jnp.linspace(0.0, 1.0, 50).reshape(-1, 1)
-        knots = make_knots(x, num_knots=4)
-
-        def model(x, y=None):
-            mu = SplineLayer(knots)("f", x)
-            return gaussian_link_exp(mu, y)
-
-        samples = self._run_model(model, x)
-        # SplineLayer returns (n, units=1); obs shape is (num_samples, n, 1)
-        assert samples["obs"].shape == (5, 50, 1)
-
-    def test_output_shape_2d_input(self) -> None:
-        """Two features → each gets its own spline basis."""
-        x = random.normal(random.PRNGKey(0), (40, 2))
-        knots = make_knots(x[:, 0], num_knots=3)
-
-        def model(x, y=None):
-            mu = SplineLayer(knots)("f", x)
-            return gaussian_link_exp(mu, y)
-
-        samples = self._run_model(model, x)
-        assert samples["obs"].shape == (5, 40, 1)
-
-    def test_units_gt_1(self) -> None:
-        x = jnp.linspace(0.0, 1.0, 30).reshape(-1, 1)
-        knots = make_knots(x, num_knots=3)
-
-        def model(x, y=None):
-            return SplineLayer(knots)("f", x, units=2)
-
-        samples = self._run_model(model, x)
-        assert samples["SplineLayer_f_beta"].shape[-1] == 2
-
-    def test_num_basis_in_beta(self) -> None:
-        """Beta coefficient shape should match d * num_basis."""
-        x = jnp.ones((20, 1))
-        knots = make_knots(x, num_knots=5, degree=3)
-        layer = SplineLayer(knots, degree=3)
-        # d=1, num_basis = 5 + 3 + 1 = 9
-        assert layer.num_basis == 9
-
-    def test_degree_stored(self) -> None:
-        knots = make_knots(jnp.linspace(0, 1, 50), num_knots=3, degree=2)
-        layer = SplineLayer(knots, degree=2)
-        assert layer.degree == 2
-
-
-# --------------------------------------------------------------------------- #
-# Integration: fit() with SplineLayer
+# Integration: bspline_basis + AdaptiveLayer + fit()
 # --------------------------------------------------------------------------- #
 
 
@@ -211,13 +147,14 @@ def nonlinear_data() -> dict[str, jax.Array]:
 
 
 def test_spline_fit_runs(nonlinear_data: dict[str, jax.Array]) -> None:
-    """SplineLayer should work end-to-end with fit()."""
+    """bspline_basis + AdaptiveLayer should work end-to-end with fit()."""
     x = nonlinear_data["x"]
     knots = make_knots(x, num_knots=6)
+    B = bspline_basis(x, knots)  # (n, num_basis) — precomputed outside model
 
     @autoreshape
-    def spline_model(x, y=None):
-        mu = SplineLayer(knots)("f", x)
+    def spline_model(B, y=None):
+        mu = AdaptiveLayer()("f", B)
         return gaussian_link_exp(mu, y)
 
     result = fit(
@@ -227,7 +164,7 @@ def test_spline_fit_runs(nonlinear_data: dict[str, jax.Array]) -> None:
         num_epochs=20,
         lr=0.05,
         seed=0,
-        x=x,
+        B=B,
     )
     assert result.params is not None
     assert result.losses is not None
@@ -238,10 +175,11 @@ def test_spline_learns_nonlinear(nonlinear_data: dict[str, jax.Array]) -> None:
     x = nonlinear_data["x"]
     y = nonlinear_data["y"]
     knots = make_knots(x, num_knots=8)
+    B = bspline_basis(x, knots)
 
     @autoreshape
-    def spline_model(x, y=None):
-        mu = SplineLayer(knots)("f", x)
+    def spline_model(B, y=None):
+        mu = AdaptiveLayer()("f", B)
         return gaussian_link_exp(mu, y)
 
     result = fit(
@@ -251,10 +189,40 @@ def test_spline_learns_nonlinear(nonlinear_data: dict[str, jax.Array]) -> None:
         num_epochs=100,
         lr=0.05,
         seed=0,
-        x=x,
+        B=B,
     )
-    preds = result.predict(x=x, num_samples=100)
+    preds = result.predict(B=B, num_samples=100)
     prediction_rmse = float(rmse(preds.mean, y))
     baseline_rmse = float(rmse(jnp.zeros_like(y), y))
-    # A decent spline should do meaningfully better than predicting zero
     assert prediction_rmse < baseline_rmse * 0.5
+
+
+def test_additive_spline_model(nonlinear_data: dict[str, jax.Array]) -> None:
+    """Two-feature additive model: each feature gets its own basis expansion."""
+    x = nonlinear_data["x"]
+    y = nonlinear_data["y"]
+
+    # Two features on different scales — each gets its own knots
+    x1 = x
+    x2 = x * 2.0 + 1.0
+    knots1 = make_knots(x1, num_knots=5)
+    knots2 = make_knots(x2, num_knots=5)
+    B1 = bspline_basis(x1, knots1)  # (n, num_basis)
+    B2 = bspline_basis(x2, knots2)  # (n, num_basis)
+
+    @autoreshape
+    def additive_model(B1, B2, y=None):
+        mu = AdaptiveLayer()("f1", B1) + AdaptiveLayer()("f2", B2)
+        return gaussian_link_exp(mu, y)
+
+    result = fit(
+        additive_model,
+        y=y,
+        batch_size=256,
+        num_epochs=20,
+        lr=0.05,
+        seed=0,
+        B1=B1,
+        B2=B2,
+    )
+    assert result.params is not None
