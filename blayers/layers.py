@@ -29,6 +29,7 @@ from typing import Any, Callable
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
+import numpy as np
 from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
@@ -909,6 +910,103 @@ class RandomEffectsLayer(BLayer):
         return beta[x.squeeze()]
 
 
+# ---- Spline utilities ------------------------------------------------------ #
+
+
+def _bspline_basis(x: jax.Array, knots: jax.Array, degree: int = 3) -> jax.Array:
+    """Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).
+
+    Args:
+        x: 1D input array of shape ``(n,)``.
+        knots: Full clamped knot vector of shape ``(num_basis + degree + 1,)``.
+            Use ``make_knots`` to construct this.
+        degree: B-spline degree (3 = cubic).
+
+    Returns:
+        jax.Array of shape ``(n, num_basis)`` where
+        ``num_basis = len(knots) - degree - 1``.
+    """
+    x_col = x[:, None]  # (n, 1) for broadcasting against knot intervals
+
+    # Degree-0 base case: B_{i,0}(t) = 1 if knots[i] <= t < knots[i+1].
+    # We use a half-open interval [left, right) everywhere; the right boundary
+    # special case (x == knots[-1]) is corrected after the recursion.
+    left = knots[:-1]  # (num_knots - 1,)
+    right = knots[1:]  # (num_knots - 1,)
+    B = jnp.where((x_col >= left) & (x_col < right), 1.0, 0.0)  # (n, num_knots-1)
+
+    # Cox–de Boor recursion
+    for p in range(1, degree + 1):
+        m = knots.shape[0] - p - 1  # number of basis functions at this level
+
+        ti = knots[:m]  # t_i         (m,)
+        ti_p = knots[p : m + p]  # t_{i+p}      (m,)
+        d1 = ti_p - ti  # denominator of left term
+
+        ti_p1 = knots[p + 1 : m + p + 1]  # t_{i+p+1}   (m,)
+        ti_1 = knots[1 : m + 1]  # t_{i+1}     (m,)
+        d2 = ti_p1 - ti_1  # denominator of right term
+
+        # Avoid division by zero (degenerate knot intervals → coefficient = 0)
+        alpha = jnp.where(d1 > 0, (x_col - ti) / jnp.where(d1 > 0, d1, 1.0), 0.0)
+        beta_c = jnp.where(
+            d2 > 0, (ti_p1 - x_col) / jnp.where(d2 > 0, d2, 1.0), 0.0
+        )
+
+        B = alpha * B[:, :m] + beta_c * B[:, 1 : m + 1]
+
+    # For clamped splines, x == knots[-1] (the right boundary) must evaluate
+    # to 1 on the last basis function.  The half-open base-case convention
+    # misses this point because the rightmost repeated boundary intervals are
+    # all degenerate ([t_max, t_max)), so we fix it here after the recursion.
+    at_right = (x == knots[-1])  # (n,)
+    last_basis = jnp.zeros_like(B).at[:, -1].set(1.0)  # (n, num_basis), 1 in last col
+    B = jnp.where(at_right[:, None], last_basis, B)
+
+    return B  # (n, num_basis)
+
+
+def make_knots(x: Any, num_knots: int, degree: int = 3) -> jax.Array:
+    """Compute a clamped B-spline knot vector from data.
+
+    Interior knots are placed at evenly-spaced quantiles of ``x``.  Call
+    this once at preprocessing time (outside any JAX-traced function) and
+    pass the returned array to ``SplineLayer``.
+
+    Args:
+        x: Reference data (any shape).  Only used for quantile computation.
+        num_knots: Number of interior knots.  The total number of basis
+            functions will be ``num_knots + degree + 1``.
+        degree: B-spline degree (default 3 for cubic splines).
+
+    Returns:
+        Full clamped knot vector as a ``jax.Array`` of shape
+        ``(num_knots + 2 * (degree + 1),)``.
+
+    Example::
+
+        knots = make_knots(x_train, num_knots=5)
+        layer = SplineLayer(knots)
+    """
+    x_np = np.asarray(x).ravel()
+    x_min, x_max = float(x_np.min()), float(x_np.max())
+
+    if num_knots > 0:
+        quantiles = np.linspace(0.0, 1.0, num_knots + 2)[1:-1]
+        interior = np.quantile(x_np, quantiles)
+    else:
+        interior = np.array([], dtype=float)
+
+    full_knots = np.concatenate(
+        [
+            np.full(degree + 1, x_min),
+            interior,
+            np.full(degree + 1, x_max),
+        ]
+    )
+    return jnp.array(full_knots)
+
+
 class RandomWalkLayer(BLayer):
     """Random walk of embedding dim ``m``, defaults to Gaussian walk."""
 
@@ -960,3 +1058,101 @@ class RandomWalkLayer(BLayer):
         )
         # matmul and return
         return _matmul_randomwalk(theta, x)
+
+
+class SplineLayer(BLayer):
+    """Bayesian B-spline layer for smooth nonlinear transformations.
+
+    Maps each input feature through a B-spline basis expansion and places
+    an adaptive hierarchical prior on the spline coefficients.  For
+    ``d``-dimensional input, independent spline bases are applied to each
+    column (additive / GAM-style structure) and the results are handled by
+    a shared coefficient matrix.
+
+    Knot positions are fixed (non-random) and must be provided at
+    construction time.  Use :func:`make_knots` to compute them from your
+    training data once, then reuse the same ``SplineLayer`` instance.
+
+    Typical usage::
+
+        knots = make_knots(x_train, num_knots=5)
+
+        @autoreshape
+        def model(x, y=None):
+            mu = SplineLayer(knots)("f", x)
+            return gaussian_link_exp(mu, y)
+    """
+
+    def __init__(
+        self,
+        knots: jax.Array,
+        degree: int = 3,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+    ):
+        """
+        Args:
+            knots: Full clamped knot vector.  Build with :func:`make_knots`.
+            degree: B-spline degree (default 3 for cubic splines).
+            lmbda_dist: Distribution for the adaptive scale λ.
+            coef_dist: Prior distribution for spline coefficients.
+            coef_kwargs: Arguments for the coefficient prior.
+            lmbda_kwargs: Arguments for the scale prior.
+        """
+        self.knots = jnp.asarray(knots)
+        self.degree = degree
+        self.num_basis = int(self.knots.shape[0]) - degree - 1
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Forward pass: expand inputs through B-spline basis, then apply
+        a Bayesian linear layer on the expanded features.
+
+        Args:
+            name: Variable name scope (used for NumPyro sample site names).
+            x: Input array of shape ``(n, d)`` or ``(n,)``.  Each column
+                receives its own B-spline basis expansion.
+            units: Number of output dimensions.
+            activation: Activation function applied to the output.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)  # (n, d)
+        d = x.shape[1]
+
+        # Compute B-spline basis for each input column via vmap.
+        # basis_fn: (n,) → (n, num_basis)
+        # vmap over axis-1 of x (the d features) with out_axes=1
+        # → output shape (n, d, num_basis)
+        basis_fn = lambda col: _bspline_basis(col, self.knots, self.degree)
+        B = jax.vmap(basis_fn, in_axes=1, out_axes=1)(x)  # (n, d, num_basis)
+        B = B.reshape(x.shape[0], d * self.num_basis)  # (n, d * num_basis)
+
+        total_basis = d * self.num_basis
+
+        # Adaptive prior on spline coefficients
+        lmbda = sample(
+            name=f"{self.__class__.__name__}_{name}_lmbda",
+            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        )
+        beta = sample(
+            name=f"{self.__class__.__name__}_{name}_beta",
+            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+                [total_basis, units]
+            ),
+        )
+
+        return activation(_matmul_dot_product(B, beta))
