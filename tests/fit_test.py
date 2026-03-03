@@ -411,6 +411,105 @@ def test_fit_mcmc_summary(sim_data: dict[str, jax.Array]) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# SVGD
+# --------------------------------------------------------------------------- #
+
+
+def test_fit_svgd(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=300,
+        num_particles=10,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+    )
+
+    assert result.method == "svgd"
+    assert result.params is not None
+    assert result.guide is not None
+    assert result.losses is not None
+    assert result.num_particles == 10
+
+
+def test_fit_svgd_predict(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=300,
+        num_particles=10,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+    )
+
+    preds = result.predict(x=sim_data["x"], num_samples=20)
+
+    assert isinstance(preds, Predictions)
+    assert preds.mean.shape == (NUM_OBS,)
+    assert preds.std.shape == (NUM_OBS,)
+    # samples should be flattened: (num_samples * num_particles, n)
+    assert preds.samples.shape[0] == 20 * 10
+
+
+def test_fit_svgd_summary(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=300,
+        num_particles=10,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+    )
+
+    summary = result.summary()
+
+    assert isinstance(summary, dict)
+    assert len(summary) > 0
+    for name, stats in summary.items():
+        assert "mean" in stats
+        assert "std" in stats
+
+
+def test_fit_svgd_with_constants(sim_data: dict[str, jax.Array]) -> None:
+    """Constants should be auto-bound for SVGD just like VI."""
+    result = fit(
+        model_with_constant,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=100,
+        num_particles=5,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+        n_features=K,
+    )
+
+    preds = result.predict(x=sim_data["x"])
+    assert preds.mean.shape == (NUM_OBS,)
+
+
+def test_fit_svgd_num_epochs(sim_data: dict[str, jax.Array]) -> None:
+    """num_epochs should work for SVGD (equivalent to num_steps)."""
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_epochs=100,
+        num_particles=5,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+    )
+    assert result.params is not None
+
+
+# --------------------------------------------------------------------------- #
 # Quality check: does fit() actually learn?
 # --------------------------------------------------------------------------- #
 
@@ -435,3 +534,26 @@ def test_fit_learns_coefficients(sim_data: dict[str, jax.Array]) -> None:
 
     # Model should do meaningfully better than predicting zero
     assert prediction_rmse < baseline_rmse * 0.5
+
+
+def test_fit_svgd_learns(sim_data: dict[str, jax.Array]) -> None:
+    """Verify that SVGD produces predictions better than chance."""
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=2000,
+        num_particles=20,
+        lr=0.05,
+        seed=0,
+        x=sim_data["x"],
+    )
+
+    preds = result.predict(x=sim_data["x"], num_samples=50)
+    y = sim_data["y"]
+
+    prediction_rmse = float(rmse(preds.mean, y))
+    baseline_rmse = float(rmse(jnp.zeros_like(y), y))
+
+    # SVGD converges slower than VI, so use a looser threshold
+    assert prediction_rmse < baseline_rmse * 0.75

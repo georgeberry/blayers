@@ -28,6 +28,10 @@ Example
     result = fit(model, y=y_train, method="mcmc", x=x_train)
     preds = result.predict(x=x_test)
 
+    # Fit with Stein Variational Gradient Descent
+    result = fit(model, y=y_train, method="svgd", num_steps=500, x=x_train)
+    preds = result.predict(x=x_test)
+
 
 Constants (non-array kwargs) are automatically bound via ``functools.partial``,
 so you never need to wrap your model manually:
@@ -158,12 +162,14 @@ class FittedModel:
 
     model_fn: Callable
     method: str
-    # VI
+    # VI / SVGD
     params: dict | None = None
     guide: Any | None = None
     losses: jax.Array | None = field(default=None, repr=False)
     # MCMC
     posterior_samples: dict | None = field(default=None, repr=False)
+    # SVGD
+    num_particles: int | None = None
 
     def predict(
         self,
@@ -198,6 +204,14 @@ class FittedModel:
                 params=self.params,
                 num_samples=num_samples,
             )
+        elif self.method == "svgd":
+            predictive = Predictive(
+                self.model_fn,
+                guide=self.guide,
+                params=self.params,
+                num_samples=num_samples,
+                batch_ndims=1,
+            )
         elif self.method == "mcmc":
             predictive = Predictive(
                 self.model_fn,
@@ -208,6 +222,11 @@ class FittedModel:
 
         ppc = predictive(rng_key, **data)
         obs = ppc["obs"]
+
+        if self.method == "svgd":
+            # obs shape is (num_samples, num_particles, n, ...) — flatten the
+            # sample and particle dimensions so mean/std marginalise over both.
+            obs = obs.reshape(-1, *obs.shape[2:])
 
         return Predictions(
             mean=obs.mean(axis=0).squeeze(),
@@ -251,6 +270,12 @@ class FittedModel:
                 num_samples=num_samples,
             )
             samples = predictive(rng_key, **data)
+        elif self.method == "svgd":
+            # For SVGD the params dict already contains per-particle values
+            # with shape (num_particles, ...).  Treat particles as samples.
+            if self.params is None:
+                raise RuntimeError("SVGD results missing params")
+            samples = self.params
         elif self.method == "mcmc":
             if self.posterior_samples is None:
                 raise RuntimeError("MCMC results missing posterior_samples")
@@ -281,7 +306,7 @@ def fit(
     model_fn: Callable,
     *,
     y: jax.Array,
-    method: Literal["vi", "mcmc"] = "vi",
+    method: Literal["vi", "mcmc", "svgd"] = "vi",
     # VI parameters
     batch_size: int | None = None,
     num_epochs: int | None = None,
@@ -295,11 +320,14 @@ def fit(
     num_mcmc_samples: int = 1000,
     num_chains: int = 1,
     autoreparam_model: bool = True,
+    # SVGD parameters
+    num_particles: int = 10,
+    kernel_fn: Any = None,
     # Common
     seed: int = 0,
     **kwargs: Any,
 ) -> FittedModel:
-    """Fit a blayers model via variational inference or MCMC.
+    """Fit a blayers model via variational inference, MCMC, or SVGD.
 
     Keyword arguments that are JAX/numpy arrays are treated as **data** and
     batched during training.  Non-array keyword arguments (ints, floats,
@@ -313,7 +341,7 @@ def fit(
         A NumPyro model function that accepts ``y`` as a keyword argument.
     y : jax.Array
         Target / observed values.
-    method : ``"vi"`` or ``"mcmc"``
+    method : ``"vi"``, ``"mcmc"``, or ``"svgd"``
         Inference method.  Default ``"vi"``.
 
     batch_size : int, optional
@@ -321,21 +349,23 @@ def fit(
         (appropriate for small datasets).
     num_epochs : int, optional
         Number of full passes through the data.  Exactly one of *num_epochs*
-        or *num_steps* is required for VI.
+        or *num_steps* is required for VI and SVGD.
     num_steps : int, optional
         Total number of gradient updates.  Exactly one of *num_epochs* or
-        *num_steps* is required for VI.
+        *num_steps* is required for VI and SVGD.
     lr : float
-        Peak learning rate (default 0.01).  Ignored when *optimizer* is given.
+        Peak learning rate (default 0.01).  For SVGD this is the Adagrad
+        step size.  Ignored when *optimizer* is given.
     schedule : str
         LR schedule name: ``"cosine"`` (default), ``"warmup_cosine"``, or
-        ``"constant"``.  Ignored when *optimizer* is given.
+        ``"constant"``.  Only used for VI.
     guide : type or AutoGuide instance, optional
         Variational family.  Pass a **class** (instantiated on *model_fn*) or
         a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.
+        Not used for SVGD (which auto-generates an ``AutoDelta`` guide).
     optimizer : optax.GradientTransformation, optional
         A fully-constructed optax optimizer.  When provided, *lr* and
-        *schedule* are ignored.
+        *schedule* are ignored.  Not used for SVGD.
 
     num_warmup : int
         MCMC warmup iterations (default 500).
@@ -346,6 +376,11 @@ def fit(
     autoreparam_model : bool
         Automatically reparameterize LocScale distributions for MCMC
         (default True).
+
+    num_particles : int
+        Number of Stein particles (default 10).  Only used for SVGD.
+    kernel_fn : SteinKernel, optional
+        Kernel for SVGD.  Default: ``RBFKernel()``.
 
     seed : int
         Random seed (default 0).
@@ -373,6 +408,11 @@ def fit(
     MCMC:
 
     >>> result = fit(model, y=y_train, method="mcmc", x=x_train)
+
+    SVGD:
+
+    >>> result = fit(model, y=y_train, method="svgd", num_steps=500,
+    ...              num_particles=20, x=x_train)
     """
     # ------------------------------------------------------------------ #
     # Separate arrays (→ batched data) from scalars (→ partial-bound)
@@ -410,8 +450,27 @@ def fit(
             autoreparam_model=autoreparam_model,
             rng_key=rng_key,
         )
+    elif method == "svgd":
+        # Compute total steps (same logic as unbatched VI)
+        if (num_epochs is None) == (num_steps is None):
+            raise ValueError(
+                "Provide exactly one of num_epochs or num_steps, not both (or neither)."
+            )
+        total_steps = num_epochs if num_epochs is not None else num_steps
+
+        return _fit_svgd(
+            bound_model,
+            data=data,
+            num_steps=total_steps,
+            num_particles=num_particles,
+            kernel_fn=kernel_fn,
+            lr=lr,
+            rng_key=rng_key,
+        )
     else:
-        raise ValueError(f"Unknown method {method!r}. Use 'vi' or 'mcmc'.")
+        raise ValueError(
+            f"Unknown method {method!r}. Use 'vi', 'mcmc', or 'svgd'."
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -532,4 +591,45 @@ def _fit_mcmc(
         model_fn=model_fn,
         method="mcmc",
         posterior_samples=mcmc.get_samples(),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# SVGD
+# --------------------------------------------------------------------------- #
+
+
+def _fit_svgd(
+    model_fn: Callable,
+    *,
+    data: dict[str, jax.Array],
+    num_steps: int,
+    num_particles: int,
+    kernel_fn: Any,
+    lr: float,
+    rng_key: jax.Array,
+) -> FittedModel:
+    """Fit a model with Stein Variational Gradient Descent.
+
+    Uses ``numpyro.contrib.einstein.SVGD`` which auto-generates an
+    ``AutoDelta`` guide and maintains a set of particles that are
+    iteratively pushed toward the posterior via a kernelised gradient.
+    """
+    from numpyro.contrib.einstein import SVGD, RBFKernel
+    from numpyro.optim import Adagrad
+
+    if kernel_fn is None:
+        kernel_fn = RBFKernel()
+
+    opt = Adagrad(step_size=lr)
+    svgd = SVGD(model_fn, opt, kernel_fn, num_stein_particles=num_particles)
+    result = svgd.run(rng_key, num_steps, **data)
+
+    return FittedModel(
+        model_fn=model_fn,
+        method="svgd",
+        params=result.params,
+        guide=svgd.guide,
+        losses=result.losses,
+        num_particles=num_particles,
     )
