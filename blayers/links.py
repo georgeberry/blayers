@@ -53,6 +53,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import jax
+import jax.nn as jnn
+import jax.numpy as jnp
 import numpyro.distributions as dists
 from numpyro import sample
 
@@ -162,3 +164,98 @@ gaussian_link_exp = LocScaleLink()
 
 lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
 """Lognormal link function with exponentially distributed sigma."""
+
+
+def ordinal_link(
+    mu: jax.Array,
+    y: jax.Array | None = None,
+    num_classes: int = None,
+) -> jax.Array:
+    """Cumulative logit (proportional odds) link for ordinal outcomes.
+
+    Models P(Y = k | μ) via:
+
+    .. math::
+        P(Y \\leq k \\mid \\mu) = \\sigma(c_k - \\mu)
+
+    Cutpoints are sampled with an ordered parameterisation: the first is
+    free (``Normal(0, 2)``), subsequent ones add ``Exponential`` increments.
+
+    Args:
+        mu: Linear predictor, shape ``(n, 1)`` or ``(n,)``.
+        y: Integer observations in ``{0, 1, ..., num_classes - 1}``, or
+            ``None`` for prior predictive / inference.
+        num_classes: Number of ordinal categories (required).
+
+    Returns:
+        Sample site ``"obs"`` with integer values in ``{0, …, num_classes-1}``.
+    """
+    mu_flat = mu.squeeze()  # (n,)
+    K = num_classes
+
+    # Ordered cutpoints: anchor + positive increments
+    c0 = sample("ordinal_c0", dists.Normal(0.0, 2.0))
+    if K > 2:
+        gaps = sample("ordinal_gaps", dists.Exponential(1.0).expand([K - 2]))
+        cutpoints = jnp.concatenate([c0[None], c0 + jnp.cumsum(gaps)])
+    else:
+        cutpoints = c0[None]  # (1,) — single cutpoint for binary ordinal
+
+    # Cumulative probs: (n, K-1)
+    cum_probs = jnn.sigmoid(cutpoints - mu_flat[:, None])
+
+    # Class probs: (n, K)
+    probs_parts = [cum_probs[:, :1]]
+    if K > 2:
+        probs_parts.append(jnp.diff(cum_probs, axis=1))
+    probs_parts.append(1.0 - cum_probs[:, -1:])
+    probs = jnp.clip(jnp.concatenate(probs_parts, axis=1), 1e-8, 1.0)
+
+    return sample("obs", dists.Categorical(probs=probs), obs=y)
+
+
+def zip_link(
+    mu: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Zero-inflated Poisson link for count data with excess zeros.
+
+    Models a mixture: with probability π the outcome is exactly 0 (the
+    "inflated" component); with probability 1 - π the outcome follows
+    Poisson(λ) where λ = exp(μ).  π is a global scalar learned from data.
+
+    Args:
+        mu: Log Poisson rate, shape ``(n, 1)`` or ``(n,)``.
+        y: Non-negative integer observations, or ``None``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    rate = jnp.exp(mu.squeeze())  # (n,)
+    gate = sample("zip_gate", dists.Beta(1.0, 10.0))
+    return sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
+
+
+def beta_link(
+    mu: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Beta link for proportional outcomes strictly in (0, 1).
+
+    Maps the linear predictor to a mean via sigmoid, then uses a learned
+    global precision φ:
+
+    .. math::
+        \\bar{\\mu} = \\sigma(\\mu), \\quad
+        y \\sim Beta(\\bar{\\mu}\\,\\phi,\\; (1 - \\bar{\\mu})\\,\\phi)
+
+    Args:
+        mu: Logit of the mean proportion, shape ``(n, 1)`` or ``(n,)``.
+        y: Observed proportions in (0, 1), or ``None``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    mean = jnn.sigmoid(mu.squeeze())  # (n,) in (0, 1)
+    phi = sample("beta_phi", dists.Exponential(1.0))
+    return sample("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), obs=y)
