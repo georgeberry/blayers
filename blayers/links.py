@@ -166,6 +166,53 @@ lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
 """Lognormal link function with exponentially distributed sigma."""
 
 
+def gaussian_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+    scale: float | jax.Array | None = None,
+    untransformed_scale: jax.Array | None = None,
+) -> jax.Array:
+    """Gaussian link with flexible scale specification.
+
+    Exactly one of ``scale`` or ``untransformed_scale`` should be supplied, or neither.
+
+    * **Default** (neither): ``sigma ~ Exponential(1)`` is learned from data.
+    * **``scale``**: a known positive std passed directly — e.g. per-observation
+      stds from XGBoost quantile regression.
+    * **``untransformed_scale``**: an unbounded linear predictor transformed via
+      ``softplus`` internally.  Prefer this when the scale comes from a learned
+      layer so gradients stay bounded.
+
+    .. code-block:: python
+
+        # Default: learn sigma
+        gaussian_link(mu, y)
+
+        # Already-positive std (e.g. from XGBoost)
+        gaussian_link(mu, y, scale=pred_std)
+
+        # Learned scale from a layer — pass raw output, softplus applied internally
+        raw = AdaptiveLayer()("log_scale", x)
+        gaussian_link(mu, y, untransformed_scale=raw)
+
+    Args:
+        y_hat: Predicted mean, shape ``(n, 1)`` or ``(n,)``.
+        y: Observed values, or ``None`` for prior predictive / inference.
+        scale: Known positive standard deviation. Scalar or broadcastable array.
+        untransformed_scale: Unbounded array transformed via ``softplus`` internally.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    if untransformed_scale is not None:
+        sigma = jax.nn.softplus(untransformed_scale)
+    elif scale is not None:
+        sigma = scale
+    else:
+        sigma = sample("sigma", dists.Exponential(rate=1.0))
+    return sample("obs", dists.Normal(loc=y_hat, scale=sigma), obs=y)
+
+
 def ordinal_link(
     mu: jax.Array,
     y: jax.Array | None = None,

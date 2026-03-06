@@ -1,4 +1,4 @@
-"""Tests for HorseshoeLayer, AttentionLayer, ordinal_link, zip_link, beta_link."""
+"""Tests for HorseshoeLayer, AttentionLayer, ordinal_link, zip_link, beta_link, gaussian_link."""
 
 import jax
 import jax.numpy as jnp
@@ -13,6 +13,7 @@ from blayers.fit import fit
 from blayers.layers import AdaptiveLayer, AttentionLayer, HorseshoeLayer
 from blayers.links import (
     beta_link,
+    gaussian_link,
     gaussian_link_exp,
     ordinal_link,
     zip_link,
@@ -354,3 +355,124 @@ class TestBetaLink:
         result = fit(prop_model, y=y, x=x, num_steps=300, lr=0.02, seed=0)
         assert result.params is not None
 
+
+# --------------------------------------------------------------------------- #
+# gaussian_link
+# --------------------------------------------------------------------------- #
+
+
+class TestGaussianLink:
+    def test_default_learns_sigma(self) -> None:
+        """With no scale arg, a 'sigma' sample site should appear."""
+        x = random.normal(random.PRNGKey(0), (20, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y)
+
+        samples = _prior_samples(model, x=x)
+        assert "sigma" in samples
+        assert jnp.all(samples["sigma"] > 0.0)
+
+    def test_fixed_scalar_no_sigma_site(self) -> None:
+        """Passing a scalar scale should suppress the 'sigma' sample site."""
+        x = random.normal(random.PRNGKey(0), (20, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y, scale=0.5)
+
+        samples = _prior_samples(model, x=x)
+        assert "sigma" not in samples
+
+    def test_fixed_array_scale(self) -> None:
+        """Per-observation scale array should work without a sigma site."""
+        x = random.normal(random.PRNGKey(0), (20, 2))
+        scale_arr = jnp.full((20,), 0.3)
+
+        @autoreshape
+        def model(x, y=None, scale=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y, scale=scale)
+
+        samples = _prior_samples(model, x=x, scale=scale_arr)
+        assert "sigma" not in samples
+        assert samples["obs"].shape == (4, 20, 1)
+
+    def test_obs_shape_default(self) -> None:
+        x = random.normal(random.PRNGKey(0), (30, 3))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y)
+
+        samples = _prior_samples(model, x=x)
+        assert samples["obs"].shape == (4, 30, 1)
+
+    def test_fit_runs_default(self) -> None:
+        x = random.normal(random.PRNGKey(0), (NUM_OBS, 3))
+        y = x[:, 0] * 2.0 + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.5
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y)
+
+        result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
+        assert result.params is not None
+
+    def test_fit_runs_fixed_scale(self) -> None:
+        x = random.normal(random.PRNGKey(0), (NUM_OBS, 3))
+        y = x[:, 0] * 2.0 + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.5
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y, scale=0.5)
+
+        result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
+        assert result.params is not None
+
+    def test_untransformed_scale_no_sigma_site(self) -> None:
+        """untransformed_scale should apply softplus and suppress the learned sigma site."""
+        x = random.normal(random.PRNGKey(0), (20, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            raw = AdaptiveLayer()("untransformed_scale", x)
+            return gaussian_link(mu, y, untransformed_scale=raw)
+
+        samples = _prior_samples(model, x=x)
+        assert "sigma" not in samples
+        assert samples["obs"].shape == (4, 20, 1)
+
+    def test_untransformed_scale_positive(self) -> None:
+        """softplus of any real input is strictly positive."""
+        x = random.normal(random.PRNGKey(0), (50, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            raw = AdaptiveLayer()("untransformed_scale", x)
+            return gaussian_link(mu, y, untransformed_scale=raw)
+
+        samples = _prior_samples(model, num_samples=8, x=x)
+        # Normal scale must be positive; if it weren't numpyro would error
+        assert samples["obs"].shape[1:] == (50, 1)
+
+    def test_untransformed_scale_fit_runs(self) -> None:
+        x = random.normal(random.PRNGKey(0), (NUM_OBS, 3))
+        y = x[:, 0] * 2.0 + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.5
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            raw = AdaptiveLayer()("untransformed_scale", x)
+            return gaussian_link(mu, y, untransformed_scale=raw)
+
+        result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
+        assert result.params is not None
