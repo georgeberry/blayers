@@ -156,7 +156,7 @@ The full set of layers included with BLayers:
 - `BilinearLayer` — Bilinear interaction: `x^T W z`.
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `HorseshoeLayer` — Horseshoe prior for sparse regression.
-- `AttentionLayer` — Single-head self-attention over the feature dimension.
+- `AttentionLayer` — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation ([Gorishniy et al. 2021](https://arxiv.org/abs/2106.11959)).
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 

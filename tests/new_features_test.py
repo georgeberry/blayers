@@ -148,8 +148,38 @@ class TestAttentionLayer:
             return AttentionLayer()("a", x, head_dim=4)
 
         samples = _prior_samples(model, x=x)
-        for site in ["W_emb", "W_Q", "W_K", "W_V", "W_out"]:
+        for site in ["W_emb", "W_bias", "W_Q", "W_K", "W_V", "W_out"]:
             assert f"AttentionLayer_a_{site}" in samples
+
+    def test_multihead_output_shape(self) -> None:
+        x = random.normal(random.PRNGKey(0), (30, 5))
+
+        def model(x):
+            out = AttentionLayer()("attn", x, head_dim=4, num_heads=2)
+            return deterministic("out", out)
+
+        samples = _prior_samples(model, x=x)
+        assert samples["out"].shape == (4, 30, 1)
+
+    def test_multihead_units(self) -> None:
+        x = random.normal(random.PRNGKey(0), (30, 5))
+
+        def model(x):
+            out = AttentionLayer()("attn", x, head_dim=4, num_heads=2, units=3)
+            return deterministic("out", out)
+
+        samples = _prior_samples(model, x=x)
+        assert samples["out"].shape == (4, 30, 3)
+
+    def test_bias_site_present(self) -> None:
+        """W_bias (per-column identity embedding) should be sampled."""
+        x = random.normal(random.PRNGKey(0), (20, 4))
+
+        def model(x):
+            return AttentionLayer()("a", x, head_dim=4)
+
+        samples = _prior_samples(model, x=x)
+        assert "AttentionLayer_a_W_bias" in samples
 
     def test_fit_runs(self) -> None:
         """AttentionLayer should run end-to-end with fit()."""
@@ -159,6 +189,18 @@ class TestAttentionLayer:
         @autoreshape
         def attn_model(x, y=None):
             mu = AttentionLayer()("attn", x, head_dim=4)
+            return gaussian_link_exp(mu, y)
+
+        result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
+        assert result.params is not None
+
+    def test_multihead_fit_runs(self) -> None:
+        x = random.normal(random.PRNGKey(0), (NUM_OBS, 4))
+        y = jnp.sin(x[:, 0]) * x[:, 1] + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.2
+
+        @autoreshape
+        def attn_model(x, y=None):
+            mu = AttentionLayer()("attn", x, head_dim=4, num_heads=2)
             return gaussian_link_exp(mu, y)
 
         result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
