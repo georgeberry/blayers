@@ -150,16 +150,98 @@ The full set of layers included with BLayers:
 - `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
 - `RandomWalkLayer` — Random walk prior over coefficients (e.g., Gaussian walk).
 - `InteractionLayer` — All pairwise interactions between two feature sets.
+- `BilinearLayer` — Bilinear interaction: `x^T W z`.
+- `LowRankBilinearLayer` — Low-rank bilinear interaction.
+- `HorseshoeLayer` — Horseshoe prior for sparse regression.
+- `AttentionLayer` — Single-head self-attention over the feature dimension.
+
+All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 
 ## Links
 
 We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available links:
 
-- `logit_link` — Bernoulli link for logistic regression.
-- `poission_link` — Poisson link with rate `y_hat`.
+- `gaussian_link` — Gaussian link with flexible scale: learned (default), fixed, or from a layer (see below).
 - `gaussian_link_exp` — Gaussian link with `Exp` distributed homoskedastic `sigma`.
 - `lognormal_link_exp` — LogNormal link with `Exp` distributed homoskedastic `sigma`
+- `logit_link` — Bernoulli link for logistic regression.
+- `poission_link` — Poisson link with rate `y_hat`.
 - `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
+- `ordinal_link` — Cumulative logit / proportional odds for ordinal outcomes.
+- `zip_link` — Zero-inflated Poisson for count data with excess zeros.
+- `beta_link` — Beta regression for proportions strictly in (0, 1).
+
+### `gaussian_link` scale modes
+
+```python
+# Default: sigma ~ Exp(1) learned from data
+gaussian_link(mu, y)
+
+# Fixed known scale (e.g. from XGBoost quantile regression)
+gaussian_link(mu, y, scale=pred_std)
+
+# Learned scale from a layer — softplus applied internally for stable gradients
+raw = AdaptiveLayer()("log_sigma", x)
+gaussian_link(mu, y, untransformed_scale=raw)
+```
+
+## Splines
+
+Non-linear transformations via B-splines. Compute the basis matrix once with `make_knots` + `bspline_basis`, then pass it to any layer.
+
+```python
+from blayers.layers import make_knots, bspline_basis, AdaptiveLayer
+from blayers.links import gaussian_link
+
+knots = make_knots(x_train, num_knots=10)   # clamped knot vector from data quantiles
+
+def model(x, y=None):
+    B = bspline_basis(x, knots)             # (n, num_basis) design matrix
+    f = AdaptiveLayer()("f", B)
+    return gaussian_link(f, y)
+```
+
+Additive models are straightforward:
+
+```python
+def model(x1, x2, y=None):
+    f1 = AdaptiveLayer()("f1", bspline_basis(x1, knots1))
+    f2 = AdaptiveLayer()("f2", bspline_basis(x2, knots2))
+    return gaussian_link(f1 + f2, y)
+```
+
+## fit() helpers
+
+`fit()` handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.
+
+```python
+from blayers.fit import fit
+from blayers.sampling import autoreshape
+
+@autoreshape
+def model(x, y=None):
+    mu = AdaptiveLayer()("beta", x)
+    intercept = InterceptLayer()("intercept")
+    return gaussian_link(mu + intercept, y)
+
+# Variational Inference (default)
+result = fit(model, y=y, num_steps=1000, batch_size=256, lr=0.01, x=X)
+
+# MCMC
+result = fit(model, y=y, method="mcmc", num_mcmc_samples=1000, num_warmup=500, x=X)
+
+# SVGD
+result = fit(model, y=y, method="svgd", num_steps=1000, num_particles=20, x=X)
+```
+
+`result.predict()` returns a `Predictions` object with `.mean`, `.std`, and `.samples`. `result.summary()` returns posterior stats per latent variable.
+
+```python
+preds = result.predict(x=X, num_samples=500)
+summary = result.summary(x=X)
+```
+
+Keyword arguments that are JAX arrays are treated as **data** (batched during training). Non-array kwargs are bound as **constants**.
 
 ## Batched loss
 
