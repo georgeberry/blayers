@@ -358,7 +358,12 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-scale-modes"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>
@@ -513,18 +518,92 @@ model is exacatly equivalent to writing the following, just using way less code.
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code> — Low-rank interaction between two feature sets.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Random walk prior over coefficients (e.g., Gaussian walk).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InteractionLayer</span></code> — All pairwise interactions between two feature sets.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BilinearLayer</span></code> — Bilinear interaction: <code class="docutils literal notranslate"><span class="pre">x^T</span> <span class="pre">W</span> <span class="pre">z</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code> — Low-rank bilinear interaction.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code> — Single-head self-attention over the feature dimension.</p></li>
 </ul>
+<p>All layer prior kwargs are validated at construction time — bad kwargs raise <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> immediately.</p>
 </section>
 <section id="links">
 <h2>Links<a class="headerlink" href="#links" title="Link to this heading">#</a></h2>
 <p>We provide link helpers in <code class="docutils literal notranslate"><span class="pre">links.py</span></code> to reduce Numpyro boilerplate. Available links:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for logistic regression.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code> — Poisson link with rate <code class="docutils literal notranslate"><span class="pre">y_hat</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> — Gaussian link with flexible scale: learned (default), fixed, or from a layer (see below).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code> — Gaussian link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code> — LogNormal link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for logistic regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poission_link</span></code> — Poisson link with rate <code class="docutils literal notranslate"><span class="pre">y_hat</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — Uses <code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">~</span> <span class="pre">Exponential(rate)</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">~</span> <span class="pre">NegativeBinomial2(mean=y_hat,</span> <span class="pre">concentration=sigma)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ordinal_link</span></code> — Cumulative logit / proportional odds for ordinal outcomes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zip_link</span></code> — Zero-inflated Poisson for count data with excess zeros.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta_link</span></code> — Beta regression for proportions strictly in (0, 1).</p></li>
 </ul>
+<section id="gaussian-link-scale-modes">
+<h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes<a class="headerlink" href="#gaussian-link-scale-modes" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default: sigma ~ Exp(1) learned from data</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Fixed known scale (e.g. from XGBoost quantile regression)</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_std</span><span class="p">)</span>
+
+<span class="c1"># Learned scale from a layer — softplus applied internally for stable gradients</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;log_sigma&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">untransformed_scale</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="splines">
+<h2>Splines<a class="headerlink" href="#splines" title="Link to this heading">#</a></h2>
+<p>Non-linear transformations via B-splines. Compute the basis matrix once with <code class="docutils literal notranslate"><span class="pre">make_knots</span></code> + <code class="docutils literal notranslate"><span class="pre">bspline_basis</span></code>, then pass it to any layer.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_knots</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">,</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
+<span class="n">knots</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>   <span class="c1"># clamped knot vector from data quantiles</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">knots</span><span class="p">)</span>             <span class="c1"># (n, num_basis) design matrix</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Additive models are straightforward:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f1&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">knots1</span><span class="p">))</span>
+    <span class="n">f2</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f2&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">knots2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f1</span> <span class="o">+</span> <span class="n">f2</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-helpers">
+<h2>fit() helpers<a class="headerlink" href="#fit-helpers" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreshape</span>
+
+<span class="nd">@autoreshape</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">intercept</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Variational Inference (default)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># MCMC</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mcmc&quot;</span><span class="p">,</span> <span class="n">num_mcmc_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># SVGD</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;svgd&quot;</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_particles</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">result.predict()</span></code> returns a <code class="docutils literal notranslate"><span class="pre">Predictions</span></code> object with <code class="docutils literal notranslate"><span class="pre">.mean</span></code>, <code class="docutils literal notranslate"><span class="pre">.std</span></code>, and <code class="docutils literal notranslate"><span class="pre">.samples</span></code>. <code class="docutils literal notranslate"><span class="pre">result.summary()</span></code> returns posterior stats per latent variable.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">preds</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Keyword arguments that are JAX arrays are treated as <strong>data</strong> (batched during training). Non-array kwargs are bound as <strong>constants</strong>.</p>
 </section>
 <section id="batched-loss">
 <h2>Batched loss<a class="headerlink" href="#batched-loss" title="Link to this heading">#</a></h2>
@@ -698,7 +777,12 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-scale-modes"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>
