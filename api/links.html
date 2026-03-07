@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Links &#8212; blayers v0.2.3 documentation</title>
+    <title>Links &#8212; blayers 0.2.4 documentation</title>
   
   
   
@@ -36,10 +36,11 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../_static/documentation_options.js?v=1d1eeab5"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/documentation_options.js?v=fd1d25c9"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/links';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -132,7 +133,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.3 documentation</p>
+    <p class="title logo__title">blayers 0.2.4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -368,6 +369,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poission_link"><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link_exp"><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link_exp"><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.ordinal_link"><code class="docutils literal notranslate"><span class="pre">ordinal_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zip_link"><code class="docutils literal notranslate"><span class="pre">zip_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -419,7 +424,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.links.Link">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">Link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">Link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -428,7 +433,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.links.Link.__init__">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link.__init__" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize link parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -442,7 +447,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.links.Link.__call__">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link.__call__" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#Link.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.Link.__call__" title="Link to this definition">#</a></dt>
 <dd><p>Execute the link function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -458,7 +463,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.links.LocScaleLink">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">LocScaleLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Exponential'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_kwargs={'rate':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_kwargs={}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#LocScaleLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.LocScaleLink" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">LocScaleLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Exponential'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'rate':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#LocScaleLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.LocScaleLink" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.links.Link" title="blayers.links.Link"><code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -472,7 +477,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.links.LocScaleLink.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Exponential'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_kwargs={'rate':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_dist=&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_kwargs={}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#LocScaleLink.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.LocScaleLink.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Exponential'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'rate':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#LocScaleLink.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.LocScaleLink.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize link parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -511,7 +516,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.links.SingleParamLink">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">SingleParamLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_dist=&lt;function</span> <span class="pre">Bernoulli&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#SingleParamLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.SingleParamLink" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">SingleParamLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">Bernoulli&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#SingleParamLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.SingleParamLink" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.links.Link" title="blayers.links.Link"><code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -520,7 +525,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.links.SingleParamLink.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_dist=&lt;function</span> <span class="pre">Bernoulli&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#SingleParamLink.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.SingleParamLink.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">Bernoulli&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#SingleParamLink.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.SingleParamLink.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize link parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -572,7 +577,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py data">
 <dt class="sig sig-object py" id="blayers.links.logit_link">
-<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">logit_link</span></span><a class="headerlink" href="#blayers.links.logit_link" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">logit_link</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;blayers.links.SingleParamLink</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#blayers.links.logit_link" title="Link to this definition">#</a></dt>
 <dd><p>Logit link function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -590,7 +595,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py data">
 <dt class="sig sig-object py" id="blayers.links.poission_link">
-<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">poission_link</span></span><a class="headerlink" href="#blayers.links.poission_link" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">poission_link</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;blayers.links.SingleParamLink</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#blayers.links.poission_link" title="Link to this definition">#</a></dt>
 <dd><p>Poisson link function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -608,7 +613,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py data">
 <dt class="sig sig-object py" id="blayers.links.gaussian_link_exp">
-<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">gaussian_link_exp</span></span><a class="headerlink" href="#blayers.links.gaussian_link_exp" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">gaussian_link_exp</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;blayers.links.LocScaleLink</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#blayers.links.gaussian_link_exp" title="Link to this definition">#</a></dt>
 <dd><p>Gaussian link function with exponentially distributed sigma.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -626,7 +631,7 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 
 <dl class="py data">
 <dt class="sig sig-object py" id="blayers.links.lognormal_link_exp">
-<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">lognormal_link_exp</span></span><a class="headerlink" href="#blayers.links.lognormal_link_exp" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">lognormal_link_exp</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;blayers.links.LocScaleLink</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#blayers.links.lognormal_link_exp" title="Link to this definition">#</a></dt>
 <dd><p>Lognormal link function with exponentially distributed sigma.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -638,6 +643,123 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.gaussian_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">gaussian_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">untransformed_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#gaussian_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.gaussian_link" title="Link to this definition">#</a></dt>
+<dd><p>Gaussian link with flexible scale specification.</p>
+<p>Exactly one of <code class="docutils literal notranslate"><span class="pre">scale</span></code> or <code class="docutils literal notranslate"><span class="pre">untransformed_scale</span></code> should be supplied, or neither.</p>
+<ul class="simple">
+<li><p><strong>Default</strong> (neither): <code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">~</span> <span class="pre">Exponential(1)</span></code> is learned from data.</p></li>
+<li><p><strong>``scale``</strong>: a known positive std passed directly — e.g. per-observation
+stds from XGBoost quantile regression.</p></li>
+<li><p><strong>``untransformed_scale``</strong>: an unbounded linear predictor transformed via
+<code class="docutils literal notranslate"><span class="pre">softplus</span></code> internally.  Prefer this when the scale comes from a learned
+layer so gradients stay bounded.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default: learn sigma</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Already-positive std (e.g. from XGBoost)</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_std</span><span class="p">)</span>
+
+<span class="c1"># Learned scale from a layer — pass raw output, softplus applied internally</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;log_scale&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">untransformed_scale</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>) – Predicted mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed values, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for prior predictive / inference.</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive standard deviation. Scalar or broadcastable array.</p></li>
+<li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded array transformed via <code class="docutils literal notranslate"><span class="pre">softplus</span></code> internally.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.ordinal_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">ordinal_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#ordinal_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.ordinal_link" title="Link to this definition">#</a></dt>
+<dd><p>Cumulative logit (proportional odds) link for ordinal outcomes.</p>
+<p>Models P(Y = k | μ) via:</p>
+<div class="math notranslate nohighlight">
+\[P(Y \leq k \mid \mu) = \sigma(c_k - \mu)\]</div>
+<p>Cutpoints are sampled with an ordered parameterisation: the first is
+free (<code class="docutils literal notranslate"><span class="pre">Normal(0,</span> <span class="pre">2)</span></code>), subsequent ones add <code class="docutils literal notranslate"><span class="pre">Exponential</span></code> increments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>Array</em>) – Linear predictor, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Integer observations in <code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1,</span> <span class="pre">...,</span> <span class="pre">num_classes</span> <span class="pre">-</span> <span class="pre">1}</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> for prior predictive / inference.</p></li>
+<li><p><strong>num_classes</strong> (<em>int</em>) – Number of ordinal categories (required).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code> with integer values in <code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">…,</span> <span class="pre">num_classes-1}</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.zip_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">zip_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#zip_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.zip_link" title="Link to this definition">#</a></dt>
+<dd><p>Zero-inflated Poisson link for count data with excess zeros.</p>
+<p>Models a mixture: with probability π the outcome is exactly 0 (the
+“inflated” component); with probability 1 - π the outcome follows
+Poisson(λ) where λ = exp(μ).  π is a global scalar learned from data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>Array</em>) – Log Poisson rate, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Non-negative integer observations, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.beta_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">beta_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#beta_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.beta_link" title="Link to this definition">#</a></dt>
+<dd><p>Beta link for proportional outcomes strictly in (0, 1).</p>
+<p>Maps the linear predictor to a mean via sigmoid, then uses a learned
+global precision φ:</p>
+<div class="math notranslate nohighlight">
+\[\bar{\mu} = \sigma(\mu), \quad
+y \sim Beta(\bar{\mu}\,\phi,\; (1 - \bar{\mu})\,\phi)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>Array</em>) – Logit of the mean proportion, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed proportions in (0, 1), or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -709,6 +831,10 @@ the <code class="docutils literal notranslate"><span class="pre">LocScaleLink</s
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poission_link"><code class="docutils literal notranslate"><span class="pre">poission_link</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link_exp"><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link_exp"><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.ordinal_link"><code class="docutils literal notranslate"><span class="pre">ordinal_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zip_link"><code class="docutils literal notranslate"><span class="pre">zip_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
   </nav></div>
 

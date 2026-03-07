@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.layers &#8212; blayers v0.2.3 documentation</title>
+    <title>blayers.layers &#8212; blayers 0.2.4 documentation</title>
   
   
   
@@ -35,9 +35,9 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=1d1eeab5"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=fd1d25c9"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/layers';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.3 documentation</p>
+    <p class="title logo__title">blayers 0.2.4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -301,6 +301,7 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_trailing_dim</span>
@@ -466,6 +467,22 @@ document.write(`
 <span class="c1"># ---- Classes --------------------------------------------------------------- #</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eagerly instantiate distributions at construction time to catch bad kwargs.</span>
+
+<span class="sd">    Raises ``TypeError`` immediately if the supplied kwargs are incompatible</span>
+<span class="sd">    with the distribution, rather than waiting until the layer is called.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lmbda_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="n">lmbda_kwargs</span><span class="p">)</span>
+            <span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">coef_kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="n">coef_kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid distribution kwargs: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+
 <div class="viewcode-block" id="BLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.BLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BLayer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -529,7 +546,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveLayer.__call__">
@@ -600,7 +618,8 @@ document.write(`
 <span class="sd">            coef_kwargs: Parameters to initialize the prior distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FixedPriorLayer.__call__">
@@ -664,7 +683,8 @@ document.write(`
 <span class="sd">            ``coef_kwargs``: Parameters to initialize the prior distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InterceptLayer.__call__">
@@ -737,7 +757,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FMLayer.__call__">
@@ -808,7 +829,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FM3Layer.__call__">
@@ -872,7 +894,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LowRankInteractionLayer.__call__">
@@ -949,7 +972,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="InteractionLayer.__call__">
@@ -1022,7 +1046,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BilinearLayer.__call__">
@@ -1095,7 +1120,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LowRankBilinearLayer.__call__">
@@ -1184,7 +1210,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="EmbeddingLayer.__call__">
@@ -1250,7 +1277,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RandomEffectsLayer.__call__">
@@ -1289,6 +1317,109 @@ document.write(`
 
 
 
+<span class="c1"># ---- Spline utilities ------------------------------------------------------ #</span>
+
+
+<div class="viewcode-block" id="bspline_basis">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.bspline_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">knots</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: 1D input array of shape ``(n,)``.</span>
+<span class="sd">        knots: Full clamped knot vector of shape ``(num_basis + degree + 1,)``.</span>
+<span class="sd">            Use ``make_knots`` to construct this.</span>
+<span class="sd">        degree: B-spline degree (3 = cubic).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        jax.Array of shape ``(n, num_basis)`` where</span>
+<span class="sd">        ``num_basis = len(knots) - degree - 1``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_col</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># (n, 1) for broadcasting against knot intervals</span>
+
+    <span class="c1"># Degree-0 base case: B_{i,0}(t) = 1 if knots[i] &lt;= t &lt; knots[i+1].</span>
+    <span class="c1"># We use a half-open interval [left, right) everywhere; the right boundary</span>
+    <span class="c1"># special case (x == knots[-1]) is corrected after the recursion.</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># (num_knots - 1,)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># (num_knots - 1,)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">x_col</span> <span class="o">&gt;=</span> <span class="n">left</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x_col</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># (n, num_knots-1)</span>
+
+    <span class="c1"># Cox–de Boor recursion</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">knots</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># number of basis functions at this level</span>
+
+        <span class="n">ti</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[:</span><span class="n">m</span><span class="p">]</span>  <span class="c1"># t_i         (m,)</span>
+        <span class="n">ti_p</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span>  <span class="c1"># t_{i+p}      (m,)</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">ti_p</span> <span class="o">-</span> <span class="n">ti</span>  <span class="c1"># denominator of left term</span>
+
+        <span class="n">ti_p1</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># t_{i+p+1}   (m,)</span>
+        <span class="n">ti_1</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># t_{i+1}     (m,)</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">ti_p1</span> <span class="o">-</span> <span class="n">ti_1</span>  <span class="c1"># denominator of right term</span>
+
+        <span class="c1"># Avoid division by zero (degenerate knot intervals → coefficient = 0)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">x_col</span> <span class="o">-</span> <span class="n">ti</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">beta_c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">d2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">ti_p1</span> <span class="o">-</span> <span class="n">x_col</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="n">B</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="p">:</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">beta_c</span> <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># For clamped splines, x == knots[-1] (the right boundary) must evaluate</span>
+    <span class="c1"># to 1 on the last basis function.  The half-open base-case convention</span>
+    <span class="c1"># misses this point because the rightmost repeated boundary intervals are</span>
+    <span class="c1"># all degenerate ([t_max, t_max)), so we fix it here after the recursion.</span>
+    <span class="n">at_right</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># (n,)</span>
+    <span class="n">last_basis</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">B</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># (n, num_basis), 1 in last col</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">at_right</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">last_basis</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">B</span>  <span class="c1"># (n, num_basis)</span></div>
+
+
+
+<div class="viewcode-block" id="make_knots">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.make_knots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_knots</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">num_knots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute a clamped B-spline knot vector from data.</span>
+
+<span class="sd">    Interior knots are placed at evenly-spaced quantiles of ``x``.  Call</span>
+<span class="sd">    this once at preprocessing time (outside any JAX-traced function) and</span>
+<span class="sd">    pass the returned array to ``SplineLayer``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: Reference data (any shape).  Only used for quantile computation.</span>
+<span class="sd">        num_knots: Number of interior knots.  The total number of basis</span>
+<span class="sd">            functions will be ``num_knots + degree + 1``.</span>
+<span class="sd">        degree: B-spline degree (default 3 for cubic splines).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Full clamped knot vector as a ``jax.Array`` of shape</span>
+<span class="sd">        ``(num_knots + 2 * (degree + 1),)``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        knots = make_knots(x_train, num_knots=5)</span>
+<span class="sd">        layer = SplineLayer(knots)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_np</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">num_knots</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">num_knots</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">interior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_np</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">interior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">full_knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x_min</span><span class="p">),</span>
+            <span class="n">interior</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x_max</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">full_knots</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="RandomWalkLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomWalkLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RandomWalkLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
@@ -1306,7 +1437,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RandomWalkLayer.__call__">
@@ -1347,6 +1479,225 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
         <span class="k">return</span> <span class="n">_matmul_randomwalk</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---- Sparse priors --------------------------------------------------------- #</span>
+
+
+<div class="viewcode-block" id="HorseshoeLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.HorseshoeLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HorseshoeLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian layer with horseshoe prior for sparse regression.</span>
+
+<span class="sd">    Implements the (regularized) horseshoe prior of Piironen &amp; Vehtari (2017).</span>
+
+<span class="sd">    Basic horseshoe:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\tau \\sim HalfCauchy(1), \\quad</span>
+<span class="sd">        \\lambda_j \\sim HalfCauchy(1), \\quad</span>
+<span class="sd">        \\beta_j \\sim Normal(0,\\; \\tau \\lambda_j)</span>
+
+<span class="sd">    Regularized horseshoe (``slab_scale`` set) — prevents large coefficients</span>
+<span class="sd">    from escaping the slab:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\tilde{\\lambda}_j^2 = \\frac{c^2 \\lambda_j^2}{c^2 + \\tau^2 \\lambda_j^2},</span>
+<span class="sd">        \\quad c^2 \\sim InverseGamma(s/2,\\; s/2 \\cdot scale_{slab}^2)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HorseshoeLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.HorseshoeLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">slab_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">slab_df</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            slab_scale: If set, uses the regularized horseshoe with this slab</span>
+<span class="sd">                scale.  ``None`` gives the plain horseshoe.</span>
+<span class="sd">            slab_df: Degrees of freedom for the slab variance prior (only</span>
+<span class="sd">                used when ``slab_scale`` is set).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slab_scale</span> <span class="o">=</span> <span class="n">slab_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">=</span> <span class="n">slab_df</span></div>
+
+
+<div class="viewcode-block" id="HorseshoeLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.HorseshoeLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass with horseshoe prior on coefficients.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input array of shape ``(n, d)``.</span>
+<span class="sd">            units: Number of output dimensions.</span>
+<span class="sd">            activation: Activation function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array of shape ``(n, units)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># Global shrinkage: one scale per output unit</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_tau&quot;</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="c1"># Local shrinkage: one per feature per output unit</span>
+        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda&quot;</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Soft upper bound on coefficient size via a finite-variance slab</span>
+            <span class="n">c2</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_c2&quot;</span><span class="p">,</span>
+                <span class="n">distributions</span><span class="o">.</span><span class="n">InverseGamma</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">slab_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">lmbda_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">c2</span> <span class="o">*</span> <span class="n">lmbda</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">c2</span> <span class="o">+</span> <span class="n">tau</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">lmbda</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">lmbda_tilde</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">lmbda</span>  <span class="c1"># (d, units)</span>
+
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span></div>
+</div>
+
+
+
+<span class="c1"># ---- Attention ------------------------------------------------------------- #</span>
+
+
+<div class="viewcode-block" id="AttentionLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AttentionLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttentionLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single-head Bayesian self-attention over the feature dimension.</span>
+
+<span class="sd">    Treats the ``d`` input features as tokens and computes scaled dot-product</span>
+<span class="sd">    self-attention across them for each observation.  Useful for capturing</span>
+<span class="sd">    input-dependent feature interactions in tabular settings.</span>
+
+<span class="sd">    For each observation ``x_i ∈ R^d``:</span>
+
+<span class="sd">    1. Feature tokens: ``H_j = x_{i,j} · W_emb_j``  (``head_dim``-dim each)</span>
+<span class="sd">    2. ``Q, K, V = H W_Q, H W_K, H W_V``</span>
+<span class="sd">    3. ``Attn = softmax(Q Kᵀ / √head_dim)``</span>
+<span class="sd">    4. ``Out = Attn V``  →  mean-pool over features  →  project to ``units``</span>
+
+<span class="sd">    Requires ``d ≥ 2`` for attention to be non-trivial.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AttentionLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AttentionLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lmbda_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+        <span class="n">lmbda_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span> <span class="o">=</span> <span class="n">lmbda_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span> <span class="o">=</span> <span class="n">lmbda_kwargs</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">,</span> <span class="n">lmbda_dist</span><span class="p">,</span> <span class="n">lmbda_kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AttentionLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AttentionLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">head_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: Variable name scope.</span>
+<span class="sd">            x: Input of shape ``(n, d)``.  Each column is a feature token.</span>
+<span class="sd">            head_dim: Dimensionality of Q/K/V projections.</span>
+<span class="sd">            units: Number of output dimensions.</span>
+<span class="sd">            activation: Activation function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            jax.Array of shape ``(n, units)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">head_dim</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># Feature embeddings: H[i,j] = x[i,j] * W_emb[j]  → (n, d, h)</span>
+        <span class="n">lmbda_emb</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda_emb&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">W_emb</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W_emb&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda_emb</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">W_emb</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># (n, d, h)</span>
+
+        <span class="c1"># Q, K, V projections  (shared adaptive scale for all three)</span>
+        <span class="n">lmbda_qkv</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda_qkv&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">W_Q</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W_Q&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda_qkv</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">W_K</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W_K&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda_qkv</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">W_V</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W_V&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda_qkv</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ndh,hk-&gt;ndk&quot;</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W_Q</span><span class="p">)</span>  <span class="c1"># (n, d, h)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ndh,hk-&gt;ndk&quot;</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W_K</span><span class="p">)</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ndh,hk-&gt;ndk&quot;</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W_V</span><span class="p">)</span>
+
+        <span class="c1"># Scaled dot-product attention</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nqh,nkh-&gt;nqk&quot;</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span><span class="o">**</span><span class="mf">0.5</span>  <span class="c1"># (n, d, d)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nqk,nkh-&gt;nqh&quot;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>  <span class="c1"># (n, d, h)</span>
+
+        <span class="n">pooled</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (n, h)</span>
+
+        <span class="c1"># Output projection</span>
+        <span class="n">lmbda_out</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_lmbda_out&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lmbda_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">lmbda_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">W_out</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_W_out&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">lmbda_out</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">pooled</span> <span class="o">@</span> <span class="n">W_out</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

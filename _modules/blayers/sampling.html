@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.sampling &#8212; blayers v0.2.3 documentation</title>
+    <title>blayers.sampling &#8212; blayers 0.2.4 documentation</title>
   
   
   
@@ -35,9 +35,9 @@
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="../../_static/documentation_options.js?v=1d1eeab5"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/documentation_options.js?v=fd1d25c9"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/sampling';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">blayers v0.2.3 documentation</p>
+    <p class="title logo__title">blayers 0.2.4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -271,20 +271,28 @@ document.write(`
                   
   <h1>Source code for blayers.sampling</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">We offer some help for automatically reparameterizing `LocScaleDist`s for</span>
-<span class="sd">your MCMC models. Use like</span>
+<span class="sd">Model decorators for blayers.</span>
 
+<span class="sd">- `reshape_inputs`: Auto-reshape 1D arrays to (n, 1)</span>
+<span class="sd">- `autoreparam`: Auto-reparameterize LocScale distributions for MCMC</span>
+
+<span class="sd">Usage:</span>
 <span class="sd">```</span>
+<span class="sd">@reshape_inputs</span>
 <span class="sd">@autoreparam</span>
-<span class="sd">def my_model():</span>
+<span class="sd">def my_model(x, y=None):</span>
 <span class="sd">    ...</span>
 <span class="sd">```</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">reparam</span> <span class="k">as</span> <span class="n">numpyro_reparam</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">seed</span><span class="p">,</span> <span class="n">trace</span>
@@ -298,6 +306,56 @@ document.write(`
     <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Laplace</span>
     <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gumbel</span>
 <span class="p">)</span>
+
+
+<div class="viewcode-block" id="autoreshape">
+<a class="viewcode-back" href="../../api/sampling.html#blayers.sampling.autoreshape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">autoreshape</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator that ensures all array inputs have shape (n, d), not (n,).</span>
+
+<span class="sd">    blayers expects arrays with explicit trailing dimensions. This decorator</span>
+<span class="sd">    auto-reshapes 1D arrays to (n, 1) so you don&#39;t have to do it manually.</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">        @autoreshape</span>
+<span class="sd">        def model(x, y=None):</span>
+<span class="sd">            mu = AdaptiveLayer()(&#39;mu&#39;, x)</span>
+<span class="sd">            return gaussian_link_exp(mu, y)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_logged</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Only log once per decorated function</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">nonlocal</span> <span class="n">_logged</span>
+        <span class="n">reshaped</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Reshape positional args</span>
+        <span class="n">new_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">reshaped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;arg[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]: </span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -&gt; (</span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, 1)&quot;</span><span class="p">)</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">new_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+        <span class="c1"># Reshape keyword args</span>
+        <span class="n">new_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">reshaped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -&gt; (</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, 1)&quot;</span><span class="p">)</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">new_kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+        <span class="k">if</span> <span class="n">reshaped</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_logged</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;autoreshape(</span><span class="si">{</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">): reshaped </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">reshaped</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">_logged</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">new_args</span><span class="p">,</span> <span class="o">**</span><span class="n">new_kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">wrapped</span></div>
+
 
 
 <div class="viewcode-block" id="autoreparam">
