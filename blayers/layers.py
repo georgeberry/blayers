@@ -29,6 +29,7 @@ from typing import Any, Callable
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
+import numpy as np
 from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
@@ -194,6 +195,22 @@ def _matmul_interaction(
 # ---- Classes --------------------------------------------------------------- #
 
 
+def _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist=None, lmbda_kwargs=None):
+    """Eagerly instantiate distributions at construction time to catch bad kwargs.
+
+    Raises ``TypeError`` immediately if the supplied kwargs are incompatible
+    with the distribution, rather than waiting until the layer is called.
+    """
+    try:
+        if lmbda_dist is not None:
+            lmbda_dist(**lmbda_kwargs)
+            coef_dist(scale=1.0, **coef_kwargs)
+        else:
+            coef_dist(**coef_kwargs)
+    except TypeError as e:
+        raise TypeError(f"Invalid distribution kwargs: {e}") from e
+
+
 class BLayer(ABC):
     """Abstract base class for Bayesian layers. Lays out an interface."""
 
@@ -245,6 +262,7 @@ class AdaptiveLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -307,6 +325,7 @@ class FixedPriorLayer(BLayer):
         """
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs)
 
     def __call__(
         self,
@@ -362,6 +381,7 @@ class InterceptLayer(BLayer):
         """
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs)
 
     def __call__(
         self,
@@ -426,6 +446,7 @@ class FMLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -488,6 +509,7 @@ class FM3Layer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -543,6 +565,7 @@ class LowRankInteractionLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -611,6 +634,7 @@ class InteractionLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -675,6 +699,7 @@ class BilinearLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -739,6 +764,7 @@ class LowRankBilinearLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -819,6 +845,7 @@ class EmbeddingLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -876,6 +903,7 @@ class RandomEffectsLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -909,6 +937,103 @@ class RandomEffectsLayer(BLayer):
         return beta[x.squeeze()]
 
 
+# ---- Spline utilities ------------------------------------------------------ #
+
+
+def bspline_basis(x: jax.Array, knots: jax.Array, degree: int = 3) -> jax.Array:
+    """Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).
+
+    Args:
+        x: 1D input array of shape ``(n,)``.
+        knots: Full clamped knot vector of shape ``(num_basis + degree + 1,)``.
+            Use ``make_knots`` to construct this.
+        degree: B-spline degree (3 = cubic).
+
+    Returns:
+        jax.Array of shape ``(n, num_basis)`` where
+        ``num_basis = len(knots) - degree - 1``.
+    """
+    x_col = x[:, None]  # (n, 1) for broadcasting against knot intervals
+
+    # Degree-0 base case: B_{i,0}(t) = 1 if knots[i] <= t < knots[i+1].
+    # We use a half-open interval [left, right) everywhere; the right boundary
+    # special case (x == knots[-1]) is corrected after the recursion.
+    left = knots[:-1]  # (num_knots - 1,)
+    right = knots[1:]  # (num_knots - 1,)
+    B = jnp.where((x_col >= left) & (x_col < right), 1.0, 0.0)  # (n, num_knots-1)
+
+    # Cox–de Boor recursion
+    for p in range(1, degree + 1):
+        m = knots.shape[0] - p - 1  # number of basis functions at this level
+
+        ti = knots[:m]  # t_i         (m,)
+        ti_p = knots[p : m + p]  # t_{i+p}      (m,)
+        d1 = ti_p - ti  # denominator of left term
+
+        ti_p1 = knots[p + 1 : m + p + 1]  # t_{i+p+1}   (m,)
+        ti_1 = knots[1 : m + 1]  # t_{i+1}     (m,)
+        d2 = ti_p1 - ti_1  # denominator of right term
+
+        # Avoid division by zero (degenerate knot intervals → coefficient = 0)
+        alpha = jnp.where(d1 > 0, (x_col - ti) / jnp.where(d1 > 0, d1, 1.0), 0.0)
+        beta_c = jnp.where(
+            d2 > 0, (ti_p1 - x_col) / jnp.where(d2 > 0, d2, 1.0), 0.0
+        )
+
+        B = alpha * B[:, :m] + beta_c * B[:, 1 : m + 1]
+
+    # For clamped splines, x == knots[-1] (the right boundary) must evaluate
+    # to 1 on the last basis function.  The half-open base-case convention
+    # misses this point because the rightmost repeated boundary intervals are
+    # all degenerate ([t_max, t_max)), so we fix it here after the recursion.
+    at_right = (x == knots[-1])  # (n,)
+    last_basis = jnp.zeros_like(B).at[:, -1].set(1.0)  # (n, num_basis), 1 in last col
+    B = jnp.where(at_right[:, None], last_basis, B)
+
+    return B  # (n, num_basis)
+
+
+def make_knots(x: Any, num_knots: int, degree: int = 3) -> jax.Array:
+    """Compute a clamped B-spline knot vector from data.
+
+    Interior knots are placed at evenly-spaced quantiles of ``x``.  Call
+    this once at preprocessing time (outside any JAX-traced function) and
+    pass the returned array to ``SplineLayer``.
+
+    Args:
+        x: Reference data (any shape).  Only used for quantile computation.
+        num_knots: Number of interior knots.  The total number of basis
+            functions will be ``num_knots + degree + 1``.
+        degree: B-spline degree (default 3 for cubic splines).
+
+    Returns:
+        Full clamped knot vector as a ``jax.Array`` of shape
+        ``(num_knots + 2 * (degree + 1),)``.
+
+    Example::
+
+        knots = make_knots(x_train, num_knots=5)
+        layer = SplineLayer(knots)
+    """
+    x_np = np.asarray(x).ravel()
+    x_min, x_max = float(x_np.min()), float(x_np.max())
+
+    if num_knots > 0:
+        quantiles = np.linspace(0.0, 1.0, num_knots + 2)[1:-1]
+        interior = np.quantile(x_np, quantiles)
+    else:
+        interior = np.array([], dtype=float)
+
+    full_knots = np.concatenate(
+        [
+            np.full(degree + 1, x_min),
+            interior,
+            np.full(degree + 1, x_max),
+        ]
+    )
+    return jnp.array(full_knots)
+
+
 class RandomWalkLayer(BLayer):
     """Random walk of embedding dim ``m``, defaults to Gaussian walk."""
 
@@ -923,6 +1048,7 @@ class RandomWalkLayer(BLayer):
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
         self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
 
     def __call__(
         self,
@@ -960,3 +1086,204 @@ class RandomWalkLayer(BLayer):
         )
         # matmul and return
         return _matmul_randomwalk(theta, x)
+
+
+# ---- Sparse priors --------------------------------------------------------- #
+
+
+class HorseshoeLayer(BLayer):
+    """Bayesian layer with horseshoe prior for sparse regression.
+
+    Implements the (regularized) horseshoe prior of Piironen & Vehtari (2017).
+
+    Basic horseshoe:
+
+    .. math::
+        \\tau \\sim HalfCauchy(1), \\quad
+        \\lambda_j \\sim HalfCauchy(1), \\quad
+        \\beta_j \\sim Normal(0,\\; \\tau \\lambda_j)
+
+    Regularized horseshoe (``slab_scale`` set) — prevents large coefficients
+    from escaping the slab:
+
+    .. math::
+        \\tilde{\\lambda}_j^2 = \\frac{c^2 \\lambda_j^2}{c^2 + \\tau^2 \\lambda_j^2},
+        \\quad c^2 \\sim InverseGamma(s/2,\\; s/2 \\cdot scale_{slab}^2)
+    """
+
+    def __init__(
+        self,
+        slab_scale: float | None = None,
+        slab_df: float = 4.0,
+    ):
+        """
+        Args:
+            slab_scale: If set, uses the regularized horseshoe with this slab
+                scale.  ``None`` gives the plain horseshoe.
+            slab_df: Degrees of freedom for the slab variance prior (only
+                used when ``slab_scale`` is set).
+        """
+        self.slab_scale = slab_scale
+        self.slab_df = slab_df
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Forward pass with horseshoe prior on coefficients.
+
+        Args:
+            name: Variable name scope.
+            x: Input array of shape ``(n, d)``.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        d = x.shape[1]
+        cls = self.__class__.__name__
+
+        # Global shrinkage: one scale per output unit
+        tau = sample(
+            f"{cls}_{name}_tau",
+            distributions.HalfCauchy(1.0).expand([units]),
+        )
+        # Local shrinkage: one per feature per output unit
+        lmbda = sample(
+            f"{cls}_{name}_lmbda",
+            distributions.HalfCauchy(1.0).expand([d, units]),
+        )
+
+        if self.slab_scale is not None:
+            # Soft upper bound on coefficient size via a finite-variance slab
+            c2 = sample(
+                f"{cls}_{name}_c2",
+                distributions.InverseGamma(
+                    self.slab_df / 2.0,
+                    self.slab_df / 2.0 * self.slab_scale**2,
+                ),
+            )
+            lmbda_tilde = jnp.sqrt(
+                c2 * lmbda**2 / (c2 + tau**2 * lmbda**2)
+            )
+            scale = tau * lmbda_tilde
+        else:
+            scale = tau * lmbda  # (d, units)
+
+        beta = sample(f"{cls}_{name}_beta", distributions.Normal(0.0, scale))
+        return activation(_matmul_dot_product(x, beta))
+
+
+# ---- Attention ------------------------------------------------------------- #
+
+
+class AttentionLayer(BLayer):
+    """Single-head Bayesian self-attention over the feature dimension.
+
+    Treats the ``d`` input features as tokens and computes scaled dot-product
+    self-attention across them for each observation.  Useful for capturing
+    input-dependent feature interactions in tabular settings.
+
+    For each observation ``x_i ∈ R^d``:
+
+    1. Feature tokens: ``H_j = x_{i,j} · W_emb_j``  (``head_dim``-dim each)
+    2. ``Q, K, V = H W_Q, H W_K, H W_V``
+    3. ``Attn = softmax(Q Kᵀ / √head_dim)``
+    4. ``Out = Attn V``  →  mean-pool over features  →  project to ``units``
+
+    Requires ``d ≥ 2`` for attention to be non-trivial.
+    """
+
+    def __init__(
+        self,
+        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
+        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+    ):
+        self.lmbda_dist = lmbda_dist
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        self.lmbda_kwargs = lmbda_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        head_dim: int = 8,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: Input of shape ``(n, d)``.  Each column is a feature token.
+            head_dim: Dimensionality of Q/K/V projections.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        d = x.shape[1]
+        h = head_dim
+        cls = self.__class__.__name__
+
+        # Feature embeddings: H[i,j] = x[i,j] * W_emb[j]  → (n, d, h)
+        lmbda_emb = sample(
+            f"{cls}_{name}_lmbda_emb",
+            self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
+        )
+        W_emb = sample(
+            f"{cls}_{name}_W_emb",
+            self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
+        )
+        H = x[:, :, None] * W_emb[None, :, :]  # (n, d, h)
+
+        # Q, K, V projections  (shared adaptive scale for all three)
+        lmbda_qkv = sample(
+            f"{cls}_{name}_lmbda_qkv",
+            self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
+        )
+        W_Q = sample(
+            f"{cls}_{name}_W_Q",
+            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+        )
+        W_K = sample(
+            f"{cls}_{name}_W_K",
+            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+        )
+        W_V = sample(
+            f"{cls}_{name}_W_V",
+            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+        )
+
+        Q = jnp.einsum("ndh,hk->ndk", H, W_Q)  # (n, d, h)
+        K = jnp.einsum("ndh,hk->ndk", H, W_K)
+        V = jnp.einsum("ndh,hk->ndk", H, W_V)
+
+        # Scaled dot-product attention
+        scores = jnp.einsum("nqh,nkh->nqk", Q, K) / h**0.5  # (n, d, d)
+        weights = jax.nn.softmax(scores, axis=-1)
+        out = jnp.einsum("nqk,nkh->nqh", weights, V)  # (n, d, h)
+
+        pooled = out.mean(axis=1)  # (n, h)
+
+        # Output projection
+        lmbda_out = sample(
+            f"{cls}_{name}_lmbda_out",
+            self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        )
+        W_out = sample(
+            f"{cls}_{name}_W_out",
+            self.coef_dist(scale=lmbda_out, **self.coef_kwargs).expand([h, units]),
+        )
+        return activation(pooled @ W_out)
