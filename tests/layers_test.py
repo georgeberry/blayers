@@ -21,6 +21,7 @@ from blayers._utils import (
 )
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.layers import (
+    BilinearLayer,
     AdaptiveLayer,
     EmbeddingLayer,
     FixedPriorLayer,
@@ -28,6 +29,7 @@ from blayers.layers import (
     FMLayer,
     InteractionLayer,
     InterceptLayer,
+    LowRankBilinearLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
     RandomWalkLayer,
@@ -824,3 +826,60 @@ def test_stacked_lambda() -> None:
 
     with pytest_check.check:
         rmse(guide_means["AdaptiveLayer_beta2_lmbda"], data["lambda2"]) < 0.1
+
+
+# --------------------------------------------------------------------------- #
+# BilinearLayer and LowRankBilinearLayer __call__ coverage
+# --------------------------------------------------------------------------- #
+
+
+def test_bilinear_output_shape() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        out = BilinearLayer()("W", x, z)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 1)
+
+
+def test_bilinear_units() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        out = BilinearLayer()("W", x, z, units=2)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 2)
+
+
+def test_low_rank_bilinear_output_shape() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        out = LowRankBilinearLayer()("W", x, z, low_rank_dim=2)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 1)
+
+
+def test_low_rank_bilinear_units() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        out = LowRankBilinearLayer()("W", x, z, low_rank_dim=2, units=3)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 3)

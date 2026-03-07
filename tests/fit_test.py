@@ -557,3 +557,109 @@ def test_fit_svgd_learns(sim_data: dict[str, jax.Array]) -> None:
 
     # SVGD converges slower than VI, so use a looser threshold
     assert prediction_rmse < baseline_rmse * 0.75
+
+
+# --------------------------------------------------------------------------- #
+# Coverage: guard clauses and edge cases
+# --------------------------------------------------------------------------- #
+
+
+def test_predict_unknown_method_raises(sim_data: dict[str, jax.Array]) -> None:
+    """predict() raises on an unknown method string."""
+    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+    result.method = "unknown"
+    with pytest.raises(ValueError, match="Unknown method"):
+        result.predict(x=sim_data["x"])
+
+
+def test_summary_unknown_method_raises(sim_data: dict[str, jax.Array]) -> None:
+    """summary() raises on an unknown method string."""
+    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+    result.method = "unknown"
+    with pytest.raises(ValueError, match="Unknown method"):
+        result.summary(x=sim_data["x"])
+
+
+def test_summary_vi_missing_guide_raises(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+    result.guide = None
+    with pytest.raises(RuntimeError, match="guide or params"):
+        result.summary(x=sim_data["x"])
+
+
+def test_summary_svgd_missing_params_raises(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="svgd",
+        num_steps=200,
+        num_particles=10,
+        seed=0,
+        x=sim_data["x"],
+    )
+    result.params = None
+    with pytest.raises(RuntimeError, match="SVGD results missing params"):
+        result.summary(x=sim_data["x"])
+
+
+def test_summary_mcmc_missing_samples_raises(sim_data: dict[str, jax.Array]) -> None:
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="mcmc",
+        num_mcmc_samples=10,
+        num_warmup=10,
+        seed=0,
+        x=sim_data["x"],
+    )
+    result.posterior_samples = None
+    with pytest.raises(RuntimeError, match="MCMC results missing posterior_samples"):
+        result.summary(x=sim_data["x"])
+
+
+def test_fit_svgd_epochs_steps_conflict_raises(sim_data: dict[str, jax.Array]) -> None:
+    """SVGD raises if both num_epochs and num_steps are given."""
+    with pytest.raises(ValueError, match="exactly one"):
+        fit(
+            linear_model,
+            y=sim_data["y"],
+            method="svgd",
+            num_steps=100,
+            num_epochs=1,
+            num_particles=10,
+            seed=0,
+            x=sim_data["x"],
+        )
+
+
+def test_fit_custom_optimizer(sim_data: dict[str, jax.Array]) -> None:
+    """Passing a custom optax optimizer should bypass the default schedule."""
+    import optax
+
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        num_steps=100,
+        optimizer=optax.adam(1e-3),
+        seed=0,
+        x=sim_data["x"],
+    )
+    assert result.params is not None
+
+
+def test_autoreshape_positional_args() -> None:
+    """autoreshape should reshape 1D positional array args to (n, 1)."""
+    from blayers.sampling import autoreshape
+
+    received = {}
+
+    @autoreshape
+    def model(x, y=None):
+        received["x_shape"] = x.shape
+        received["y_shape"] = y.shape if y is not None else None
+
+    x = jnp.ones((10,))
+    y = jnp.ones((10,))
+    model(x, y)
+    assert received["x_shape"] == (10, 1)
+    assert received["y_shape"] == (10, 1)
