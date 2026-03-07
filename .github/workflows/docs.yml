@@ -8,6 +8,8 @@ on:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -29,5 +31,5 @@ jobs:
         if: github.event.repository.private == false
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GH_PAT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
