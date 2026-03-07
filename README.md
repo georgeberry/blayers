@@ -8,129 +8,170 @@ The missing layers package for Bayesian inference.
 
 **BLayers is in beta, errors are possible! We invite you to contribute on [GitHub](https://github.com/georgeberry/blayers).**
 
-## Install
+## Write code immediately
 
 ```
 pip install blayers
 ```
 
-deps: `numpyro`, `jax`, `optax`.
+deps are: `numpyro`, `jax`, and `optax`.
 
 ## Concept
 
 Easily build Bayesian models from parts, abstract away the boilerplate, and
 tweak priors as you wish.
 
-Inspired by Keras and TensorFlow Probability, but made specifically for NumPyro + JAX.
+Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
 
-BLayers provides:
+BLayers provides tools to
 
-- **Layers** that encapsulate generative model structures with sensible priors
-- **Links** that handle likelihoods and output distributions
-- **`fit()`** — a high-level helper to train models via VI, MCMC, or SVGD with one call
-- **Spline utilities** for non-linear feature transformations
-- Pure NumPyro under the hood — integrates with all of NumPyro's tools
+- Quickly build Bayesian models from layers which encapsulate useful model parts
+- Fit models either using Variational Inference (VI) or your sampling method of
+choice without having to rewrite models
+- Write pure Numpyro to integrate with all of Numpyro's super powerful tools
+- Add more complex layers (model parts) as you wish
+- Fit models in a greater variety of ways with less code
 
----
+## The starting point
 
-## Quick start
+The simplest non-trivial (and most important!) Bayesian regression model form is
+the adaptive prior,
 
-```python
-from blayers.fit import fit
-from blayers.layers import AdaptiveLayer, InterceptLayer
-from blayers.links import gaussian_link
-from blayers.sampling import autoreshape
-
-@autoreshape
-def model(x, y=None):
-    mu = AdaptiveLayer()("beta", x)
-    intercept = InterceptLayer()("intercept")
-    return gaussian_link(mu + intercept, y)
-
-result = fit(model, y=y, num_steps=1000, batch_size=256, lr=0.01, x=X)
-
-preds = result.predict(x=X, num_samples=500)   # Predictions(mean, std, samples)
-summary = result.summary(x=X)                  # posterior stats per latent variable
+```
+lmbda ~ HalfNormal(1)
+beta  ~ Normal(0, lmbda)
+y     ~ Normal(beta * x, 1)
 ```
 
----
-
-## The `fit()` API
-
-`fit()` handles the guide, ELBO, batching, and LR schedule. Swap `method=` to change
-inference — the model doesn't change.
+BLayers encapsulates a generative model structure like this in a `BLayer`. The
+fundamental building block is the `AdaptiveLayer`.
 
 ```python
-# Variational Inference (default)
-result = fit(model, y=y, num_steps=1000, batch_size=256, lr=0.01, x=X)
-
-# MCMC (NUTS)
-result = fit(model, y=y, method="mcmc", num_mcmc_samples=1000, num_warmup=500, x=X)
-
-# SVGD
-result = fit(model, y=y, method="svgd", num_steps=1000, num_particles=20, x=X)
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
+def model(x, y):
+    mu = AdaptiveLayer()('mu', x)
+    return gaussian_link_exp(mu, y)
 ```
 
-Keyword arguments that are JAX arrays are treated as **data** (batched during training).
-Non-array kwargs (ints, floats, strings) are bound to the model as **constants**.
+All `AdaptiveLayer` is doing is writing Numpyro for you under the hood. This
+model is exacatly equivalent to writing the following, just using way less code.
 
----
+```python
+from numpyro import distributions, sample
 
-## Layers
+def model(x, y):
+    # Adaptive layer does all of this
+    input_shape = x.shape[1]
+    # adaptive prior
+    lmbda = sample(
+        name="lmbda",
+        fn=distributions.HalfNormal(1.),
+    )
+    # beta coefficients for regression
+    beta = sample(
+        name="beta",
+        fn=distributions.Normal(loc=0., scale=lmbda),
+        sample_shape=(input_shape,),
+    )
+    mu = jnp.einsum('ij,j->i', x, beta)
 
-The full set of layers:
+    # the link function does this
+    sigma = sample(name='sigma', fn=distributions.Exponential(1.))
+    return sample('obs', distributions.Normal(mu, sigma), obs=y)
+```
 
-| Layer | Description |
-|---|---|
-| `AdaptiveLayer` | Hierarchical prior: `λ ~ HalfNormal(1)`, `β ~ Normal(0, λ)` |
-| `FixedPriorLayer` | Fixed prior over coefficients (e.g. Normal or Laplace) |
-| `InterceptLayer` | Bias/intercept term |
-| `EmbeddingLayer` | Bayesian embeddings for sparse categorical features |
-| `RandomEffectsLayer` | Classical random effects (embedding with dim=1) |
-| `FMLayer` | Factorization Machine (order 2) |
-| `FM3Layer` | Factorization Machine (order 3) |
-| `LowRankInteractionLayer` | Low-rank UV interaction between two feature sets |
-| `BilinearLayer` | Full bilinear interaction: `x^T W z` |
-| `LowRankBilinearLayer` | Low-rank bilinear interaction |
-| `InteractionLayer` | All pairwise interactions between two feature sets |
-| `RandomWalkLayer` | Gaussian random walk prior (for time/ordered indices) |
-| `HorseshoeLayer` | Horseshoe prior for sparse regression |
-| `AttentionLayer` | Single-head self-attention over the feature dimension |
+### Mixing it up
 
-All layers accept custom prior distributions and kwargs:
+The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so let's say you wanted to change the model from
+
+```
+lmbda ~ HalfNormal(1)
+beta  ~ Normal(0, lmbda)
+y     ~ Normal(beta * x, 1)
+```
+
+to
+
+```
+lmbda ~ Exponential(1.)
+beta  ~ LogNormal(0, lmbda)
+y     ~ Normal(beta * x, 1)
+```
+
+you can just do this directly via arguments
+
+```python
+from numpyro import distributions,
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
+def model(x, y):
+    mu = AdaptiveLayer(
+        lmbda_dist=distributions.Exponential,
+        prior_dist=distributions.LogNormal,
+        lmbda_kwargs={'rate': 1.},
+        prior_kwargs={'loc': 0.}
+    )('mu', x)
+    return gaussian_link_exp(mu, y)
+```
+
+### "Factories"
+
+Since Numpyro traces `sample` sites and doesn't record any paramters on the class, you can re-use with a particular generative model structure freely.
 
 ```python
 from numpyro import distributions
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
 
-mu = AdaptiveLayer(
+my_lognormal_layer = AdaptiveLayer(
     lmbda_dist=distributions.Exponential,
-    coef_dist=distributions.Laplace,
-    lmbda_kwargs={"rate": 1.0},
-    coef_kwargs={"loc": 0.0},
-)("mu", x)
+    prior_dist=distributions.LogNormal,
+    lmbda_kwargs={'rate': 1.},
+    prior_kwargs={'loc': 0.}
+)
+
+def model(x, y):
+    mu = my_lognormal_layer('mu1', x) + my_lognormal_layer('mu2', x**2)
+    return gaussian_link_exp(mu, y)
 ```
 
-Bad kwargs raise `TypeError` at **construction time**, not call time.
+## Layers
 
----
+The full set of layers included with BLayers:
+
+- `AdaptiveLayer` — Adaptive prior layer.
+- `FixedPriorLayer` — Fixed prior over coefficients (e.g., Normal or Laplace).
+- `InterceptLayer` — Intercept-only layer (bias term).
+- `EmbeddingLayer` — Bayesian embeddings for sparse categorical features.
+- `RandomEffectsLayer` — Classical random-effects.
+- `FMLayer` — Factorization Machine (order 2).
+- `FM3Layer` — Factorization Machine (order 3).
+- `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
+- `RandomWalkLayer` — Random walk prior over coefficients (e.g., Gaussian walk).
+- `InteractionLayer` — All pairwise interactions between two feature sets.
+- `BilinearLayer` — Bilinear interaction: `x^T W z`.
+- `LowRankBilinearLayer` — Low-rank bilinear interaction.
+- `HorseshoeLayer` — Horseshoe prior for sparse regression.
+- `AttentionLayer` — Single-head self-attention over the feature dimension.
+
+All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 
 ## Links
 
-Link functions connect model predictions to observations.
+We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available links:
 
-| Link | Description |
-|---|---|
-| `gaussian_link` | Gaussian with learned, fixed, or per-observation scale (see below) |
-| `gaussian_link_exp` | Gaussian with `sigma ~ Exp(1)` |
-| `lognormal_link_exp` | LogNormal with `sigma ~ Exp(1)` |
-| `logit_link` | Bernoulli (logistic regression) |
-| `poission_link` | Poisson |
-| `negative_binomial_link` | Negative Binomial (overdispersed counts) |
-| `ordinal_link` | Cumulative logit / proportional odds for ordinal outcomes |
-| `zip_link` | Zero-inflated Poisson |
-| `beta_link` | Beta regression for proportions in (0, 1) |
+- `gaussian_link` — Gaussian link with flexible scale: learned (default), fixed, or from a layer (see below).
+- `gaussian_link_exp` — Gaussian link with `Exp` distributed homoskedastic `sigma`.
+- `lognormal_link_exp` — LogNormal link with `Exp` distributed homoskedastic `sigma`
+- `logit_link` — Bernoulli link for logistic regression.
+- `poission_link` — Poisson link with rate `y_hat`.
+- `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
+- `ordinal_link` — Cumulative logit / proportional odds for ordinal outcomes.
+- `zip_link` — Zero-inflated Poisson for count data with excess zeros.
+- `beta_link` — Beta regression for proportions strictly in (0, 1).
 
-### `gaussian_link` — three scale modes
+### `gaussian_link` scale modes
 
 ```python
 # Default: sigma ~ Exp(1) learned from data
@@ -144,22 +185,19 @@ raw = AdaptiveLayer()("log_sigma", x)
 gaussian_link(mu, y, untransformed_scale=raw)
 ```
 
----
-
 ## Splines
 
-Non-linear feature transformations via B-splines. Compute the basis once, then
-pass it to any layer.
+Non-linear transformations via B-splines. Compute the basis matrix once with `make_knots` + `bspline_basis`, then pass it to any layer.
 
 ```python
 from blayers.layers import make_knots, bspline_basis, AdaptiveLayer
+from blayers.links import gaussian_link
 
 knots = make_knots(x_train, num_knots=10)   # clamped knot vector from data quantiles
-B = bspline_basis(x, knots)                 # (n, num_basis) design matrix
 
 def model(x, y=None):
-    B = bspline_basis(x, knots)
-    f = AdaptiveLayer()("f", B)             # adaptive prior over spline coefficients
+    B = bspline_basis(x, knots)             # (n, num_basis) design matrix
+    f = AdaptiveLayer()("f", B)
     return gaussian_link(f, y)
 ```
 
@@ -172,77 +210,107 @@ def model(x1, x2, y=None):
     return gaussian_link(f1 + f2, y)
 ```
 
----
+## fit() helpers
 
-## The adaptive prior in detail
-
-The fundamental building block is the adaptive prior:
-
-```
-λ ~ HalfNormal(1)
-β ~ Normal(0, λ)
-y ~ Normal(β · x, σ)
-```
-
-`AdaptiveLayer` encapsulates this. The following are equivalent:
+`fit()` handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.
 
 ```python
-# With BLayers
-from blayers.layers import AdaptiveLayer
-from blayers.links import gaussian_link
+from blayers.fit import fit
+from blayers.sampling import autoreshape
 
+@autoreshape
 def model(x, y=None):
-    mu = AdaptiveLayer()("mu", x)
-    return gaussian_link(mu, y)
+    mu = AdaptiveLayer()("beta", x)
+    intercept = InterceptLayer()("intercept")
+    return gaussian_link(mu + intercept, y)
+
+# Variational Inference (default)
+result = fit(model, y=y, num_steps=1000, batch_size=256, lr=0.01, x=X)
+
+# MCMC
+result = fit(model, y=y, method="mcmc", num_mcmc_samples=1000, num_warmup=500, x=X)
+
+# SVGD
+result = fit(model, y=y, method="svgd", num_steps=1000, num_particles=20, x=X)
 ```
+
+`result.predict()` returns a `Predictions` object with `.mean`, `.std`, and `.samples`. `result.summary()` returns posterior stats per latent variable.
 
 ```python
-# Raw NumPyro
-from numpyro import distributions, sample
-
-def model(x, y=None):
-    lmbda = sample("lmbda", distributions.HalfNormal(1.0))
-    beta = sample("beta", distributions.Normal(0.0, lmbda).expand([x.shape[1], 1]))
-    mu = x @ beta
-    sigma = sample("sigma", distributions.Exponential(1.0))
-    return sample("obs", distributions.Normal(mu, sigma), obs=y)
+preds = result.predict(x=X, num_samples=500)
+summary = result.summary(x=X)
 ```
 
----
+Keyword arguments that are JAX arrays are treated as **data** (batched during training). Non-array kwargs are bound as **constants**.
 
-## Batched ELBO (low-level)
+## Batched loss
 
-If you prefer wiring up SVI yourself, `Batched_Trace_ELBO` handles mini-batching
-without requiring `numpyro.plate`.
+The default Numpyro way to fit batched VI models is to use `plate`, which confuses
+me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
+you to use `plate` to batch in VI. Just drop your model in.
 
 ```python
 from blayers.infer import Batched_Trace_ELBO, svi_run_batched
 
-svi = SVI(model, guide, optax.adam(lr), loss=Batched_Trace_ELBO(num_obs=n, batch_size=256))
+svi = SVI(model_fn, guide, optax.adam(schedule), loss=loss_instance)
 
-result = svi_run_batched(svi, rng_key, num_epochs=10, batch_size=256, x=X, y=y)
+svi_result = svi_run_batched(
+    svi,
+    rng_key,
+    num_steps,
+    batch_size=1000,
+    **model_data,
+)
 ```
 
-**⚠️ `numpyro.plate` and `Batched_Trace_ELBO` do not mix.** Use one or the other.
+**⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
 
----
+`Batched_Trace_ELBO` is known to have issues when your model uses `numpyro.plate`. If your model needs plates, either:
+1. Batch via `plate` and use the standard `Trace_ELBO`, or
+1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
-## Reparameterisation for MCMC
+`Batched_Trace_ELBO` will warn if you if your model has plates.
 
-`@autoreparam` automatically reparameterises `LocScale` distributions for better
-NUTS performance — no manual `numpyro.handlers.reparam` needed.
+
+### Reparameterizing
+
+To fit MCMC models well it is crucial to [reparamterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
 
 ```python
-from blayers.sampling import autoreparam
-from numpyro.infer import MCMC, NUTS
-
-@autoreparam
-def model(x, y=None):
-    mu = AdaptiveLayer()("mu", x)
-    return gaussian_link(mu, y)
-
-mcmc = MCMC(NUTS(model), num_warmup=500, num_samples=1000)
-mcmc.run(rng_key, x=X, y=y)
+LocScaleDist = (
+    dist.Normal
+    | dist.LogNormal
+    | dist.StudentT
+    | dist.Cauchy
+    | dist.Laplace
+    | dist.Gumbel
+)
 ```
 
-Or just use `fit(model, method="mcmc", ...)` which handles this automatically.
+Then, reparam these distributions automatically and fit with Numpyro's built in MCMC methods.
+
+```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link_exp
+from blayers.sampling import autoreparam
+
+data = {...}
+
+@autoreparam
+def model(x, y):
+    mu = AdaptiveLayer()('mu', x)
+    return gaussian_link_exp(mu, y)
+
+kernel = NUTS(model)
+mcmc = MCMC(
+    kernel,
+    num_warmup=500,
+    num_samples=1000,
+    num_chains=1,
+    progress_bar=True,
+)
+    mcmc.run(
+        rng_key,
+        **data,
+    )
+```
