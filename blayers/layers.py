@@ -1184,20 +1184,23 @@ class HorseshoeLayer(BLayer):
 
 
 class AttentionLayer(BLayer):
-    """Single-head Bayesian self-attention over the feature dimension.
+    """Multi-head Bayesian self-attention over the feature dimension.
 
-    Treats the ``d`` input features as tokens and computes scaled dot-product
-    self-attention across them for each observation.  Useful for capturing
-    input-dependent feature interactions in tabular settings.
+    Treats the ``d`` input features as tokens using FT-Transformer style
+    tokenisation (Gorishniy et al. 2021, https://arxiv.org/abs/2106.11959):
+    each feature gets a per-column bias embedding (identity) plus a
+    value-scaled embedding, so tokens are distinct even when the feature
+    value is zero.
 
     For each observation ``x_i ∈ R^d``:
 
-    1. Feature tokens: ``H_j = x_{i,j} · W_emb_j``  (``head_dim``-dim each)
-    2. ``Q, K, V = H W_Q, H W_K, H W_V``
-    3. ``Attn = softmax(Q Kᵀ / √head_dim)``
-    4. ``Out = Attn V``  →  mean-pool over features  →  project to ``units``
+    1. Tokenise: ``H_j = x_{i,j} · W_emb_j + W_bias_j``  (``head_dim``-dim each)
+    2. Per head: ``Q_m, K_m, V_m = H W_Q_m, H W_K_m, H W_V_m``
+    3. ``Attn_m = softmax(Q_m K_m^T / √h_k)``
+    4. Concatenate heads  →  mean-pool over features  →  project to ``units``
 
     Requires ``d ≥ 2`` for attention to be non-trivial.
+    ``head_dim`` must be divisible by ``num_heads``.
     """
 
     def __init__(
@@ -1218,6 +1221,7 @@ class AttentionLayer(BLayer):
         name: str,
         x: jax.Array,
         head_dim: int = 8,
+        num_heads: int = 1,
         units: int = 1,
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
@@ -1225,7 +1229,9 @@ class AttentionLayer(BLayer):
         Args:
             name: Variable name scope.
             x: Input of shape ``(n, d)``.  Each column is a feature token.
-            head_dim: Dimensionality of Q/K/V projections.
+            head_dim: Total embedding dimension (split evenly across heads).
+            num_heads: Number of attention heads.  ``head_dim`` must be
+                divisible by ``num_heads``.
             units: Number of output dimensions.
             activation: Activation function.
 
@@ -1233,11 +1239,14 @@ class AttentionLayer(BLayer):
             jax.Array of shape ``(n, units)``.
         """
         x = add_trailing_dim(x)
-        d = x.shape[1]
+        n, d = x.shape[0], x.shape[1]
         h = head_dim
+        m = num_heads
+        h_k = h // m  # per-head dimension
         cls = self.__class__.__name__
 
-        # Feature embeddings: H[i,j] = x[i,j] * W_emb[j]  → (n, d, h)
+        # FT-Transformer tokenisation: value scaling + per-column bias
+        # H[i,j] = x[i,j] * W_emb[j] + W_bias[j]  → (n, d, h)
         lmbda_emb = sample(
             f"{cls}_{name}_lmbda_emb",
             self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
@@ -1246,36 +1255,44 @@ class AttentionLayer(BLayer):
             f"{cls}_{name}_W_emb",
             self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
         )
-        H = x[:, :, None] * W_emb[None, :, :]  # (n, d, h)
+        W_bias = sample(
+            f"{cls}_{name}_W_bias",
+            self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
+        )
+        H = x[:, :, None] * W_emb[None, :, :] + W_bias[None, :, :]  # (n, d, h)
 
-        # Q, K, V projections  (shared adaptive scale for all three)
+        # Q, K, V projections — one set per head: (m, h, h_k)
+        # lmbda_qkv is (m, h_k); unsqueeze to (m, 1, h_k) so it broadcasts to (m, h, h_k)
         lmbda_qkv = sample(
             f"{cls}_{name}_lmbda_qkv",
-            self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
+            self.lmbda_dist(**self.lmbda_kwargs).expand([m, h_k]),
         )
+        lmbda_qkv_bc = lmbda_qkv[:, None, :]  # (m, 1, h_k)
         W_Q = sample(
             f"{cls}_{name}_W_Q",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_K = sample(
             f"{cls}_{name}_W_K",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_V = sample(
             f"{cls}_{name}_W_V",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
 
-        Q = jnp.einsum("ndh,hk->ndk", H, W_Q)  # (n, d, h)
-        K = jnp.einsum("ndh,hk->ndk", H, W_K)
-        V = jnp.einsum("ndh,hk->ndk", H, W_V)
+        # Project to per-head Q/K/V: (n, d, m, h_k)
+        Q = jnp.einsum("ndh,mhk->ndmk", H, W_Q)
+        K = jnp.einsum("ndh,mhk->ndmk", H, W_K)
+        V = jnp.einsum("ndh,mhk->ndmk", H, W_V)
 
-        # Scaled dot-product attention
-        scores = jnp.einsum("nqh,nkh->nqk", Q, K) / h**0.5  # (n, d, d)
+        # Scaled dot-product attention per head: (n, m, d, d)
+        scores = jnp.einsum("ndmk,nqmk->nmdq", Q, K) / h_k**0.5
         weights = jax.nn.softmax(scores, axis=-1)
-        out = jnp.einsum("nqk,nkh->nqh", weights, V)  # (n, d, h)
+        out = jnp.einsum("nmdq,nqmk->ndmk", weights, V)  # (n, d, m, h_k)
 
-        pooled = out.mean(axis=1)  # (n, h)
+        # Concatenate heads, mean-pool over features: (n, h)
+        pooled = out.reshape(n, d, h).mean(axis=1)
 
         # Output projection
         lmbda_out = sample(

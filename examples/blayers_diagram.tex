@@ -1,0 +1,33 @@
+\documentclass[preview, border=12pt]{standalone}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+
+% Color palette
+\definecolor{modelcol}{RGB}{52, 120, 200}   % blue  — model form
+\definecolor{distcol}{RGB}{220, 100, 30}    % orange — distributions
+\definecolor{argscol}{RGB}{40, 160, 80}     % green  — data / call args
+
+\begin{document}
+
+\[
+  \underbrace{%
+    \textcolor{modelcol}{\texttt{AdaptiveLayer}}%
+  }_{\substack{\textcolor{modelcol}{\text{\small model form}}\\[2pt]
+               \textcolor{modelcol}{\text{\scriptsize (hierarchical prior)}}}}
+  \underbrace{%
+    \textcolor{distcol}{%
+      \texttt{(lmbda\_dist{=}HalfNormal,\ coef\_dist{=}Normal)}%
+    }%
+  }_{\substack{\textcolor{distcol}{\text{\small prior distributions}}\\[2pt]
+               \textcolor{distcol}{\text{\scriptsize (swappable at construction)}}}}
+  \underbrace{%
+    \textcolor{argscol}{%
+      \texttt{("beta",\ x,\ units{=}2)}%
+    }%
+  }_{\substack{\textcolor{argscol}{\text{\small name,\ data,\ output dim}}\\[2pt]
+               \textcolor{argscol}{\text{\scriptsize (supplied at call time)}}}}
+\]
+
+\end{document}
