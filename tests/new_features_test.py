@@ -68,7 +68,7 @@ class TestHorseshoeLayer:
 
         samples = _prior_samples(model, x=x)
         assert "HorseshoeLayer_beta_tau" in samples
-        assert "HorseshoeLayer_beta_lmbda" in samples
+        assert "HorseshoeLayer_beta_scale" in samples
         assert "HorseshoeLayer_beta_c2" not in samples
 
     def test_regularized_sites(self) -> None:

@@ -107,9 +107,9 @@ from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
 def model(x, y):
     mu = AdaptiveLayer(
-        lmbda_dist=distributions.Exponential,
+        scale_dist=distributions.Exponential,
         prior_dist=distributions.LogNormal,
-        lmbda_kwargs={'rate': 1.},
+        scale_kwargs={'rate': 1.},
         prior_kwargs={'loc': 0.}
     )('mu', x)
     return gaussian_link_exp(mu, y)
@@ -125,9 +125,9 @@ from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link_exp
 
 my_lognormal_layer = AdaptiveLayer(
-    lmbda_dist=distributions.Exponential,
+    scale_dist=distributions.Exponential,
     prior_dist=distributions.LogNormal,
-    lmbda_kwargs={'rate': 1.},
+    scale_kwargs={'rate': 1.},
     prior_kwargs={'loc': 0.}
 )
 
