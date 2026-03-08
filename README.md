@@ -153,7 +153,7 @@ The full set of layers included with BLayers:
 - `BilinearLayer` — Bilinear interaction: `x^T W z`.
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `HorseshoeLayer` — Horseshoe prior for sparse regression.
-- `AttentionLayer` — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation ([Gorishniy et al. 2021](https://arxiv.org/abs/2106.11959)).
+- `AttentionLayer` — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation ([Gorishniy et al. 2021](https://arxiv.org/abs/2106.11959)). `head_dim` is per-head so total embedding dim is `head_dim * num_heads` — adding heads increases capacity.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 
@@ -190,7 +190,8 @@ gaussian_link(mu, y, untransformed_scale=raw)
 Non-linear transformations via B-splines. Compute the basis matrix once with `make_knots` + `bspline_basis`, then pass it to any layer.
 
 ```python
-from blayers.layers import make_knots, bspline_basis, AdaptiveLayer
+from blayers.splines import make_knots, bspline_basis
+from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link
 
 knots = make_knots(x_train, num_knots=10)   # clamped knot vector from data quantiles
