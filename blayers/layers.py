@@ -938,100 +938,9 @@ class RandomEffectsLayer(BLayer):
 
 
 # ---- Spline utilities ------------------------------------------------------ #
+# Moved to blayers.splines; re-exported here for backwards compatibility.
 
-
-def bspline_basis(x: jax.Array, knots: jax.Array, degree: int = 3) -> jax.Array:
-    """Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).
-
-    Args:
-        x: 1D input array of shape ``(n,)``.
-        knots: Full clamped knot vector of shape ``(num_basis + degree + 1,)``.
-            Use ``make_knots`` to construct this.
-        degree: B-spline degree (3 = cubic).
-
-    Returns:
-        jax.Array of shape ``(n, num_basis)`` where
-        ``num_basis = len(knots) - degree - 1``.
-    """
-    x_col = x[:, None]  # (n, 1) for broadcasting against knot intervals
-
-    # Degree-0 base case: B_{i,0}(t) = 1 if knots[i] <= t < knots[i+1].
-    # We use a half-open interval [left, right) everywhere; the right boundary
-    # special case (x == knots[-1]) is corrected after the recursion.
-    left = knots[:-1]  # (num_knots - 1,)
-    right = knots[1:]  # (num_knots - 1,)
-    B = jnp.where((x_col >= left) & (x_col < right), 1.0, 0.0)  # (n, num_knots-1)
-
-    # Cox–de Boor recursion
-    for p in range(1, degree + 1):
-        m = knots.shape[0] - p - 1  # number of basis functions at this level
-
-        ti = knots[:m]  # t_i         (m,)
-        ti_p = knots[p : m + p]  # t_{i+p}      (m,)
-        d1 = ti_p - ti  # denominator of left term
-
-        ti_p1 = knots[p + 1 : m + p + 1]  # t_{i+p+1}   (m,)
-        ti_1 = knots[1 : m + 1]  # t_{i+1}     (m,)
-        d2 = ti_p1 - ti_1  # denominator of right term
-
-        # Avoid division by zero (degenerate knot intervals → coefficient = 0)
-        alpha = jnp.where(d1 > 0, (x_col - ti) / jnp.where(d1 > 0, d1, 1.0), 0.0)
-        beta_c = jnp.where(
-            d2 > 0, (ti_p1 - x_col) / jnp.where(d2 > 0, d2, 1.0), 0.0
-        )
-
-        B = alpha * B[:, :m] + beta_c * B[:, 1 : m + 1]
-
-    # For clamped splines, x == knots[-1] (the right boundary) must evaluate
-    # to 1 on the last basis function.  The half-open base-case convention
-    # misses this point because the rightmost repeated boundary intervals are
-    # all degenerate ([t_max, t_max)), so we fix it here after the recursion.
-    at_right = (x == knots[-1])  # (n,)
-    last_basis = jnp.zeros_like(B).at[:, -1].set(1.0)  # (n, num_basis), 1 in last col
-    B = jnp.where(at_right[:, None], last_basis, B)
-
-    return B  # (n, num_basis)
-
-
-def make_knots(x: Any, num_knots: int, degree: int = 3) -> jax.Array:
-    """Compute a clamped B-spline knot vector from data.
-
-    Interior knots are placed at evenly-spaced quantiles of ``x``.  Call
-    this once at preprocessing time (outside any JAX-traced function) and
-    pass the returned array to ``SplineLayer``.
-
-    Args:
-        x: Reference data (any shape).  Only used for quantile computation.
-        num_knots: Number of interior knots.  The total number of basis
-            functions will be ``num_knots + degree + 1``.
-        degree: B-spline degree (default 3 for cubic splines).
-
-    Returns:
-        Full clamped knot vector as a ``jax.Array`` of shape
-        ``(num_knots + 2 * (degree + 1),)``.
-
-    Example::
-
-        knots = make_knots(x_train, num_knots=5)
-        layer = SplineLayer(knots)
-    """
-    x_np = np.asarray(x).ravel()
-    x_min, x_max = float(x_np.min()), float(x_np.max())
-
-    if num_knots > 0:
-        quantiles = np.linspace(0.0, 1.0, num_knots + 2)[1:-1]
-        interior = np.quantile(x_np, quantiles)
-    else:
-        interior = np.array([], dtype=float)
-
-    full_knots = np.concatenate(
-        [
-            np.full(degree + 1, x_min),
-            interior,
-            np.full(degree + 1, x_max),
-        ]
-    )
-    return jnp.array(full_knots)
+from blayers.splines import bspline_basis, make_knots  # noqa: F401, E402
 
 
 class RandomWalkLayer(BLayer):
@@ -1184,20 +1093,24 @@ class HorseshoeLayer(BLayer):
 
 
 class AttentionLayer(BLayer):
-    """Single-head Bayesian self-attention over the feature dimension.
+    """Multi-head Bayesian self-attention over the feature dimension.
 
-    Treats the ``d`` input features as tokens and computes scaled dot-product
-    self-attention across them for each observation.  Useful for capturing
-    input-dependent feature interactions in tabular settings.
+    Treats the ``d`` input features as tokens using FT-Transformer style
+    tokenisation (Gorishniy et al. 2021, https://arxiv.org/abs/2106.11959):
+    each feature gets a per-column bias embedding (identity) plus a
+    value-scaled embedding, so tokens are distinct even when the feature
+    value is zero.
 
     For each observation ``x_i ∈ R^d``:
 
-    1. Feature tokens: ``H_j = x_{i,j} · W_emb_j``  (``head_dim``-dim each)
-    2. ``Q, K, V = H W_Q, H W_K, H W_V``
-    3. ``Attn = softmax(Q Kᵀ / √head_dim)``
-    4. ``Out = Attn V``  →  mean-pool over features  →  project to ``units``
+    1. Tokenise: ``H_j = x_{i,j} · W_emb_j + W_bias_j``  (``head_dim``-dim each)
+    2. Per head: ``Q_m, K_m, V_m = H W_Q_m, H W_K_m, H W_V_m``
+    3. ``Attn_m = softmax(Q_m K_m^T / √h_k)``
+    4. Concatenate heads  →  mean-pool over features  →  project to ``units``
 
     Requires ``d ≥ 2`` for attention to be non-trivial.
+    Total embedding dimension is ``head_dim * num_heads`` — adding heads
+    increases capacity rather than splitting a fixed budget.
     """
 
     def __init__(
@@ -1218,6 +1131,7 @@ class AttentionLayer(BLayer):
         name: str,
         x: jax.Array,
         head_dim: int = 8,
+        num_heads: int = 1,
         units: int = 1,
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
@@ -1225,7 +1139,10 @@ class AttentionLayer(BLayer):
         Args:
             name: Variable name scope.
             x: Input of shape ``(n, d)``.  Each column is a feature token.
-            head_dim: Dimensionality of Q/K/V projections.
+            head_dim: Dimension of each individual head.  Total embedding
+                dimension is ``head_dim * num_heads``, so adding heads
+                increases capacity.
+            num_heads: Number of attention heads.
             units: Number of output dimensions.
             activation: Activation function.
 
@@ -1233,11 +1150,14 @@ class AttentionLayer(BLayer):
             jax.Array of shape ``(n, units)``.
         """
         x = add_trailing_dim(x)
-        d = x.shape[1]
-        h = head_dim
+        n, d = x.shape[0], x.shape[1]
+        h_k = head_dim        # per-head dimension
+        m = num_heads
+        h = head_dim * m      # total embedding dimension
         cls = self.__class__.__name__
 
-        # Feature embeddings: H[i,j] = x[i,j] * W_emb[j]  → (n, d, h)
+        # FT-Transformer tokenisation: value scaling + per-column bias
+        # H[i,j] = x[i,j] * W_emb[j] + W_bias[j]  → (n, d, h)
         lmbda_emb = sample(
             f"{cls}_{name}_lmbda_emb",
             self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
@@ -1246,36 +1166,44 @@ class AttentionLayer(BLayer):
             f"{cls}_{name}_W_emb",
             self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
         )
-        H = x[:, :, None] * W_emb[None, :, :]  # (n, d, h)
+        W_bias = sample(
+            f"{cls}_{name}_W_bias",
+            self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
+        )
+        H = x[:, :, None] * W_emb[None, :, :] + W_bias[None, :, :]  # (n, d, h)
 
-        # Q, K, V projections  (shared adaptive scale for all three)
+        # Q, K, V projections — one set per head: (m, h, h_k)
+        # lmbda_qkv is (m, h_k); unsqueeze to (m, 1, h_k) so it broadcasts to (m, h, h_k)
         lmbda_qkv = sample(
             f"{cls}_{name}_lmbda_qkv",
-            self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
+            self.lmbda_dist(**self.lmbda_kwargs).expand([m, h_k]),
         )
+        lmbda_qkv_bc = lmbda_qkv[:, None, :]  # (m, 1, h_k)
         W_Q = sample(
             f"{cls}_{name}_W_Q",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_K = sample(
             f"{cls}_{name}_W_K",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_V = sample(
             f"{cls}_{name}_W_V",
-            self.coef_dist(scale=lmbda_qkv, **self.coef_kwargs).expand([h, h]),
+            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
 
-        Q = jnp.einsum("ndh,hk->ndk", H, W_Q)  # (n, d, h)
-        K = jnp.einsum("ndh,hk->ndk", H, W_K)
-        V = jnp.einsum("ndh,hk->ndk", H, W_V)
+        # Project to per-head Q/K/V: (n, d, m, h_k)
+        Q = jnp.einsum("ndh,mhk->ndmk", H, W_Q)
+        K = jnp.einsum("ndh,mhk->ndmk", H, W_K)
+        V = jnp.einsum("ndh,mhk->ndmk", H, W_V)
 
-        # Scaled dot-product attention
-        scores = jnp.einsum("nqh,nkh->nqk", Q, K) / h**0.5  # (n, d, d)
+        # Scaled dot-product attention per head: (n, m, d, d)
+        scores = jnp.einsum("ndmk,nqmk->nmdq", Q, K) / h_k**0.5
         weights = jax.nn.softmax(scores, axis=-1)
-        out = jnp.einsum("nqk,nkh->nqh", weights, V)  # (n, d, h)
+        out = jnp.einsum("nmdq,nqmk->ndmk", weights, V)  # (n, d, m, h_k)
 
-        pooled = out.mean(axis=1)  # (n, h)
+        # Concatenate heads, mean-pool over features: (n, h)
+        pooled = out.reshape(n, d, h).mean(axis=1)
 
         # Output projection
         lmbda_out = sample(
