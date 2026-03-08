@@ -10,7 +10,8 @@ from numpyro.infer import Predictive
 
 from blayers._utils import rmse
 from blayers.fit import fit
-from blayers.layers import AdaptiveLayer, bspline_basis, make_knots
+from blayers.layers import AdaptiveLayer
+from blayers.splines import bspline_basis, make_knots
 from blayers.links import gaussian_link_exp
 from blayers.sampling import autoreshape
 
