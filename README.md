@@ -18,7 +18,7 @@ deps are: `numpyro`, `jax`, and `optax`.
 
 ## Concept
 
-<img width="577" height="229" alt="image" src="https://github.com/user-attachments/assets/b2314f2f-2437-4fea-b01d-2161113b3b67" />
+<img width="646" height="258" alt="image" src="https://github.com/user-attachments/assets/21608d4a-fe83-4ebd-a8eb-a67774ea115f" />
 
 
 Easily build Bayesian models from parts, abstract away the boilerplate, and
