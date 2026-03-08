@@ -195,15 +195,15 @@ def _matmul_interaction(
 # ---- Classes --------------------------------------------------------------- #
 
 
-def _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist=None, lmbda_kwargs=None):
+def _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist=None, scale_kwargs=None):
     """Eagerly instantiate distributions at construction time to catch bad kwargs.
 
     Raises ``TypeError`` immediately if the supplied kwargs are incompatible
     with the distribution, rather than waiting until the layer is called.
     """
     try:
-        if lmbda_dist is not None:
-            lmbda_dist(**lmbda_kwargs)
+        if scale_dist is not None:
+            scale_dist(**scale_kwargs)
             coef_dist(scale=1.0, **coef_kwargs)
         else:
             coef_dist(**coef_kwargs)
@@ -245,24 +245,24 @@ class AdaptiveLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: NumPyro distribution class for the scale (λ) of the
+            scale_dist: NumPyro distribution class for the scale (λ) of the
                 prior.
             coef_dist: NumPyro distribution class for the coefficient prior.
             coef_kwargs: Parameters for the prior distribution.
-            lmbda_kwargs: Parameters for the scale distribution.
+            scale_kwargs: Parameters for the scale distribution.
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -288,13 +288,13 @@ class AdaptiveLayer(BLayer):
         input_shape = x.shape[1]
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape, units]
             ),
         )
@@ -430,23 +430,23 @@ class FMLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: Distribution for scaling factor λ.
+            scale_dist: Distribution for scaling factor λ.
             coef_dist: Prior for beta parameters.
             coef_kwargs: Arguments for prior distribution.
-            lmbda_kwargs: Arguments for λ distribution.
+            scale_kwargs: Arguments for λ distribution.
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -474,13 +474,13 @@ class FMLayer(BLayer):
         input_shape = x.shape[1]
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape, low_rank_dim, units]
             ),
         )
@@ -493,23 +493,23 @@ class FM3Layer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: Distribution for scaling factor λ.
+            scale_dist: Distribution for scaling factor λ.
             coef_dist: Prior for beta parameters.
             coef_kwargs: Arguments for prior distribution.
-            lmbda_kwargs: Arguments for λ distribution.
+            scale_kwargs: Arguments for λ distribution.
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -537,13 +537,13 @@ class FM3Layer(BLayer):
         input_shape = x.shape[1]
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape, low_rank_dim, units]
             ),
         )
@@ -556,16 +556,16 @@ class LowRankInteractionLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -597,23 +597,23 @@ class LowRankInteractionLayer(BLayer):
         input_shape2 = z.shape[1]
 
         # sampling block
-        lmbda1 = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda1",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale1 = sample(
+            name=f"{self.__class__.__name__}_{name}_scale1",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         theta1 = sample(
             name=f"{self.__class__.__name__}_{name}_theta1",
-            fn=self.coef_dist(scale=lmbda1, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale1, **self.coef_kwargs).expand(
                 [input_shape1, low_rank_dim, units]
             ),
         )
-        lmbda2 = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda2",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale2 = sample(
+            name=f"{self.__class__.__name__}_{name}_scale2",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         theta2 = sample(
             name=f"{self.__class__.__name__}_{name}_theta2",
-            fn=self.coef_dist(scale=lmbda2, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale2, **self.coef_kwargs).expand(
                 [input_shape2, low_rank_dim, units]
             ),
         )
@@ -625,16 +625,16 @@ class InteractionLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -664,13 +664,13 @@ class InteractionLayer(BLayer):
         input_shape2 = z.shape[1]
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda1",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale1",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta1",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape1 * input_shape2, units]
             ),
         )
@@ -683,23 +683,23 @@ class BilinearLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: prior on scale of coefficients
+            scale_dist: prior on scale of coefficients
             coef_dist: distribution for coefficients
             coef_kwargs: kwargs for coef distribution
-            lmbda_kwargs: kwargs for scale prior
+            scale_kwargs: kwargs for scale prior
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -728,14 +728,14 @@ class BilinearLayer(BLayer):
         input_shape1, input_shape2 = x.shape[1], z.shape[1]
 
         # sample coefficient scales
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         # full W: [input_shape1, input_shape2, units]
         W = sample(
             name=f"{self.__class__.__name__}_{name}_W",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape1, input_shape2, units]
             ),
         )
@@ -748,23 +748,23 @@ class LowRankBilinearLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: prior on scale of coefficients
+            scale_dist: prior on scale of coefficients
             coef_dist: distribution for coefficients
             coef_kwargs: kwargs for coef distribution
-            lmbda_kwargs: kwargs for scale prior
+            scale_kwargs: kwargs for scale prior
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -795,20 +795,20 @@ class LowRankBilinearLayer(BLayer):
         input_shape1, input_shape2 = x.shape[1], z.shape[1]
 
         # sample coefficient scales
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs).expand([units]),
         )
 
         A = sample(
             name=f"{self.__class__.__name__}_{name}_A",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape1, low_rank_dim, units]
             ),
         )
         B = sample(
             name=f"{self.__class__.__name__}_{name}_B",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [input_shape2, low_rank_dim, units]
             ),
         )
@@ -828,24 +828,24 @@ class EmbeddingLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
-            lmbda_dist: NumPyro distribution class for the scale (λ) of the
+            scale_dist: NumPyro distribution class for the scale (λ) of the
                 prior.
             coef_dist: NumPyro distribution class for the coefficient prior.
             coef_kwargs: Parameters for the prior distribution.
-            lmbda_kwargs: Parameters for the scale distribution.
+            scale_kwargs: Parameters for the scale distribution.
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -868,18 +868,18 @@ class EmbeddingLayer(BLayer):
         """
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs),
         )
-        beta = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+        theta = sample(
+            name=f"{self.__class__.__name__}_{name}_theta",
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [num_categories, embedding_dim]
             ),
         )
         # matmul and return
-        return beta[x.squeeze()]
+        return theta[x.squeeze()]
 
 
 class RandomEffectsLayer(BLayer):
@@ -887,10 +887,10 @@ class RandomEffectsLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
         """
         Args:
@@ -899,11 +899,11 @@ class RandomEffectsLayer(BLayer):
             coef_dist: Prior distribution for embedding weights.
             coef_kwargs: Parameters for the prior distribution.
         """
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -924,23 +924,17 @@ class RandomEffectsLayer(BLayer):
         """
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs),
         )
-        beta = sample(
-            name=f"{self.__class__.__name__}_{name}_beta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+        theta = sample(
+            name=f"{self.__class__.__name__}_{name}_theta",
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [num_categories, 1]
             ),
         )
-        return beta[x.squeeze()]
-
-
-# ---- Spline utilities ------------------------------------------------------ #
-# Moved to blayers.splines; re-exported here for backwards compatibility.
-
-from blayers.splines import bspline_basis, make_knots  # noqa: F401, E402
+        return theta[x.squeeze()]
 
 
 class RandomWalkLayer(BLayer):
@@ -948,16 +942,16 @@ class RandomWalkLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -980,13 +974,13 @@ class RandomWalkLayer(BLayer):
         """
 
         # sampling block
-        lmbda = sample(
-            name=f"{self.__class__.__name__}_{name}_lmbda",
-            fn=self.lmbda_dist(**self.lmbda_kwargs),
+        scale = sample(
+            name=f"{self.__class__.__name__}_{name}_scale",
+            fn=self.scale_dist(**self.scale_kwargs),
         )
         theta = sample(
             name=f"{self.__class__.__name__}_{name}_theta",
-            fn=self.coef_dist(scale=lmbda, **self.coef_kwargs).expand(
+            fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
                 [
                     num_categories,
                     embedding_dim,
@@ -1064,8 +1058,8 @@ class HorseshoeLayer(BLayer):
             distributions.HalfCauchy(1.0).expand([units]),
         )
         # Local shrinkage: one per feature per output unit
-        lmbda = sample(
-            f"{cls}_{name}_lmbda",
+        scale = sample(
+            f"{cls}_{name}_scale",
             distributions.HalfCauchy(1.0).expand([d, units]),
         )
 
@@ -1078,12 +1072,12 @@ class HorseshoeLayer(BLayer):
                     self.slab_df / 2.0 * self.slab_scale**2,
                 ),
             )
-            lmbda_tilde = jnp.sqrt(
-                c2 * lmbda**2 / (c2 + tau**2 * lmbda**2)
+            scale_tilde = jnp.sqrt(
+                c2 * scale**2 / (c2 + tau**2 * scale**2)
             )
-            scale = tau * lmbda_tilde
+            scale = tau * scale_tilde
         else:
-            scale = tau * lmbda  # (d, units)
+            scale = tau * scale  # (d, units)
 
         beta = sample(f"{cls}_{name}_beta", distributions.Normal(0.0, scale))
         return activation(_matmul_dot_product(x, beta))
@@ -1115,16 +1109,16 @@ class AttentionLayer(BLayer):
 
     def __init__(
         self,
-        lmbda_dist: distributions.Distribution = distributions.HalfNormal,
+        scale_dist: distributions.Distribution = distributions.HalfNormal,
         coef_dist: distributions.Distribution = distributions.Normal,
         coef_kwargs: dict[str, float] = {"loc": 0.0},
-        lmbda_kwargs: dict[str, float] = {"scale": 1.0},
+        scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
-        self.lmbda_dist = lmbda_dist
+        self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
-        self.lmbda_kwargs = lmbda_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, lmbda_dist, lmbda_kwargs)
+        self.scale_kwargs = scale_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
 
     def __call__(
         self,
@@ -1158,38 +1152,38 @@ class AttentionLayer(BLayer):
 
         # FT-Transformer tokenisation: value scaling + per-column bias
         # H[i,j] = x[i,j] * W_emb[j] + W_bias[j]  → (n, d, h)
-        lmbda_emb = sample(
-            f"{cls}_{name}_lmbda_emb",
-            self.lmbda_dist(**self.lmbda_kwargs).expand([h]),
+        scale_emb = sample(
+            f"{cls}_{name}_scale_emb",
+            self.scale_dist(**self.scale_kwargs).expand([h]),
         )
         W_emb = sample(
             f"{cls}_{name}_W_emb",
-            self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
+            self.coef_dist(scale=scale_emb, **self.coef_kwargs).expand([d, h]),
         )
         W_bias = sample(
             f"{cls}_{name}_W_bias",
-            self.coef_dist(scale=lmbda_emb, **self.coef_kwargs).expand([d, h]),
+            self.coef_dist(scale=scale_emb, **self.coef_kwargs).expand([d, h]),
         )
         H = x[:, :, None] * W_emb[None, :, :] + W_bias[None, :, :]  # (n, d, h)
 
         # Q, K, V projections — one set per head: (m, h, h_k)
-        # lmbda_qkv is (m, h_k); unsqueeze to (m, 1, h_k) so it broadcasts to (m, h, h_k)
-        lmbda_qkv = sample(
-            f"{cls}_{name}_lmbda_qkv",
-            self.lmbda_dist(**self.lmbda_kwargs).expand([m, h_k]),
+        # scale_qkv is (m, h_k); unsqueeze to (m, 1, h_k) so it broadcasts to (m, h, h_k)
+        scale_qkv = sample(
+            f"{cls}_{name}_scale_qkv",
+            self.scale_dist(**self.scale_kwargs).expand([m, h_k]),
         )
-        lmbda_qkv_bc = lmbda_qkv[:, None, :]  # (m, 1, h_k)
+        scale_qkv_bc = scale_qkv[:, None, :]  # (m, 1, h_k)
         W_Q = sample(
             f"{cls}_{name}_W_Q",
-            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
+            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_K = sample(
             f"{cls}_{name}_W_K",
-            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
+            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
         W_V = sample(
             f"{cls}_{name}_W_V",
-            self.coef_dist(scale=lmbda_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
+            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
         )
 
         # Project to per-head Q/K/V: (n, d, m, h_k)
@@ -1206,12 +1200,12 @@ class AttentionLayer(BLayer):
         pooled = out.reshape(n, d, h).mean(axis=1)
 
         # Output projection
-        lmbda_out = sample(
-            f"{cls}_{name}_lmbda_out",
-            self.lmbda_dist(**self.lmbda_kwargs).expand([units]),
+        scale_out = sample(
+            f"{cls}_{name}_scale_out",
+            self.scale_dist(**self.scale_kwargs).expand([units]),
         )
         W_out = sample(
             f"{cls}_{name}_W_out",
-            self.coef_dist(scale=lmbda_out, **self.coef_kwargs).expand([h, units]),
+            self.coef_dist(scale=scale_out, **self.coef_kwargs).expand([h, units]),
         )
         return activation(pooled @ W_out)

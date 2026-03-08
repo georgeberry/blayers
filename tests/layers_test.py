@@ -89,7 +89,7 @@ def dgp_fm(num_obs: int, k: int) -> dict[str, jax.Array]:
 
 def dgp_emb(num_obs: int, k: int, num_categories: int) -> dict[str, jax.Array]:
     lmbda = sample("lambda", dist.HalfNormal(1.0))
-    beta = sample("beta", dist.Normal(0, lmbda).expand([num_categories, k]))
+    theta = sample("theta", dist.Normal(0, lmbda).expand([num_categories, k]))
     x1 = sample(
         "x1",
         dist.Categorical(
@@ -99,12 +99,12 @@ def dgp_emb(num_obs: int, k: int, num_categories: int) -> dict[str, jax.Array]:
 
     sigma = sample("sigma", dist.HalfNormal(1.0))
 
-    mu = jnp.sum(beta[x1], axis=1)
+    mu = jnp.sum(theta[x1], axis=1)
     y = sample("y", dist.Normal(mu, sigma))
     return {
         "x1": x1,
         "y": y,
-        "beta": beta,
+        "theta": theta,
         "lambda": lmbda,
         "sigma": sigma,
     }
@@ -295,7 +295,7 @@ def emb_model() -> (
     return (
         model,
         [
-            (["EmbeddingLayer_beta_beta"], identity),
+            (["EmbeddingLayer_beta_theta"], identity),
         ],
     )
 
@@ -315,7 +315,7 @@ def re_model() -> (
     return (
         model,
         [
-            (["RandomEffectsLayer_beta_beta"], identity),
+            (["RandomEffectsLayer_beta_theta"], identity),
         ],
     )
 
@@ -733,7 +733,7 @@ def test_simple_lambda() -> None:
     guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
 
     with pytest_check.check:
-        rmse(guide_means["AdaptiveLayer_beta_lmbda"], data["lambda1"]) < 0.1
+        rmse(guide_means["AdaptiveLayer_beta_scale"], data["lambda1"]) < 0.1
 
 
 def dgp_stacked(num_obs: int, k: int, hidden_dim: int) -> dict[str, jax.Array]:
@@ -822,10 +822,10 @@ def test_stacked_lambda() -> None:
     guide_means = {k: jnp.mean(v, axis=0) for k, v in guide_samples.items()}
 
     with pytest_check.check:
-        rmse(guide_means["AdaptiveLayer_beta1_lmbda"], data["lambda1"]) < 0.1
+        rmse(guide_means["AdaptiveLayer_beta1_scale"], data["lambda1"]) < 0.1
 
     with pytest_check.check:
-        rmse(guide_means["AdaptiveLayer_beta2_lmbda"], data["lambda2"]) < 0.1
+        rmse(guide_means["AdaptiveLayer_beta2_scale"], data["lambda2"]) < 0.1
 
 
 # --------------------------------------------------------------------------- #

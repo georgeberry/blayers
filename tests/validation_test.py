@@ -29,9 +29,9 @@ class TestAdaptiveLayerValidation:
     def test_valid_defaults(self):
         AdaptiveLayer()  # should not raise
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            AdaptiveLayer(lmbda_kwargs={"nonexistent_arg": 1.0})
+            AdaptiveLayer(scale_kwargs={"nonexistent_arg": 1.0})
 
     def test_bad_coef_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
@@ -40,16 +40,16 @@ class TestAdaptiveLayerValidation:
     def test_error_at_construction_not_call(self):
         """TypeError fires during __init__, not during __call__."""
         with pytest.raises(TypeError):
-            AdaptiveLayer(lmbda_kwargs={"bad": 1.0})
+            AdaptiveLayer(scale_kwargs={"bad": 1.0})
 
 
 class TestFMLayerValidation:
     def test_valid_defaults(self):
         FMLayer()
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            FMLayer(lmbda_kwargs={"bad_kwarg": 1.0})
+            FMLayer(scale_kwargs={"bad_kwarg": 1.0})
 
 
 class TestFM3LayerValidation:
@@ -65,9 +65,9 @@ class TestAttentionLayerValidation:
     def test_valid_defaults(self):
         AttentionLayer()
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            AttentionLayer(lmbda_kwargs={"oops": 2.0})
+            AttentionLayer(scale_kwargs={"oops": 2.0})
 
 
 class TestEmbeddingLayerValidation:
@@ -83,9 +83,9 @@ class TestRandomEffectsLayerValidation:
     def test_valid_defaults(self):
         RandomEffectsLayer()
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            RandomEffectsLayer(lmbda_kwargs={"bad": 1.0})
+            RandomEffectsLayer(scale_kwargs={"bad": 1.0})
 
 
 class TestRandomWalkLayerValidation:
@@ -101,9 +101,9 @@ class TestLowRankInteractionLayerValidation:
     def test_valid_defaults(self):
         LowRankInteractionLayer()
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            LowRankInteractionLayer(lmbda_kwargs={"bad": 0.5})
+            LowRankInteractionLayer(scale_kwargs={"bad": 0.5})
 
 
 class TestInteractionLayerValidation:
@@ -119,9 +119,9 @@ class TestBilinearLayerValidation:
     def test_valid_defaults(self):
         BilinearLayer()
 
-    def test_bad_lmbda_kwargs(self):
+    def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            BilinearLayer(lmbda_kwargs={"bad": 1.0})
+            BilinearLayer(scale_kwargs={"bad": 1.0})
 
 
 class TestLowRankBilinearLayerValidation:
