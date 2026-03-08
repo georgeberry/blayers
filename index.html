@@ -398,7 +398,7 @@ document.write(`
 </section>
 <section id="concept">
 <h2>Concept<a class="headerlink" href="#concept" title="Link to this heading">#</a></h2>
-<img width="732" height="126" alt="Screenshot 2026-03-07 at 11 39 54 AM" src="https://github.com/user-attachments/assets/e763730b-3498-41a7-9a85-f8f1c3601ed0" />
+<img width="577" height="229" alt="image" src="https://github.com/user-attachments/assets/b2314f2f-2437-4fea-b01d-2161113b3b67" />
 <p>Easily build Bayesian models from parts, abstract away the boilerplate, and
 tweak priors as you wish.</p>
 <p>Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.</p>
@@ -475,9 +475,9 @@ model is exacatly equivalent to writing the following, just using way less code.
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
-        <span class="n">lmbda_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
+        <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
         <span class="n">prior_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
-        <span class="n">lmbda_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
+        <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
         <span class="n">prior_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
     <span class="p">)(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -492,9 +492,9 @@ model is exacatly equivalent to writing the following, just using way less code.
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
 
 <span class="n">my_lognormal_layer</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
-    <span class="n">lmbda_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
+    <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
     <span class="n">prior_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
-    <span class="n">lmbda_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
+    <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
     <span class="n">prior_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
 <span class="p">)</span>
 
@@ -522,7 +522,7 @@ model is exacatly equivalent to writing the following, just using way less code.
 <li><p><code class="docutils literal notranslate"><span class="pre">BilinearLayer</span></code> — Bilinear interaction: <code class="docutils literal notranslate"><span class="pre">x^T</span> <span class="pre">W</span> <span class="pre">z</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code> — Low-rank bilinear interaction.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code> — Single-head self-attention over the feature dimension.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code> — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation (<a class="reference external" href="https://arxiv.org/abs/2106.11959">Gorishniy et al. 2021</a>). <code class="docutils literal notranslate"><span class="pre">head_dim</span></code> is per-head so total embedding dim is <code class="docutils literal notranslate"><span class="pre">head_dim</span> <span class="pre">*</span> <span class="pre">num_heads</span></code> — adding heads increases capacity.</p></li>
 </ul>
 <p>All layer prior kwargs are validated at construction time — bad kwargs raise <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> immediately.</p>
 </section>
@@ -558,7 +558,8 @@ model is exacatly equivalent to writing the following, just using way less code.
 <section id="splines">
 <h2>Splines<a class="headerlink" href="#splines" title="Link to this heading">#</a></h2>
 <p>Non-linear transformations via B-splines. Compute the basis matrix once with <code class="docutils literal notranslate"><span class="pre">make_knots</span></code> + <code class="docutils literal notranslate"><span class="pre">bspline_basis</span></code>, then pass it to any layer.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_knots</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">,</span> <span class="n">AdaptiveLayer</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.splines</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_knots</span><span class="p">,</span> <span class="n">bspline_basis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="n">knots</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>   <span class="c1"># clamped knot vector from data quantiles</span>
@@ -697,8 +698,6 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankBilinearLayer"><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.bspline_basis"><code class="docutils literal notranslate"><span class="pre">bspline_basis()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.make_knots"><code class="docutils literal notranslate"><span class="pre">make_knots()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HorseshoeLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AttentionLayer"><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code></a></li>
