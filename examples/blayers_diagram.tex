@@ -1,16 +1,18 @@
-\documentclass[preview, border=12pt]{standalone}
+\documentclass[11pt]{article}
 \usepackage{amsmath}
+\usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{lmodern}
 \usepackage[T1]{fontenc}
 
 % Color palette
-\definecolor{modelcol}{RGB}{52, 120, 200}   % blue  — model form
+\definecolor{modelcol}{RGB}{52, 120, 200}   % blue   — model form / latent vars
 \definecolor{distcol}{RGB}{220, 100, 30}    % orange — distributions
-\definecolor{argscol}{RGB}{40, 160, 80}     % green  — data / call args
+\definecolor{argscol}{RGB}{150, 50, 200}    % purple — data / call args
 
 \begin{document}
 
+% --- BLayers call syntax -----------------------------------------------------
 \[
   \underbrace{%
     \textcolor{modelcol}{\texttt{AdaptiveLayer}}%
@@ -28,6 +30,26 @@
     }%
   }_{\substack{\textcolor{argscol}{\text{\small name,\ data,\ output dim}}\\[2pt]
                \textcolor{argscol}{\text{\scriptsize (supplied at call time)}}}}
+\]
+
+\bigskip
+
+% --- Generative model --------------------------------------------------------
+\[
+  \begin{array}{rcl@{\quad}l}
+    \textcolor{modelcol}{\lambda}
+      &\textcolor{modelcol}{\sim}& \textcolor{distcol}{\mathrm{HalfNormal}}\textcolor{modelcol}{(}\textcolor{distcol}{1}\textcolor{modelcol}{)}
+      & \multirow{2}{*}{$\Bigg\}\;\textcolor{modelcol}{\texttt{AdaptiveLayer}}$} \\[4pt]
+    \textcolor{modelcol}{\beta}
+      &\textcolor{modelcol}{\sim}& \textcolor{distcol}{\mathrm{Normal}}\textcolor{modelcol}{(}\textcolor{distcol}{0}\textcolor{modelcol}{,\;}\textcolor{modelcol}{\lambda}\textcolor{modelcol}{)}
+      & \\[10pt]
+    \sigma
+      &\sim& \mathrm{HalfNormal}(1)
+      & \multirow{2}{*}{$\Bigg\}\;\texttt{gaussian\_link}$} \\[4pt]
+    y
+      &\sim& \mathrm{Normal}(\textcolor{modelcol}{\beta} \cdot \textcolor{argscol}{x},\ \sigma)
+      &
+  \end{array}
 \]
 
 \end{document}
