@@ -41,8 +41,8 @@ The simplest non-trivial (and most important!) Bayesian regression model form is
 the adaptive prior,
 
 ```
-lmbda ~ HalfNormal(1)
-beta  ~ Normal(0, lmbda)
+scale ~ HalfNormal(1)
+beta  ~ Normal(0, scale)
 y     ~ Normal(beta * x, 1)
 ```
 
@@ -67,14 +67,14 @@ def model(x, y):
     # Adaptive layer does all of this
     input_shape = x.shape[1]
     # adaptive prior
-    lmbda = sample(
-        name="lmbda",
+    scale = sample(
+        name="scale",
         fn=distributions.HalfNormal(1.),
     )
     # beta coefficients for regression
     beta = sample(
         name="beta",
-        fn=distributions.Normal(loc=0., scale=lmbda),
+        fn=distributions.Normal(loc=0., scale=scale),
         sample_shape=(input_shape,),
     )
     mu = jnp.einsum('ij,j->i', x, beta)
@@ -89,16 +89,16 @@ def model(x, y):
 The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so let's say you wanted to change the model from
 
 ```
-lmbda ~ HalfNormal(1)
-beta  ~ Normal(0, lmbda)
+scale ~ HalfNormal(1)
+beta  ~ Normal(0, scale)
 y     ~ Normal(beta * x, 1)
 ```
 
 to
 
 ```
-lmbda ~ Exponential(1.)
-beta  ~ LogNormal(0, lmbda)
+scale ~ Exponential(1.)
+beta  ~ LogNormal(0, scale)
 y     ~ Normal(beta * x, 1)
 ```
 
