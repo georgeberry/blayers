@@ -1083,6 +1083,84 @@ class HorseshoeLayer(BLayer):
         return activation(_matmul_dot_product(x, beta))
 
 
+# ---- Spike and slab -------------------------------------------------------- #
+
+
+class SpikeAndSlabLayer(BLayer):
+    """Sparse regression via a spike-and-slab prior.
+
+    Each coefficient has a relaxed Bernoulli inclusion indicator
+    ``z_j`` (Concrete distribution). Included features (``z_j ≈ 1``) take
+    the full slab coefficient; excluded features (``z_j ≈ 0``) are gated
+    toward zero (the spike).
+
+    Generative model::
+
+        z_j ~ RelaxedBernoulli(temperature, p)   # inclusion indicator
+        β_j ~ Normal(0, slab_scale)              # slab coefficient
+        y   ~ link(z · β · x, ...)               # z gates each coefficient
+
+    The posterior mean of ``z_j`` approximates ``P(feature j included | data)``.
+    Use a lower temperature (e.g. 0.05) for harder 0/1 inclusion decisions.
+
+    Args:
+        slab_scale: Prior std for included (slab) coefficients.
+        temperature: Concrete relaxation temperature. Lower → harder 0/1.
+        inclusion_prob: Prior probability each feature is included.
+    """
+
+    def __init__(
+        self,
+        slab_scale: float = 1.0,
+        temperature: float = 0.1,
+        inclusion_prob: float = 0.5,
+    ):
+        self.slab_scale = slab_scale
+        self.temperature = temperature
+        self.inclusion_prob = inclusion_prob
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: Input of shape ``(n, d)``.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        d = x.shape[1]
+        cls = self.__class__.__name__
+
+        logit_p = jnp.log(self.inclusion_prob / (1.0 - self.inclusion_prob))
+
+        # Relaxed inclusion: posterior z_j ≈ P(feature j included | data)
+        z = sample(
+            f"{cls}_{name}_z",
+            distributions.RelaxedBernoulliLogits(
+                temperature=self.temperature,
+                logits=jnp.full((d, units), logit_p),
+            ),
+        )
+
+        # Slab coefficients
+        beta = sample(
+            f"{cls}_{name}_beta",
+            distributions.Normal(0.0, self.slab_scale).expand([d, units]),
+        )
+
+        # Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)
+        return activation(_matmul_dot_product(x, z * beta))
+
+
 # ---- Attention ------------------------------------------------------------- #
 
 
