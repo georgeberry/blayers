@@ -345,7 +345,7 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-scale-modes"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-and-lognormal-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
@@ -410,14 +410,15 @@ the adaptive prior,</p>
 <p>BLayers encapsulates a generative model structure like this in a <code class="docutils literal notranslate"><span class="pre">BLayer</span></code>. The
 fundamental building block is the <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>All <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> is doing is writing Numpyro for you under the hood. This
-model is exacatly equivalent to writing the following, just using way less code.</p>
+model is exactly equivalent to writing the following, just using way less code.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -456,37 +457,38 @@ model is exacatly equivalent to writing the following, just using way less code.
 </pre></div>
 </div>
 <p>you can just do this directly via arguments</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
         <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
-        <span class="n">prior_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
         <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
-        <span class="n">prior_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
+        <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
     <span class="p">)(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="factories">
 <h3>“Factories”<a class="headerlink" href="#factories" title="Link to this heading">#</a></h3>
-<p>Since Numpyro traces <code class="docutils literal notranslate"><span class="pre">sample</span></code> sites and doesn’t record any paramters on the class, you can re-use with a particular generative model structure freely.</p>
+<p>Since Numpyro traces <code class="docutils literal notranslate"><span class="pre">sample</span></code> sites and doesn’t record any parameters on the class, you can re-use with a particular generative model structure freely.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="n">my_lognormal_layer</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
     <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
-    <span class="n">prior_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
+    <span class="n">coef_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
     <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
-    <span class="n">prior_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
+    <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">&#39;mu1&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">&#39;mu2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -495,19 +497,20 @@ model is exacatly equivalent to writing the following, just using way less code.
 <h2>Layers<a class="headerlink" href="#layers" title="Link to this heading">#</a></h2>
 <p>The full set of layers included with BLayers:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> — Adaptive prior layer.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code> — Fixed prior over coefficients (e.g., Normal or Laplace).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> — Adaptive prior layer: <code class="docutils literal notranslate"><span class="pre">scale</span> <span class="pre">~</span> <span class="pre">HalfNormal(1)</span></code>, <code class="docutils literal notranslate"><span class="pre">beta</span> <span class="pre">~</span> <span class="pre">Normal(0,</span> <span class="pre">scale)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code> — Fixed prior over coefficients (e.g., Normal or Laplace), no hierarchical scale.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code> — Intercept-only layer (bias term).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code> — Bayesian embeddings for sparse categorical features.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code> — Factorization Machine (order 2).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects (embedding with output dim 1).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code> — Factorization Machine (order 2) for pairwise interaction terms.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code> — Factorization Machine (order 3).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code> — Low-rank interaction between two feature sets.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Random walk prior over coefficients (e.g., Gaussian walk).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InteractionLayer</span></code> — All pairwise interactions between two feature sets.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BilinearLayer</span></code> — Bilinear interaction: <code class="docutils literal notranslate"><span class="pre">x^T</span> <span class="pre">W</span> <span class="pre">z</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code> — Low-rank bilinear interaction.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Gaussian random walk prior over an ordered index (e.g., time).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code> — Spike-and-slab prior; <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">~</span> <span class="pre">Beta(0.5,</span> <span class="pre">0.5)</span></code> inclusion weights times a configurable slab.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code> — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation (<a class="reference external" href="https://arxiv.org/abs/2106.11959">Gorishniy et al. 2021</a>). <code class="docutils literal notranslate"><span class="pre">head_dim</span></code> is per-head so total embedding dim is <code class="docutils literal notranslate"><span class="pre">head_dim</span> <span class="pre">*</span> <span class="pre">num_heads</span></code> — adding heads increases capacity.</p></li>
 </ul>
 <p>All layer prior kwargs are validated at construction time — bad kwargs raise <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> immediately.</p>
@@ -516,18 +519,18 @@ model is exacatly equivalent to writing the following, just using way less code.
 <h2>Links<a class="headerlink" href="#links" title="Link to this heading">#</a></h2>
 <p>We provide link helpers in <code class="docutils literal notranslate"><span class="pre">links.py</span></code> to reduce Numpyro boilerplate. Available links:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> — Gaussian link with flexible scale: learned (default), fixed, or from a layer (see below).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link_exp</span></code> — Gaussian link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link_exp</span></code> — LogNormal link with <code class="docutils literal notranslate"><span class="pre">Exp</span></code> distributed homoskedastic <code class="docutils literal notranslate"><span class="pre">sigma</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> — Gaussian likelihood with configurable sigma prior (see below).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code> — LogNormal likelihood with configurable sigma prior.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for logistic regression.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">poisson_link</span></code> — Poisson link with rate <code class="docutils literal notranslate"><span class="pre">y_hat</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — Uses <code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">~</span> <span class="pre">Exponential(rate)</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">~</span> <span class="pre">NegativeBinomial2(mean=y_hat,</span> <span class="pre">concentration=sigma)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poisson_link</span></code> — Poisson link with log-rate input.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — NegativeBinomial2 for overdispersed counts; learned concentration via <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ordinal_link</span></code> — Cumulative logit / proportional odds for ordinal outcomes.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">zip_link</span></code> — Zero-inflated Poisson for count data with excess zeros.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta_link</span></code> — Beta regression for proportions strictly in (0, 1).</p></li>
 </ul>
-<section id="gaussian-link-scale-modes">
-<h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes<a class="headerlink" href="#gaussian-link-scale-modes" title="Link to this heading">#</a></h3>
+<section id="gaussian-link-and-lognormal-link">
+<h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code><a class="headerlink" href="#gaussian-link-and-lognormal-link" title="Link to this heading">#</a></h3>
+<p>Both links are built on a common base and support three scale modes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default: sigma ~ Exp(1) learned from data</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
@@ -537,6 +540,19 @@ model is exacatly equivalent to writing the following, just using way less code.
 <span class="c1"># Learned scale from a layer — softplus applied internally for stable gradients</span>
 <span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;log_sigma&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">untransformed_scale</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Swap the sigma prior via <code class="docutils literal notranslate"><span class="pre">functools.partial</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dists</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
+<span class="c1"># HalfNormal prior instead of Exponential</span>
+<span class="n">hn_gaussian</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hn_gaussian</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -617,10 +633,10 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li><p>Batch via <code class="docutils literal notranslate"><span class="pre">plate</span></code> and use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code>, or</p></li>
 <li><p>Remove plates and use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code>.</p></li>
 </ol>
-<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if you if your model has plates.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if your model has plates.</p>
 <section id="reparameterizing">
 <h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
-<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparamterize</a>. BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions.</p>
+<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparameterize</a>. BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
     <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span>
@@ -633,7 +649,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </div>
 <p>Then, reparam these distributions automatically and fit with Numpyro’s built in MCMC methods.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link_exp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
@@ -641,7 +657,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <span class="nd">@autoreparam</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link_exp</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="n">kernel</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="n">mcmc</span> <span class="o">=</span> <span class="n">MCMC</span><span class="p">(</span>
@@ -651,10 +667,10 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
     <span class="n">num_chains</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
-    <span class="n">mcmc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="n">rng_key</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">data</span><span class="p">,</span>
-    <span class="p">)</span>
+<span class="n">mcmc</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">data</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -763,7 +779,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-scale-modes"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> scale modes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-and-lognormal-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
