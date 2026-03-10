@@ -1,56 +1,34 @@
 """
-We provide link functions as a convenience to abstract away a bit more Numpyro
-boilerplate. Link functions take model predictions as inputs to a distribution.
+Link functions connect model predictions to likelihood distributions,
+abstracting away NumPyro boilerplate for common output types.
 
-The simplest example is the Gaussian link
-
-.. code-block:: python
-
-    mu = ...
-    sigma ~ Exp(1)
-    y     ~ Normal(mu, sigma)
-
-We currently provide
-
-* ``negative_binomial_link``
-* ``logit_link``
-* ``poission_link``
-* ``gaussian_link_exp``
-* ``lognormal_link_exp``
-
-Link functions include trainable scale parameters when needed, as in the case
-of Gaussians. We also provide classes for eaisly making additional links via
-the ``LocScaleLink`` and ``SingleParamLink`` classes.
-
-For instance, the Poisson link is created like this:
-
-.. code-block:: python
-
-    poission_link = SingleParamLink(obs_dist=dists.Poisson)
-
-
-And implements
-
-.. code-block:: python
-
-    rate = ...
-    y    ~ Poisson(rate)
-
-
-In a Numpyro model, you use a link like
-
-.. code-block:: python
+Usage::
 
     from blayers.layers import AdaptiveLayer
-    from blayers.links import poisson_link
-    def model(x, y):
-        rate = AdaptiveLayer()('rate', x)
-        return poisson_link(rate, y)
+    from blayers.links import gaussian_link
 
+    def model(x, y=None):
+        mu = AdaptiveLayer()("mu", x)
+        return gaussian_link(mu, y)
+
+    # HalfNormal sigma instead of Exponential
+    from functools import partial
+    import numpyro.distributions as dists
+    hn_gaussian = partial(gaussian_link, sigma_dist=dists.HalfNormal, sigma_kwargs={"scale": 1.0})
+
+Available links:
+
+* ``gaussian_link``          — Normal likelihood, configurable sigma prior
+* ``lognormal_link``         — LogNormal likelihood, configurable sigma prior
+* ``logit_link``             — Bernoulli likelihood
+* ``poisson_link``           — Poisson likelihood
+* ``negative_binomial_link`` — NegativeBinomial2 likelihood, learned concentration
+* ``ordinal_link``           — Ordinal (cumulative logit / proportional odds)
+* ``zip_link``               — Zero-inflated Poisson
+* ``beta_link``              — Beta regression for proportions in (0, 1)
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
+from functools import partial
 
 import jax
 import jax.nn as jnn
@@ -59,158 +37,155 @@ import numpyro.distributions as dists
 from numpyro import sample
 
 
-class Link(ABC):
-    @abstractmethod
-    def __init__(self, *args: Any) -> None:
-        """Initialize link parameters."""
-
-    @abstractmethod
-    def __call__(self, *args: Any) -> Any:
-        """
-        Execute the link function.
-        """
-
-
-class LocScaleLink(Link):
-    def __init__(
-        self,
-        sigma_dist: dists.Distribution = dists.Exponential,
-        sigma_kwargs: dict[str, float] = {"rate": 1.0},
-        obs_dist: dists.Distribution = dists.Normal,
-        obs_kwargs: dict[str, float] = {},
-    ) -> None:
-        self.sigma_dist = sigma_dist
-        self.sigma_kwargs = sigma_kwargs
-        self.obs_dist = obs_dist
-        self.obs_kwargs = obs_kwargs
-
-    def __call__(
-        self,
-        y_hat: jax.Array,
-        y: jax.Array | None = None,
-        dependent_outputs: bool = False,
-    ) -> jax.Array:
-        sigma = sample("sigma", self.sigma_dist(**self.sigma_kwargs))
-
-        if dependent_outputs:
-            dist = self.obs_dist(
-                loc=y_hat, scale=sigma, **self.obs_kwargs
-            ).to_event(1)
-        dist = self.obs_dist(loc=y_hat, scale=sigma, **self.obs_kwargs)
-
-        return sample(
-            "obs",
-            dist,
-            obs=y,
-        )
-
-
-class SingleParamLink(Link):
-    def __init__(
-        self,
-        obs_dist: dists.Distribution = dists.Bernoulli,
-    ) -> None:
-        self.obs_dist = obs_dist
-
-    def __call__(
-        self,
-        y_hat: jax.Array,
-        y: jax.Array | None = None,
-        dependent_outputs: bool = False,
-    ) -> jax.Array:
-        if dependent_outputs:
-            dist = self.obs_dist(y_hat).to_event(1)
-        dist = self.obs_dist(y_hat)
-
-        return sample(
-            "obs",
-            dist,
-            obs=y,
-        )
-
-
-# Exports
-
-
-def negative_binomial_link(
+def _loc_scale_link(
     y_hat: jax.Array,
     y: jax.Array | None = None,
-    dependent_outputs: bool = False,
-    rate: float = 1.0,
-) -> jax.Array:
-    sigma = sample("sigma", dists.Exponential(rate=rate))
-
-    if dependent_outputs:
-        dist = dists.NegativeBinomial2(
-            mean=y_hat, concentration=sigma
-        ).to_event(1)
-    dist = dists.NegativeBinomial2(mean=y_hat, concentration=sigma)
-
-    return sample(
-        "obs",
-        dist,
-        obs=y,
-    )
-
-
-logit_link = SingleParamLink()
-"""Logit link function."""
-
-poission_link = SingleParamLink(obs_dist=dists.Poisson)
-"""Poisson link function."""
-
-gaussian_link_exp = LocScaleLink()
-"""Gaussian link function with exponentially distributed sigma."""
-
-lognormal_link_exp = LocScaleLink(obs_dist=dists.LogNormal)
-"""Lognormal link function with exponentially distributed sigma."""
-
-
-def gaussian_link(
-    y_hat: jax.Array,
-    y: jax.Array | None = None,
+    obs_dist=dists.Normal,
+    sigma_dist=dists.Exponential,
+    sigma_kwargs: dict | None = None,
     scale: float | jax.Array | None = None,
     untransformed_scale: jax.Array | None = None,
 ) -> jax.Array:
-    """Gaussian link with flexible scale specification.
+    """Base link for location-scale likelihoods.
 
-    Exactly one of ``scale`` or ``untransformed_scale`` should be supplied, or neither.
+    Exactly one of ``scale``, ``untransformed_scale``, or neither should be
+    supplied.
 
-    * **Default** (neither): ``sigma ~ Exponential(1)`` is learned from data.
-    * **``scale``**: a known positive std passed directly — e.g. per-observation
-      stds from XGBoost quantile regression.
-    * **``untransformed_scale``**: an unbounded linear predictor transformed via
-      ``softplus`` internally.  Prefer this when the scale comes from a learned
-      layer so gradients stay bounded.
-
-    .. code-block:: python
-
-        # Default: learn sigma
-        gaussian_link(mu, y)
-
-        # Already-positive std (e.g. from XGBoost)
-        gaussian_link(mu, y, scale=pred_std)
-
-        # Learned scale from a layer — pass raw output, softplus applied internally
-        raw = AdaptiveLayer()("log_scale", x)
-        gaussian_link(mu, y, untransformed_scale=raw)
+    * **Default** (neither): ``sigma`` is drawn from ``sigma_dist(**sigma_kwargs)``.
+    * **``scale``**: a known positive std passed directly.
+    * **``untransformed_scale``**: unbounded linear predictor transformed via
+      ``softplus`` internally.
 
     Args:
-        y_hat: Predicted mean, shape ``(n, 1)`` or ``(n,)``.
+        y_hat: Predicted mean/location.
         y: Observed values, or ``None`` for prior predictive / inference.
-        scale: Known positive standard deviation. Scalar or broadcastable array.
+        obs_dist: Likelihood distribution class (must accept ``loc`` and ``scale``).
+        sigma_dist: Prior distribution class for sigma. Default ``Exponential``.
+        sigma_kwargs: Kwargs for ``sigma_dist``. Default ``{"rate": 1.0}``.
+        scale: Known positive standard deviation.
         untransformed_scale: Unbounded array transformed via ``softplus`` internally.
 
     Returns:
         Sample site ``"obs"``.
     """
+    if sigma_kwargs is None:
+        sigma_kwargs = {"rate": 1.0}
+
     if untransformed_scale is not None:
         sigma = jax.nn.softplus(untransformed_scale)
     elif scale is not None:
         sigma = scale
     else:
-        sigma = sample("sigma", dists.Exponential(rate=1.0))
-    return sample("obs", dists.Normal(loc=y_hat, scale=sigma), obs=y)
+        sigma = sample("sigma", sigma_dist(**sigma_kwargs))
+    return sample("obs", obs_dist(loc=y_hat, scale=sigma), obs=y)
+
+
+gaussian_link = partial(_loc_scale_link, obs_dist=dists.Normal)
+gaussian_link.__doc__ = """Gaussian likelihood with configurable sigma prior.
+
+Default: ``sigma ~ Exponential(rate=1.0)``.  Override via ``sigma_dist`` /
+``sigma_kwargs``.  Pass a known ``scale`` or a raw ``untransformed_scale``
+(transformed via softplus internally) to skip the sigma sample site.
+
+Args:
+    y_hat: Predicted mean, shape ``(n, 1)`` or ``(n,)``.
+    y: Observed values, or ``None`` for prior predictive / inference.
+    sigma_dist: Prior distribution class for sigma. Default ``Exponential``.
+    sigma_kwargs: Kwargs for ``sigma_dist``. Default ``{"rate": 1.0}``.
+    scale: Known positive standard deviation. Scalar or broadcastable array.
+    untransformed_scale: Unbounded array transformed via ``softplus`` internally.
+
+Returns:
+    Sample site ``"obs"``.
+
+Example::
+
+    # Default: Exponential(1) prior on sigma
+    gaussian_link(mu, y)
+
+    # HalfNormal prior instead
+    from functools import partial
+    hn_link = partial(gaussian_link, sigma_dist=dists.HalfNormal, sigma_kwargs={"scale": 1.0})
+
+    # Known sigma (e.g. from XGBoost quantile regression)
+    gaussian_link(mu, y, scale=pred_std)
+
+    # Learned scale from a layer — softplus applied internally
+    raw = AdaptiveLayer()("log_scale", x)
+    gaussian_link(mu, y, untransformed_scale=raw)
+"""
+
+lognormal_link = partial(_loc_scale_link, obs_dist=dists.LogNormal)
+lognormal_link.__doc__ = """LogNormal likelihood with configurable sigma prior.
+
+Default: ``sigma ~ Exponential(rate=1.0)``.
+
+Args:
+    y_hat: Log-scale predicted mean, shape ``(n, 1)`` or ``(n,)``.
+    y: Observed positive values, or ``None``.
+    sigma_dist: Prior distribution class for sigma. Default ``Exponential``.
+    sigma_kwargs: Kwargs for ``sigma_dist``. Default ``{"rate": 1.0}``.
+    scale: Known positive standard deviation.
+    untransformed_scale: Unbounded array transformed via ``softplus`` internally.
+
+Returns:
+    Sample site ``"obs"``.
+"""
+
+
+def logit_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Bernoulli likelihood for binary classification.
+
+    Args:
+        y_hat: Log-odds (logits), shape ``(n, 1)`` or ``(n,)``.
+        y: Binary observations in {0, 1}, or ``None``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    return sample("obs", dists.Bernoulli(logits=y_hat), obs=y)
+
+
+def poisson_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Poisson likelihood for count data.
+
+    Args:
+        y_hat: Log rate, shape ``(n, 1)`` or ``(n,)``.
+        y: Non-negative integer observations, or ``None``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    return sample("obs", dists.Poisson(rate=jnp.exp(y_hat)), obs=y)
+
+
+def negative_binomial_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+    rate: float = 1.0,
+) -> jax.Array:
+    """NegativeBinomial2 likelihood for overdispersed count data.
+
+    Args:
+        y_hat: Predicted mean, shape ``(n, 1)`` or ``(n,)``.
+        y: Non-negative integer observations, or ``None``.
+        rate: Rate parameter for the ``Exponential`` prior on concentration.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    concentration = sample("sigma", dists.Exponential(rate=rate))
+    return sample(
+        "obs",
+        dists.NegativeBinomial2(mean=y_hat, concentration=concentration),
+        obs=y,
+    )
 
 
 def ordinal_link(
@@ -237,21 +212,18 @@ def ordinal_link(
     Returns:
         Sample site ``"obs"`` with integer values in ``{0, …, num_classes-1}``.
     """
-    mu_flat = mu.squeeze()  # (n,)
+    mu_flat = mu.squeeze()
     K = num_classes
 
-    # Ordered cutpoints: anchor + positive increments
     c0 = sample("ordinal_c0", dists.Normal(0.0, 2.0))
     if K > 2:
         gaps = sample("ordinal_gaps", dists.Exponential(1.0).expand([K - 2]))
         cutpoints = jnp.concatenate([c0[None], c0 + jnp.cumsum(gaps)])
     else:
-        cutpoints = c0[None]  # (1,) — single cutpoint for binary ordinal
+        cutpoints = c0[None]
 
-    # Cumulative probs: (n, K-1)
     cum_probs = jnn.sigmoid(cutpoints - mu_flat[:, None])
 
-    # Class probs: (n, K)
     probs_parts = [cum_probs[:, :1]]
     if K > 2:
         probs_parts.append(jnp.diff(cum_probs, axis=1))
@@ -267,9 +239,9 @@ def zip_link(
 ) -> jax.Array:
     """Zero-inflated Poisson link for count data with excess zeros.
 
-    Models a mixture: with probability π the outcome is exactly 0 (the
-    "inflated" component); with probability 1 - π the outcome follows
-    Poisson(λ) where λ = exp(μ).  π is a global scalar learned from data.
+    Models a mixture: with probability π the outcome is exactly 0; with
+    probability 1 - π the outcome follows Poisson(exp(μ)).  π is a global
+    scalar learned from data.
 
     Args:
         mu: Log Poisson rate, shape ``(n, 1)`` or ``(n,)``.
@@ -278,7 +250,7 @@ def zip_link(
     Returns:
         Sample site ``"obs"``.
     """
-    rate = jnp.exp(mu.squeeze())  # (n,)
+    rate = jnp.exp(mu.squeeze())
     gate = sample("zip_gate", dists.Beta(1.0, 10.0))
     return sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
 
@@ -287,7 +259,7 @@ def beta_link(
     mu: jax.Array,
     y: jax.Array | None = None,
 ) -> jax.Array:
-    """Beta link for proportional outcomes strictly in (0, 1).
+    """Beta likelihood for proportional outcomes strictly in (0, 1).
 
     Maps the linear predictor to a mean via sigmoid, then uses a learned
     global precision φ:
@@ -303,6 +275,6 @@ def beta_link(
     Returns:
         Sample site ``"obs"``.
     """
-    mean = jnn.sigmoid(mu.squeeze())  # (n,) in (0, 1)
+    mean = jnn.sigmoid(mu.squeeze())
     phi = sample("beta_phi", dists.Exponential(1.0))
     return sample("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), obs=y)

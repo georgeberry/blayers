@@ -204,3 +204,13 @@ public
 .DS_Store
 
 scratch
+
+# LaTeX generated files
+examples/*.pdf
+examples/*.aux
+examples/*.log
+examples/*.synctex.gz
+examples/*.out
+examples/*.toc
+examples/*.fls
+examples/*.fdb_latexmk

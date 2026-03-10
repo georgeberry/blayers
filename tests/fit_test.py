@@ -14,7 +14,7 @@ from numpyro.infer.autoguide import AutoDiagonalNormal, AutoMultivariateNormal
 from blayers._utils import rmse
 from blayers.fit import FittedModel, Predictions, _is_array, _split_data_and_constants, fit
 from blayers.layers import AdaptiveLayer, InterceptLayer
-from blayers.links import gaussian_link_exp
+from blayers.links import gaussian_link as gaussian_link_exp
 from blayers.sampling import autoreshape
 
 NUM_OBS = 2000
