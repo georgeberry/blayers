@@ -1089,35 +1089,42 @@ class HorseshoeLayer(BLayer):
 class SpikeAndSlabLayer(BLayer):
     """Sparse regression via a spike-and-slab prior.
 
-    Each coefficient has a relaxed Bernoulli inclusion indicator
-    ``z_j`` (Concrete distribution). Included features (``z_j ≈ 1``) take
-    the full slab coefficient; excluded features (``z_j ≈ 0``) are gated
-    toward zero (the spike).
+    Each coefficient has a Beta-distributed inclusion weight ``z_j`` in
+    (0, 1). Included features (``z_j ≈ 1``) take the full slab coefficient;
+    excluded features (``z_j ≈ 0``) are gated toward zero (the spike).
 
     Generative model::
 
-        z_j ~ RelaxedBernoulli(temperature, p)   # inclusion indicator
-        β_j ~ Normal(0, slab_scale)              # slab coefficient
-        y   ~ link(z · β · x, ...)               # z gates each coefficient
+        z_j ~ Beta(alpha, beta)          # inclusion weight (hardcoded Beta)
+        β_j ~ coef_dist(**coef_kwargs)   # slab coefficient
+        y   ~ link(z · β · x, ...)       # z gates each coefficient
 
-    The posterior mean of ``z_j`` approximates ``P(feature j included | data)``.
-    Use a lower temperature (e.g. 0.05) for harder 0/1 inclusion decisions.
+    The default ``Beta(0.5, 0.5)`` (Jeffreys prior) places mass near 0 and 1,
+    encouraging features to be clearly included or excluded.  The posterior
+    mean of ``z_j`` approximates ``P(feature j included | data)``.
+
+    The slab distribution defaults to ``Normal(0, 1)`` but can be swapped for
+    e.g. ``StudentT`` for heavier-tailed slab behaviour.
 
     Args:
-        slab_scale: Prior std for included (slab) coefficients.
-        temperature: Concrete relaxation temperature. Lower → harder 0/1.
-        inclusion_prob: Prior probability each feature is included.
+        alpha: First concentration parameter of the Beta prior on ``z``.
+        beta: Second concentration parameter of the Beta prior on ``z``.
+        coef_dist: Distribution for the slab coefficients.
+        coef_kwargs: Kwargs for ``coef_dist``.
     """
 
     def __init__(
         self,
-        slab_scale: float = 1.0,
-        temperature: float = 0.1,
-        inclusion_prob: float = 0.5,
+        alpha: float = 0.5,
+        beta: float = 0.5,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
     ):
-        self.slab_scale = slab_scale
-        self.temperature = temperature
-        self.inclusion_prob = inclusion_prob
+        self.alpha = alpha
+        self.beta = beta
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs)
 
     def __call__(
         self,
@@ -1140,21 +1147,16 @@ class SpikeAndSlabLayer(BLayer):
         d = x.shape[1]
         cls = self.__class__.__name__
 
-        logit_p = jnp.log(self.inclusion_prob / (1.0 - self.inclusion_prob))
-
-        # Relaxed inclusion: posterior z_j ≈ P(feature j included | data)
+        # Inclusion weight: posterior z_j ≈ P(feature j included | data)
         z = sample(
             f"{cls}_{name}_z",
-            distributions.RelaxedBernoulliLogits(
-                temperature=self.temperature,
-                logits=jnp.full((d, units), logit_p),
-            ),
+            distributions.Beta(self.alpha, self.beta).expand([d, units]),
         )
 
         # Slab coefficients
         beta = sample(
             f"{cls}_{name}_beta",
-            distributions.Normal(0.0, self.slab_scale).expand([d, units]),
+            self.coef_dist(**self.coef_kwargs).expand([d, units]),
         )
 
         # Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)
