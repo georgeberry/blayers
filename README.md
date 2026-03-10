@@ -168,7 +168,7 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 - `gaussian_link_exp` — Gaussian link with `Exp` distributed homoskedastic `sigma`.
 - `lognormal_link_exp` — LogNormal link with `Exp` distributed homoskedastic `sigma`
 - `logit_link` — Bernoulli link for logistic regression.
-- `poission_link` — Poisson link with rate `y_hat`.
+- `poisson_link` — Poisson link with rate `y_hat`.
 - `negative_binomial_link` — Uses `sigma ~ Exponential(rate)` and `y ~ NegativeBinomial2(mean=y_hat, concentration=sigma)`.
 - `ordinal_link` — Cumulative logit / proportional odds for ordinal outcomes.
 - `zip_link` — Zero-inflated Poisson for count data with excess zeros.

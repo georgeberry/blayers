@@ -14,10 +14,11 @@ from blayers.layers import AdaptiveLayer, AttentionLayer, HorseshoeLayer, SpikeA
 from blayers.links import (
     beta_link,
     gaussian_link,
-    gaussian_link_exp,
     ordinal_link,
     zip_link,
 )
+
+gaussian_link_exp = gaussian_link  # renamed
 from blayers.sampling import autoreshape
 
 NUM_OBS = 1000

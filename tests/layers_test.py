@@ -38,7 +38,7 @@ from blayers.layers import (
     _matmul_randomwalk,
     _matmul_uv_decomp,
 )
-from blayers.links import gaussian_link_exp
+from blayers.links import gaussian_link as gaussian_link_exp
 from blayers.sampling import autoreparam
 
 NUM_OBS = 10000
