@@ -1397,6 +1397,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">slab_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">slab_df</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
+        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -1404,9 +1406,20 @@
 <span class="sd">                scale.  ``None`` gives the plain horseshoe.</span>
 <span class="sd">            slab_df: Degrees of freedom for the slab variance prior (only</span>
 <span class="sd">                used when ``slab_scale`` is set).</span>
+<span class="sd">            coef_dist: Distribution for the coefficients. Must accept a</span>
+<span class="sd">                ``scale`` keyword (derived from the horseshoe shrinkage).</span>
+<span class="sd">                Defaults to ``Normal``.</span>
+<span class="sd">            coef_kwargs: Extra kwargs for ``coef_dist`` (beyond ``scale``).</span>
+<span class="sd">                Default ``{&quot;loc&quot;: 0.0}``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">slab_scale</span> <span class="o">=</span> <span class="n">slab_scale</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">=</span> <span class="n">slab_df</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">=</span> <span class="n">slab_df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">coef_kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid coef_dist kwargs: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
 
 
 <div class="viewcode-block" id="HorseshoeLayer.__call__">
@@ -1461,7 +1474,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">scale</span> <span class="o">=</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">scale</span>  <span class="c1"># (d, units)</span>
 
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span></div>
 </div>
 

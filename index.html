@@ -419,7 +419,8 @@ fundamental building block is the <code class="docutils literal notranslate"><sp
 </div>
 <p>All <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> is doing is writing Numpyro for you under the hood. This
 model is exactly equivalent to writing the following, just using way less code.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="c1"># Adaptive layer does all of this</span>
@@ -531,7 +532,10 @@ model is exactly equivalent to writing the following, just using way less code.<
 <section id="gaussian-link-and-lognormal-link">
 <h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code><a class="headerlink" href="#gaussian-link-and-lognormal-link" title="Link to this heading">#</a></h3>
 <p>Both links are built on a common base and support three scale modes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default: sigma ~ Exp(1) learned from data</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
+<span class="c1"># Default: sigma ~ Exp(1) learned from data</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="c1"># Fixed known scale (e.g. from XGBoost quantile regression)</span>
@@ -545,6 +549,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 <p>Swap the sigma prior via <code class="docutils literal notranslate"><span class="pre">functools.partial</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dists</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="c1"># HalfNormal prior instead of Exponential</span>
@@ -573,7 +578,10 @@ model is exactly equivalent to writing the following, just using way less code.<
 </pre></div>
 </div>
 <p>Additive models are straightforward:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">knots1</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x1_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">knots2</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x2_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">f1</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f1&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">knots1</span><span class="p">))</span>
     <span class="n">f2</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f2&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">knots2</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f1</span> <span class="o">+</span> <span class="n">f2</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
@@ -584,7 +592,9 @@ model is exactly equivalent to writing the following, just using way less code.<
 <h2>fit() helpers<a class="headerlink" href="#fit-helpers" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreshape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreshape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">InterceptLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="nd">@autoreshape</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -614,15 +624,20 @@ model is exactly equivalent to writing the following, just using way less code.<
 <p>The default Numpyro way to fit batched VI models is to use <code class="docutils literal notranslate"><span class="pre">plate</span></code>, which confuses
 me a lot. Instead, BLayers provides <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> which does not require
 you to use <code class="docutils literal notranslate"><span class="pre">plate</span></code> to batch in VI. Just drop your model in.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batched_Trace_ELBO</span><span class="p">,</span> <span class="n">svi_run_batched</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.autoguide</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDiagonalNormal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.vi_infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batched_Trace_ELBO</span><span class="p">,</span> <span class="n">svi_run_batched</span>
 
-<span class="n">svi</span> <span class="o">=</span> <span class="n">SVI</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">guide</span><span class="p">,</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="n">schedule</span><span class="p">),</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss_instance</span><span class="p">)</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">num_obs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">guide</span> <span class="o">=</span> <span class="n">AutoDiagonalNormal</span><span class="p">(</span><span class="n">model_fn</span><span class="p">)</span>
+<span class="n">svi</span> <span class="o">=</span> <span class="n">SVI</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">guide</span><span class="p">,</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">)</span>
 
 <span class="n">svi_result</span> <span class="o">=</span> <span class="n">svi_run_batched</span><span class="p">(</span>
     <span class="n">svi</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">,</span>
-    <span class="n">num_steps</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
     <span class="o">**</span><span class="n">model_data</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -636,21 +651,11 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if your model has plates.</p>
 <section id="reparameterizing">
 <h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
-<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparameterize</a>. BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LocScaleDist</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">StudentT</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Cauchy</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Laplace</span>
-    <span class="o">|</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gumbel</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p>Then, reparam these distributions automatically and fit with Numpyro’s built in MCMC methods.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparameterize</a>. BLayers helps you do this via <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code>, which automatically applies <code class="docutils literal notranslate"><span class="pre">LocScaleReparam</span></code> to all <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
 
@@ -707,8 +712,8 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.vi_infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a><ul>
@@ -722,11 +727,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/sampling.html#blayers.sampling.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/sampling.html#blayers.sampling.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a></li>
 </ul>
 </div>
 </section>

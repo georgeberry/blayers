@@ -1171,7 +1171,7 @@ prior.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.layers.HorseshoeLayer">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">HorseshoeLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slab_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#HorseshoeLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.HorseshoeLayer" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">HorseshoeLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slab_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#HorseshoeLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.HorseshoeLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
 <p>Bayesian layer with horseshoe prior for sparse regression.</p>
 <p>Implements the (regularized) horseshoe prior of Piironen &amp; Vehtari (2017).</p>
@@ -1190,12 +1190,14 @@ from escaping the slab:</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>slab_scale</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>slab_df</strong> (<em>float</em>)</p></li>
+<li><p><strong>coef_dist</strong> (<em>Distribution</em>)</p></li>
+<li><p><strong>coef_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.layers.HorseshoeLayer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slab_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#HorseshoeLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.HorseshoeLayer.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slab_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#HorseshoeLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.HorseshoeLayer.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1203,6 +1205,11 @@ from escaping the slab:</p>
 scale.  <code class="docutils literal notranslate"><span class="pre">None</span></code> gives the plain horseshoe.</p></li>
 <li><p><strong>slab_df</strong> (<em>float</em>) – Degrees of freedom for the slab variance prior (only
 used when <code class="docutils literal notranslate"><span class="pre">slab_scale</span></code> is set).</p></li>
+<li><p><strong>coef_dist</strong> (<em>Distribution</em>) – Distribution for the coefficients. Must accept a
+<code class="docutils literal notranslate"><span class="pre">scale</span></code> keyword (derived from the horseshoe shrinkage).
+Defaults to <code class="docutils literal notranslate"><span class="pre">Normal</span></code>.</p></li>
+<li><p><strong>coef_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Extra kwargs for <code class="docutils literal notranslate"><span class="pre">coef_dist</span></code> (beyond <code class="docutils literal notranslate"><span class="pre">scale</span></code>).
+Default <code class="docutils literal notranslate"><span class="pre">{&quot;loc&quot;:</span> <span class="pre">0.0}</span></code>.</p></li>
 </ul>
 </dd>
 </dl>

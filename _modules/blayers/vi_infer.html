@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.infer &#8212; blayers 0.2.7 documentation</title>
+    <title>blayers.vi_infer &#8212; blayers 0.2.7 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/infer';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/vi_infer';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -255,7 +255,7 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for blayers.infer</h1><div class="highlight"><pre>
+  <h1>Source code for blayers.vi_infer</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
@@ -283,10 +283,10 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO">
-<a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO">[docs]</a>
+<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">ELBO</span><span class="p">):</span>
 <div class="viewcode-block" id="Batched_Trace_ELBO.__init__">
-<a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO.__init__">[docs]</a>
+<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">num_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -299,7 +299,7 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.loss">
-<a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO.loss">[docs]</a>
+<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.loss">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -320,7 +320,7 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.elbo_components">
-<a class="viewcode-back" href="../../api/infer.html#blayers.infer.Batched_Trace_ELBO.elbo_components">[docs]</a>
+<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.elbo_components">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">elbo_components</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -429,7 +429,7 @@
 
 
 <div class="viewcode-block" id="svi_run_batched">
-<a class="viewcode-back" href="../../api/infer.html#blayers.infer.svi_run_batched">[docs]</a>
+<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.svi_run_batched">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">svi_run_batched</span><span class="p">(</span>
     <span class="n">svi</span><span class="p">:</span> <span class="n">SVI</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>

@@ -310,9 +310,7 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="fa-solid fa-list"></span>
-</button>
+
 </div></div>
       
     </div>
@@ -328,15 +326,6 @@
     <div id="print-main-content">
         <div id="jb-print-toc">
             
-            <div>
-                <h2> Contents </h2>
-            </div>
-            <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.sampling.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.sampling.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
-</ul>
-            </nav>
         </div>
     </div>
 </div>
@@ -346,60 +335,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-blayers.sampling">
-<span id="sampling"></span><h1>Sampling<a class="headerlink" href="#module-blayers.sampling" title="Link to this heading">#</a></h1>
-<p>Model decorators for blayers.</p>
-<ul class="simple">
-<li><p><cite>reshape_inputs</cite>: Auto-reshape 1D arrays to (n, 1)</p></li>
-<li><p><cite>autoreparam</cite>: Auto-reparameterize LocScale distributions for MCMC</p></li>
-</ul>
-<p>Usage:
-<a href="#id1"><span class="problematic" id="id2">``</span></a>`
-&#64;reshape_inputs
-&#64;autoreparam
-def my_model(x, y=None):</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
-<dl class="py function">
-<dt class="sig sig-object py" id="blayers.sampling.autoreshape">
-<span class="sig-prename descclassname"><span class="pre">blayers.sampling.</span></span><span class="sig-name descname"><span class="pre">autoreshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/sampling.html#autoreshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.sampling.autoreshape" title="Link to this definition">#</a></dt>
-<dd><p>Decorator that ensures all array inputs have shape (n, d), not (n,).</p>
-<p>blayers expects arrays with explicit trailing dimensions. This decorator
-auto-reshapes 1D arrays to (n, 1) so you don’t have to do it manually.</p>
-<dl>
-<dt>Usage:</dt><dd><p>&#64;autoreshape
-def model(x, y=None):</p>
-<blockquote>
-<div><p>mu = AdaptiveLayer()(‘mu’, x)
-return gaussian_link_exp(mu, y)</p>
-</div></blockquote>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Callable</em>[[…], <em>Any</em>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blayers.sampling.autoreparam">
-<span class="sig-prename descclassname"><span class="pre">blayers.sampling.</span></span><span class="sig-name descname"><span class="pre">autoreparam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/sampling.html#autoreparam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.sampling.autoreparam" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>centered</strong> (<em>float</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Any</em></p>
-</dd>
-</dl>
-</dd></dl>
-
+  <section id="sampling">
+<h1>Sampling<a class="headerlink" href="#sampling" title="Link to this heading">#</a></h1>
 </section>
 
 
@@ -428,24 +365,6 @@ return gaussian_link_exp(mu, y)</p>
             </div>
             
             
-              
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item"><div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
-  </div>
-  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.sampling.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.sampling.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>
