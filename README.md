@@ -62,6 +62,7 @@ All `AdaptiveLayer` is doing is writing Numpyro for you under the hood. This
 model is exactly equivalent to writing the following, just using way less code.
 
 ```python
+import jax.numpy as jnp
 from numpyro import distributions, sample
 
 def model(x, y):
@@ -181,6 +182,9 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 Both links are built on a common base and support three scale modes:
 
 ```python
+from blayers.layers import AdaptiveLayer
+from blayers.links import gaussian_link
+
 # Default: sigma ~ Exp(1) learned from data
 gaussian_link(mu, y)
 
@@ -197,6 +201,7 @@ Swap the sigma prior via `functools.partial`:
 ```python
 from functools import partial
 import numpyro.distributions as dists
+from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link
 
 # HalfNormal prior instead of Exponential
@@ -227,6 +232,9 @@ def model(x, y=None):
 Additive models are straightforward:
 
 ```python
+knots1 = make_knots(x1_train, num_knots=10)
+knots2 = make_knots(x2_train, num_knots=10)
+
 def model(x1, x2, y=None):
     f1 = AdaptiveLayer()("f1", bspline_basis(x1, knots1))
     f2 = AdaptiveLayer()("f2", bspline_basis(x2, knots2))
@@ -240,6 +248,8 @@ def model(x1, x2, y=None):
 ```python
 from blayers.fit import fit
 from blayers.decorators import autoreshape
+from blayers.layers import AdaptiveLayer, InterceptLayer
+from blayers.links import gaussian_link
 
 @autoreshape
 def model(x, y=None):
