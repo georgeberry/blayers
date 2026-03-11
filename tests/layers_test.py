@@ -19,7 +19,7 @@ from blayers._utils import (
     outer_product_upper_tril_no_diag,
     rmse,
 )
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.layers import (
     BilinearLayer,
     AdaptiveLayer,
@@ -38,8 +38,8 @@ from blayers.layers import (
     _matmul_randomwalk,
     _matmul_uv_decomp,
 )
-from blayers.links import gaussian_link as gaussian_link_exp
-from blayers.sampling import autoreparam
+from blayers.links import gaussian_link
+from blayers.decorators import autoreparam
 
 NUM_OBS = 10000
 LOW_RANK_DIM = 3
@@ -263,7 +263,7 @@ def linear_regression_adaptive_model() -> (
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
         beta = InterceptLayer()("intercept") + AdaptiveLayer()("beta", x1)
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     return model, [(["AdaptiveLayer_beta_beta"], identity)]
 
@@ -274,7 +274,7 @@ def linear_regression_fixed_model() -> (
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
         beta = FixedPriorLayer()("beta", x1)
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     return model, [(["FixedPriorLayer_beta_beta"], identity)]
 
@@ -290,7 +290,7 @@ def emb_model() -> (
             num_categories=NUM_EMB_CATEGORIES,
             embedding_dim=EMB_DIM,
         )
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     return (
         model,
@@ -310,7 +310,7 @@ def re_model() -> (
             x1,
             num_categories=NUM_EMB_CATEGORIES,
         )
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     return (
         model,
@@ -326,7 +326,7 @@ def fm_regression_model() -> (
 ):
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
         theta = FMLayer()("theta", x1, low_rank_dim=LOW_RANK_DIM)
-        return gaussian_link_exp(theta, y)
+        return gaussian_link(theta, y)
 
     return (
         model,
@@ -344,7 +344,7 @@ def lowrank_model() -> (
         beta1 = LowRankInteractionLayer()(
             "lowrank", x1, x2, low_rank_dim=LOW_RANK_DIM
         )
-        return gaussian_link_exp(beta1, y)
+        return gaussian_link(beta1, y)
 
     return (
         model,
@@ -370,7 +370,7 @@ def interaction_model() -> (
             x1,
             x2,
         )
-        return gaussian_link_exp(beta1, y)
+        return gaussian_link(beta1, y)
 
     return (
         model,
@@ -396,7 +396,7 @@ def rw_model() -> (
             num_categories=NUM_EMB_CATEGORIES,
             embedding_dim=EMB_DIM,
         )
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     return (
         model,
@@ -634,7 +634,7 @@ def test_fm3() -> None:
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
         mu = FM3Layer()("theta", x1, low_rank_dim=1)
         deterministic("yhat", mu)
-        return gaussian_link_exp(mu, y)
+        return gaussian_link(mu, y)
 
     guide = AutoDiagonalNormal(model)
 
@@ -690,7 +690,7 @@ def test_simple_lambda() -> None:
 
     def model(x1: jax.Array, y: jax.Array | None = None) -> Any:
         beta = AdaptiveLayer()("beta", x1)
-        return gaussian_link_exp(beta, y)
+        return gaussian_link(beta, y)
 
     guide = AutoDiagonalNormal(model)
 
@@ -779,7 +779,7 @@ def test_stacked_lambda() -> None:
     def model(x: jax.Array, y: jax.Array | None = None) -> Any:
         beta1 = AdaptiveLayer()("beta1", x, units=30)
         beta2 = AdaptiveLayer()("beta2", jax.nn.sigmoid(beta1))
-        return gaussian_link_exp(beta2, y)
+        return gaussian_link(beta2, y)
 
     guide = AutoDiagonalNormal(model)
 

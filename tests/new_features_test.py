@@ -18,8 +18,7 @@ from blayers.links import (
     zip_link,
 )
 
-gaussian_link_exp = gaussian_link  # renamed
-from blayers.sampling import autoreshape
+from blayers.decorators import autoreshape
 
 NUM_OBS = 1000
 
@@ -94,7 +93,7 @@ class TestHorseshoeLayer:
         @autoreshape
         def sparse_model(x, y=None):
             mu = HorseshoeLayer(slab_scale=2.0)("beta", x)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
 
         result = fit(sparse_model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
         assert result.params is not None
@@ -109,7 +108,7 @@ class TestHorseshoeLayer:
         @autoreshape
         def sparse_model(x, y=None):
             mu = HorseshoeLayer(slab_scale=2.0)("beta", x)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
 
         result = fit(sparse_model, y=y, x=x, num_steps=500, lr=0.01, seed=0)
         preds = result.predict(x=x, num_samples=100)
@@ -190,7 +189,7 @@ class TestAttentionLayer:
         @autoreshape
         def attn_model(x, y=None):
             mu = AttentionLayer()("attn", x, head_dim=4)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
 
         result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
         assert result.params is not None
@@ -202,7 +201,7 @@ class TestAttentionLayer:
         @autoreshape
         def attn_model(x, y=None):
             mu = AttentionLayer()("attn", x, head_dim=4, num_heads=2)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
 
         result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
         assert result.params is not None
@@ -573,7 +572,7 @@ class TestSpikeAndSlabLayer:
         @autoreshape
         def model(x, y=None):
             mu = SpikeAndSlabLayer()("coef", x)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
 
         result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
         assert result.params is not None

@@ -12,8 +12,8 @@ from blayers._utils import rmse
 from blayers.fit import fit
 from blayers.layers import AdaptiveLayer
 from blayers.splines import bspline_basis, make_knots
-from blayers.links import gaussian_link as gaussian_link_exp
-from blayers.sampling import autoreshape
+from blayers.links import gaussian_link
+from blayers.decorators import autoreshape
 
 NUM_OBS = 1000
 
@@ -156,7 +156,7 @@ def test_spline_fit_runs(nonlinear_data: dict[str, jax.Array]) -> None:
     @autoreshape
     def spline_model(B, y=None):
         mu = AdaptiveLayer()("f", B)
-        return gaussian_link_exp(mu, y)
+        return gaussian_link(mu, y)
 
     result = fit(
         spline_model,
@@ -181,7 +181,7 @@ def test_spline_learns_nonlinear(nonlinear_data: dict[str, jax.Array]) -> None:
     @autoreshape
     def spline_model(B, y=None):
         mu = AdaptiveLayer()("f", B)
-        return gaussian_link_exp(mu, y)
+        return gaussian_link(mu, y)
 
     result = fit(
         spline_model,
@@ -214,7 +214,7 @@ def test_additive_spline_model(nonlinear_data: dict[str, jax.Array]) -> None:
     @autoreshape
     def additive_model(B1, B2, y=None):
         mu = AdaptiveLayer()("f1", B1) + AdaptiveLayer()("f2", B2)
-        return gaussian_link_exp(mu, y)
+        return gaussian_link(mu, y)
 
     result = fit(
         additive_model,
