@@ -283,15 +283,20 @@ me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
 you to use `plate` to batch in VI. Just drop your model in.
 
 ```python
+from numpyro.infer import SVI
+from numpyro.infer.autoguide import AutoDiagonalNormal
+import optax
 from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 
-svi = SVI(model_fn, guide, optax.adam(schedule), loss=loss_instance)
+loss = Batched_Trace_ELBO(num_obs=len(y), batch_size=1000)
+guide = AutoDiagonalNormal(model_fn)
+svi = SVI(model_fn, guide, optax.adam(0.01), loss=loss)
 
 svi_result = svi_run_batched(
     svi,
     rng_key,
-    num_steps,
     batch_size=1000,
+    num_steps=500,
     **model_data,
 )
 ```
@@ -307,22 +312,10 @@ svi_result = svi_run_batched(
 
 ### Reparameterizing
 
-To fit MCMC models well it is crucial to [reparameterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this, automatically reparameterizing the following distributions which Numpyro refers to as `LocScale` distributions.
+To fit MCMC models well it is crucial to [reparameterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this via `@autoreparam`, which automatically applies `LocScaleReparam` to all `LocScale` distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).
 
 ```python
-LocScaleDist = (
-    dist.Normal
-    | dist.LogNormal
-    | dist.StudentT
-    | dist.Cauchy
-    | dist.Laplace
-    | dist.Gumbel
-)
-```
-
-Then, reparam these distributions automatically and fit with Numpyro's built in MCMC methods.
-
-```python
+from numpyro.infer import MCMC, NUTS
 from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link
 from blayers.decorators import autoreparam

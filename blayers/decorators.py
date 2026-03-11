@@ -47,7 +47,7 @@ def autoreshape(fn: Callable[..., Any]) -> Callable[..., Any]:
         @autoreshape
         def model(x, y=None):
             mu = AdaptiveLayer()('mu', x)
-            return gaussian_link_exp(mu, y)
+            return gaussian_link(mu, y)
     """
     _logged = False  # Only log once per decorated function
 

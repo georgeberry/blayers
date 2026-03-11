@@ -10,12 +10,12 @@ Example
 .. code-block:: python
 
     from blayers.layers import AdaptiveLayer
-    from blayers.links import gaussian_link_exp
+    from blayers.links import gaussian_link
     from blayers.fit import fit
 
     def model(x, y=None):
         mu = AdaptiveLayer()('mu', x)
-        return gaussian_link_exp(mu, y)
+        return gaussian_link(mu, y)
 
     # Fit with batched VI
     result = fit(model, y=y_train, batch_size=1024, num_epochs=100, x=x_train)

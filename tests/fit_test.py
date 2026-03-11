@@ -14,7 +14,7 @@ from numpyro.infer.autoguide import AutoDiagonalNormal, AutoMultivariateNormal
 from blayers._utils import rmse
 from blayers.fit import FittedModel, Predictions, _is_array, _split_data_and_constants, fit
 from blayers.layers import AdaptiveLayer, InterceptLayer
-from blayers.links import gaussian_link as gaussian_link_exp
+from blayers.links import gaussian_link
 from blayers.decorators import autoreshape
 
 NUM_OBS = 2000
@@ -55,7 +55,7 @@ def sim_data() -> dict[str, jax.Array]:
 @autoreshape
 def linear_model(x, y=None):
     mu = InterceptLayer()("intercept") + AdaptiveLayer()("beta", x)
-    return gaussian_link_exp(mu, y)
+    return gaussian_link(mu, y)
 
 
 # --------------------------------------------------------------------------- #
@@ -196,7 +196,7 @@ def model_with_constant(x, n_features, y=None):
     # fit() binds it automatically so it doesn't flow through batching.
     assert isinstance(n_features, int)
     mu = AdaptiveLayer()("beta", x)
-    return gaussian_link_exp(mu, y)
+    return gaussian_link(mu, y)
 
 
 def test_constant_binding(sim_data: dict[str, jax.Array]) -> None:
