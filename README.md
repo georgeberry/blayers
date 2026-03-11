@@ -239,7 +239,7 @@ def model(x1, x2, y=None):
 
 ```python
 from blayers.fit import fit
-from blayers.sampling import autoreshape
+from blayers.decorators import autoreshape
 
 @autoreshape
 def model(x, y=None):
@@ -273,7 +273,7 @@ me a lot. Instead, BLayers provides `Batched_Trace_ELBO` which does not require
 you to use `plate` to batch in VI. Just drop your model in.
 
 ```python
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 
 svi = SVI(model_fn, guide, optax.adam(schedule), loss=loss_instance)
 
@@ -315,7 +315,7 @@ Then, reparam these distributions automatically and fit with Numpyro's built in 
 ```python
 from blayers.layers import AdaptiveLayer
 from blayers.links import gaussian_link
-from blayers.sampling import autoreparam
+from blayers.decorators import autoreparam
 
 data = {...}
 

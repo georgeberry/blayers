@@ -11,7 +11,7 @@ from numpyro.handlers import seed, substitute, trace
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.infer import Batched_Trace_ELBO, _warn_if_has_plate
+from blayers.vi_infer import Batched_Trace_ELBO, _warn_if_has_plate
 
 
 def test_builtin_vs_batched_elbo_simple() -> None:

@@ -56,8 +56,8 @@ import optax
 from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal, AutoGuide
 
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
-from blayers.sampling import autoreparam
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
+from blayers.decorators import autoreparam
 
 
 # --------------------------------------------------------------------------- #

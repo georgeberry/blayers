@@ -19,7 +19,7 @@ from blayers._utils import (
     outer_product_upper_tril_no_diag,
     rmse,
 )
-from blayers.infer import Batched_Trace_ELBO, svi_run_batched
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.layers import (
     BilinearLayer,
     AdaptiveLayer,
@@ -39,7 +39,7 @@ from blayers.layers import (
     _matmul_uv_decomp,
 )
 from blayers.links import gaussian_link as gaussian_link_exp
-from blayers.sampling import autoreparam
+from blayers.decorators import autoreparam
 
 NUM_OBS = 10000
 LOW_RANK_DIM = 3

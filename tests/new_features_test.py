@@ -19,7 +19,7 @@ from blayers.links import (
 )
 
 gaussian_link_exp = gaussian_link  # renamed
-from blayers.sampling import autoreshape
+from blayers.decorators import autoreshape
 
 NUM_OBS = 1000
 

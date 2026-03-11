@@ -15,7 +15,7 @@ from blayers._utils import rmse
 from blayers.fit import FittedModel, Predictions, _is_array, _split_data_and_constants, fit
 from blayers.layers import AdaptiveLayer, InterceptLayer
 from blayers.links import gaussian_link as gaussian_link_exp
-from blayers.sampling import autoreshape
+from blayers.decorators import autoreshape
 
 NUM_OBS = 2000
 K = 3
@@ -649,7 +649,7 @@ def test_fit_custom_optimizer(sim_data: dict[str, jax.Array]) -> None:
 
 def test_autoreshape_positional_args() -> None:
     """autoreshape should reshape 1D positional array args to (n, 1)."""
-    from blayers.sampling import autoreshape
+    from blayers.decorators import autoreshape
 
     received = {}
 

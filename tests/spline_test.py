@@ -13,7 +13,7 @@ from blayers.fit import fit
 from blayers.layers import AdaptiveLayer
 from blayers.splines import bspline_basis, make_knots
 from blayers.links import gaussian_link as gaussian_link_exp
-from blayers.sampling import autoreshape
+from blayers.decorators import autoreshape
 
 NUM_OBS = 1000
 

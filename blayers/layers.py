@@ -1018,6 +1018,8 @@ class HorseshoeLayer(BLayer):
         self,
         slab_scale: float | None = None,
         slab_df: float = 4.0,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0},
     ):
         """
         Args:
@@ -1025,9 +1027,20 @@ class HorseshoeLayer(BLayer):
                 scale.  ``None`` gives the plain horseshoe.
             slab_df: Degrees of freedom for the slab variance prior (only
                 used when ``slab_scale`` is set).
+            coef_dist: Distribution for the coefficients. Must accept a
+                ``scale`` keyword (derived from the horseshoe shrinkage).
+                Defaults to ``Normal``.
+            coef_kwargs: Extra kwargs for ``coef_dist`` (beyond ``scale``).
+                Default ``{"loc": 0.0}``.
         """
         self.slab_scale = slab_scale
         self.slab_df = slab_df
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        try:
+            coef_dist(scale=1.0, **coef_kwargs)
+        except TypeError as e:
+            raise TypeError(f"Invalid coef_dist kwargs: {e}") from e
 
     def __call__(
         self,
@@ -1079,7 +1092,7 @@ class HorseshoeLayer(BLayer):
         else:
             scale = tau * scale  # (d, units)
 
-        beta = sample(f"{cls}_{name}_beta", distributions.Normal(0.0, scale))
+        beta = sample(f"{cls}_{name}_beta", self.coef_dist(scale=scale, **self.coef_kwargs))
         return activation(_matmul_dot_product(x, beta))
 
 
