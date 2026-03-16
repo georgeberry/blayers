@@ -1,5 +1,5 @@
-Infer
-=====
+VI Inference
+============
 
 .. automodule:: blayers.vi_infer
    :members:
