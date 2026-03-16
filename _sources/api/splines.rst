@@ -1,7 +1,7 @@
-Sampling
-========
+Splines
+=======
 
-.. automodule:: blayers.sampling
+.. automodule:: blayers.splines
    :members:
    :undoc-members:
    :show-inheritance:

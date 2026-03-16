@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Sampling &#8212; blayers 0.2.9 documentation</title>
+    <title>Decorators &#8212; blayers 0.2.9 documentation</title>
   
   
   
@@ -43,10 +43,11 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/sampling';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/decorators';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Links" href="links.html" />
+    <link rel="next" title="VI Inference" href="vi_infer.html" />
+    <link rel="prev" title="Fit" href="fit.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -138,9 +139,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">Fit</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vi_infer.html">VI Inference</a></li>
 </ul>
 
     </div>
@@ -217,7 +220,7 @@
       
       
       
-      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/sampling.rst" target="_blank"
+      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/decorators.rst" target="_blank"
    class="btn btn-sm btn-source-edit-button dropdown-item"
    title="Suggest edit"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -247,7 +250,7 @@
       
       
       
-      <li><a href="../_sources/api/sampling.rst" target="_blank"
+      <li><a href="../_sources/api/decorators.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -310,7 +313,9 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -321,11 +326,20 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Sampling</h1>
+    <h1>Decorators</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.decorators.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.decorators.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -335,8 +349,60 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="sampling">
-<h1>Sampling<a class="headerlink" href="#sampling" title="Link to this heading">#</a></h1>
+  <section id="module-blayers.decorators">
+<span id="decorators"></span><h1>Decorators<a class="headerlink" href="#module-blayers.decorators" title="Link to this heading">#</a></h1>
+<p>Model decorators for blayers.</p>
+<ul class="simple">
+<li><p><cite>reshape_inputs</cite>: Auto-reshape 1D arrays to (n, 1)</p></li>
+<li><p><cite>autoreparam</cite>: Auto-reparameterize LocScale distributions for MCMC</p></li>
+</ul>
+<p>Usage:
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+&#64;reshape_inputs
+&#64;autoreparam
+def my_model(x, y=None):</p>
+<blockquote>
+<div><p>…</p>
+</div></blockquote>
+<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.decorators.autoreshape">
+<span class="sig-prename descclassname"><span class="pre">blayers.decorators.</span></span><span class="sig-name descname"><span class="pre">autoreshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/decorators.html#autoreshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.decorators.autoreshape" title="Link to this definition">#</a></dt>
+<dd><p>Decorator that ensures all array inputs have shape (n, d), not (n,).</p>
+<p>blayers expects arrays with explicit trailing dimensions. This decorator
+auto-reshapes 1D arrays to (n, 1) so you don’t have to do it manually.</p>
+<dl>
+<dt>Usage:</dt><dd><p>&#64;autoreshape
+def model(x, y=None):</p>
+<blockquote>
+<div><p>mu = AdaptiveLayer()(‘mu’, x)
+return gaussian_link(mu, y)</p>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Callable</em>[[…], <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.decorators.autoreparam">
+<span class="sig-prename descclassname"><span class="pre">blayers.decorators.</span></span><span class="sig-name descname"><span class="pre">autoreparam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/decorators.html#autoreparam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.decorators.autoreparam" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>centered</strong> (<em>float</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -351,13 +417,22 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="links.html"
+       href="fit.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Links</p>
+        <p class="prev-next-title">Fit</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="vi_infer.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">VI Inference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>
@@ -365,6 +440,24 @@
             </div>
             
             
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.decorators.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.decorators.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

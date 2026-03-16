@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Infer &#8212; blayers 0.2.9 documentation</title>
+    <title>VI Inference &#8212; blayers 0.2.9 documentation</title>
   
   
   
@@ -43,11 +43,10 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/infer';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/vi_infer';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Links" href="links.html" />
-    <link rel="prev" title="Layers" href="layers.html" />
+    <link rel="prev" title="Decorators" href="decorators.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -139,9 +138,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">Fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">VI Inference</a></li>
 </ul>
 
     </div>
@@ -218,7 +219,7 @@
       
       
       
-      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/infer.rst" target="_blank"
+      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/vi_infer.rst" target="_blank"
    class="btn btn-sm btn-source-edit-button dropdown-item"
    title="Suggest edit"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -248,7 +249,7 @@
       
       
       
-      <li><a href="../_sources/api/infer.rst" target="_blank"
+      <li><a href="../_sources/api/vi_infer.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -324,7 +325,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Infer</h1>
+    <h1>VI Inference</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -353,7 +354,7 @@
                 <article class="bd-article">
                   
   <section id="module-blayers.vi_infer">
-<span id="infer"></span><h1>Infer<a class="headerlink" href="#module-blayers.vi_infer" title="Link to this heading">#</a></h1>
+<span id="vi-inference"></span><h1>VI Inference<a class="headerlink" href="#module-blayers.vi_infer" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.vi_infer.Batched_Trace_ELBO">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.vi_infer.</span></span><span class="sig-name descname"><span class="pre">Batched_Trace_ELBO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/vi_infer.html#Batched_Trace_ELBO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.vi_infer.Batched_Trace_ELBO" title="Link to this definition">#</a></dt>
@@ -464,22 +465,13 @@ during the course of fitting).</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="layers.html"
+       href="decorators.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Layers</p>
+        <p class="prev-next-title">Decorators</p>
       </div>
-    </a>
-    <a class="right-next"
-       href="links.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Links</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>

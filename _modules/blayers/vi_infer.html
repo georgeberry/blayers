@@ -138,9 +138,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../api/layers.html">Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/links.html">Links</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/fit.html">Fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/vi_infer.html">VI Inference</a></li>
 </ul>
 
     </div>
@@ -283,10 +285,10 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO">
-<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO">[docs]</a>
+<a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">ELBO</span><span class="p">):</span>
 <div class="viewcode-block" id="Batched_Trace_ELBO.__init__">
-<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">[docs]</a>
+<a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">num_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -299,7 +301,7 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.loss">
-<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.loss">[docs]</a>
+<a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.loss">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loss</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -320,7 +322,7 @@
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.elbo_components">
-<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.elbo_components">[docs]</a>
+<a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.elbo_components">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">elbo_components</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -429,7 +431,7 @@
 
 
 <div class="viewcode-block" id="svi_run_batched">
-<a class="viewcode-back" href="../../api/infer.html#blayers.vi_infer.svi_run_batched">[docs]</a>
+<a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.svi_run_batched">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">svi_run_batched</span><span class="p">(</span>
     <span class="n">svi</span><span class="p">:</span> <span class="n">SVI</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>

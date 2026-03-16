@@ -140,9 +140,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="api/layers.html">Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/fit.html">Fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/vi_infer.html">VI Inference</a></li>
 </ul>
 
     </div>
@@ -711,11 +713,6 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AttentionLayer"><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/infer.html#blayers.vi_infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
@@ -727,7 +724,27 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/splines.html">Splines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/splines.html#blayers.splines.bspline_basis"><code class="docutils literal notranslate"><span class="pre">bspline_basis()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/splines.html#blayers.splines.make_knots"><code class="docutils literal notranslate"><span class="pre">make_knots()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/fit.html">Fit</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.Predictions"><code class="docutils literal notranslate"><span class="pre">Predictions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.FittedModel"><code class="docutils literal notranslate"><span class="pre">FittedModel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.fit"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/decorators.html">Decorators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/decorators.html#blayers.decorators.autoreshape"><code class="docutils literal notranslate"><span class="pre">autoreshape()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/decorators.html#blayers.decorators.autoreparam"><code class="docutils literal notranslate"><span class="pre">autoreparam()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/vi_infer.html">VI Inference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO"><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/vi_infer.html#blayers.vi_infer.svi_run_batched"><code class="docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>

@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blayers.splines &#8212; blayers 0.2.9 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blayers/splines';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">blayers 0.2.9 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api/layers.html">Layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/links.html">Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/fit.html">Fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/vi_infer.html">VI Inference</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/georgeberry/blayers" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blayers.splines</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;B-spline utilities for non-linear feature transformations.</span>
+
+<span class="sd">Typical usage::</span>
+
+<span class="sd">    from blayers.splines import make_knots, bspline_basis</span>
+<span class="sd">    from blayers.layers import AdaptiveLayer</span>
+<span class="sd">    from blayers.links import gaussian_link</span>
+
+<span class="sd">    knots = make_knots(x_train, num_knots=10)</span>
+
+<span class="sd">    def model(x, y=None):</span>
+<span class="sd">        B = bspline_basis(x, knots)</span>
+<span class="sd">        f = AdaptiveLayer()(&quot;f&quot;, B)</span>
+<span class="sd">        return gaussian_link(f, y)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="bspline_basis">
+<a class="viewcode-back" href="../../api/splines.html#blayers.splines.bspline_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">knots</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: 1D input array of shape ``(n,)``.</span>
+<span class="sd">        knots: Full clamped knot vector of shape ``(num_basis + degree + 1,)``.</span>
+<span class="sd">            Use ``make_knots`` to construct this.</span>
+<span class="sd">        degree: B-spline degree (3 = cubic).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        jax.Array of shape ``(n, num_basis)`` where</span>
+<span class="sd">        ``num_basis = len(knots) - degree - 1``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_col</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># (n, 1) for broadcasting against knot intervals</span>
+
+    <span class="c1"># Degree-0 base case: B_{i,0}(t) = 1 if knots[i] &lt;= t &lt; knots[i+1].</span>
+    <span class="c1"># We use a half-open interval [left, right) everywhere; the right boundary</span>
+    <span class="c1"># special case (x == knots[-1]) is corrected after the recursion.</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># (num_knots - 1,)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># (num_knots - 1,)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">x_col</span> <span class="o">&gt;=</span> <span class="n">left</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x_col</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># (n, num_knots-1)</span>
+
+    <span class="c1"># Cox–de Boor recursion</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">knots</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># number of basis functions at this level</span>
+
+        <span class="n">ti</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[:</span><span class="n">m</span><span class="p">]</span>  <span class="c1"># t_i         (m,)</span>
+        <span class="n">ti_p</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span>  <span class="c1"># t_{i+p}      (m,)</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">ti_p</span> <span class="o">-</span> <span class="n">ti</span>  <span class="c1"># denominator of left term</span>
+
+        <span class="n">ti_p1</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># t_{i+p+1}   (m,)</span>
+        <span class="n">ti_1</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># t_{i+1}     (m,)</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">ti_p1</span> <span class="o">-</span> <span class="n">ti_1</span>  <span class="c1"># denominator of right term</span>
+
+        <span class="c1"># Avoid division by zero (degenerate knot intervals → coefficient = 0)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">x_col</span> <span class="o">-</span> <span class="n">ti</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">beta_c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">d2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">ti_p1</span> <span class="o">-</span> <span class="n">x_col</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="n">B</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="p">:</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">beta_c</span> <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># For clamped splines, x == knots[-1] (the right boundary) must evaluate</span>
+    <span class="c1"># to 1 on the last basis function.  The half-open base-case convention</span>
+    <span class="c1"># misses this point because the rightmost repeated boundary intervals are</span>
+    <span class="c1"># all degenerate ([t_max, t_max)), so we fix it here after the recursion.</span>
+    <span class="n">at_right</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># (n,)</span>
+    <span class="n">last_basis</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">B</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># (n, num_basis), 1 in last col</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">at_right</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">last_basis</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">B</span>  <span class="c1"># (n, num_basis)</span></div>
+
+
+
+<div class="viewcode-block" id="make_knots">
+<a class="viewcode-back" href="../../api/splines.html#blayers.splines.make_knots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_knots</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">num_knots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute a clamped B-spline knot vector from data.</span>
+
+<span class="sd">    Interior knots are placed at evenly-spaced quantiles of ``x``.  Call</span>
+<span class="sd">    this once at preprocessing time (outside any JAX-traced function) and</span>
+<span class="sd">    pass the returned array to ``bspline_basis``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: Reference data (any shape).  Only used for quantile computation.</span>
+<span class="sd">        num_knots: Number of interior knots.  The total number of basis</span>
+<span class="sd">            functions will be ``num_knots + degree + 1``.</span>
+<span class="sd">        degree: B-spline degree (default 3 for cubic splines).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Full clamped knot vector as a ``jax.Array`` of shape</span>
+<span class="sd">        ``(num_knots + 2 * (degree + 1),)``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        knots = make_knots(x_train, num_knots=5)</span>
+<span class="sd">        B = bspline_basis(x, knots)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_np</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_np</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">num_knots</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">num_knots</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">interior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_np</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">interior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">full_knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x_min</span><span class="p">),</span>
+            <span class="n">interior</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x_max</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">full_knots</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By George Berry
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, George Berry.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

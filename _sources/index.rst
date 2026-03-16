@@ -15,7 +15,8 @@ Detailed API
    :maxdepth: 2
 
    api/layers
-   api/infer
    api/links
-   api/sampling
-   api/formulas
+   api/splines
+   api/fit
+   api/decorators
+   api/vi_infer

@@ -138,9 +138,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="api/layers.html">Layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/infer.html">Infer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/sampling.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/splines.html">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/fit.html">Fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/decorators.html">Decorators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/vi_infer.html">VI Inference</a></li>
 </ul>
 
     </div>
@@ -314,11 +316,13 @@
         <li><a href="api/layers.html#blayers.layers.SpikeAndSlabLayer.__call__">(blayers.layers.SpikeAndSlabLayer method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.__init__">__init__() (blayers.layers.AdaptiveLayer method)</a>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.__init__">__init__() (blayers.fit.FittedModel method)</a>
 
       <ul>
+        <li><a href="api/fit.html#blayers.fit.Predictions.__init__">(blayers.fit.Predictions method)</a>
+</li>
+        <li><a href="api/layers.html#blayers.layers.AdaptiveLayer.__init__">(blayers.layers.AdaptiveLayer method)</a>
+</li>
         <li><a href="api/layers.html#blayers.layers.AttentionLayer.__init__">(blayers.layers.AttentionLayer method)</a>
 </li>
         <li><a href="api/layers.html#blayers.layers.BilinearLayer.__init__">(blayers.layers.BilinearLayer method)</a>
@@ -349,7 +353,7 @@
 </li>
         <li><a href="api/layers.html#blayers.layers.SpikeAndSlabLayer.__init__">(blayers.layers.SpikeAndSlabLayer method)</a>
 </li>
-        <li><a href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">(blayers.vi_infer.Batched_Trace_ELBO method)</a>
+        <li><a href="api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">(blayers.vi_infer.Batched_Trace_ELBO method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -360,9 +364,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/layers.html#blayers.layers.AdaptiveLayer">AdaptiveLayer (class in blayers.layers)</a>
 </li>
+      <li><a href="api/layers.html#blayers.layers.AttentionLayer">AttentionLayer (class in blayers.layers)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/layers.html#blayers.layers.AttentionLayer">AttentionLayer (class in blayers.layers)</a>
+      <li><a href="api/decorators.html#blayers.decorators.autoreparam">autoreparam() (in module blayers.decorators)</a>
+</li>
+      <li><a href="api/decorators.html#blayers.decorators.autoreshape">autoreshape() (in module blayers.decorators)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -370,7 +378,7 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO">Batched_Trace_ELBO (class in blayers.vi_infer)</a>
+      <li><a href="api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO">Batched_Trace_ELBO (class in blayers.vi_infer)</a>
 </li>
       <li><a href="api/links.html#blayers.links.beta_link">beta_link() (in module blayers.links)</a>
 </li>
@@ -379,14 +387,28 @@
       <li><a href="api/layers.html#blayers.layers.BLayer">BLayer (class in blayers.layers)</a>
 </li>
       <li>
+    blayers.decorators
+
+      <ul>
+        <li><a href="api/decorators.html#module-blayers.decorators">module</a>
+</li>
+      </ul></li>
+      <li>
+    blayers.fit
+
+      <ul>
+        <li><a href="api/fit.html#module-blayers.fit">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     blayers.layers
 
       <ul>
         <li><a href="api/layers.html#module-blayers.layers">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blayers.links
 
@@ -395,19 +417,28 @@
 </li>
       </ul></li>
       <li>
+    blayers.splines
+
+      <ul>
+        <li><a href="api/splines.html#module-blayers.splines">module</a>
+</li>
+      </ul></li>
+      <li>
     blayers.vi_infer
 
       <ul>
-        <li><a href="api/infer.html#module-blayers.vi_infer">module</a>
+        <li><a href="api/vi_infer.html#module-blayers.vi_infer">module</a>
 </li>
       </ul></li>
+      <li><a href="api/splines.html#blayers.splines.bspline_basis">bspline_basis() (in module blayers.splines)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.elbo_components">elbo_components() (blayers.vi_infer.Batched_Trace_ELBO method)</a>
+      <li><a href="api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.elbo_components">elbo_components() (blayers.vi_infer.Batched_Trace_ELBO method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -419,10 +450,14 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/layers.html#blayers.layers.FixedPriorLayer">FixedPriorLayer (class in blayers.layers)</a>
+      <li><a href="api/fit.html#blayers.fit.fit">fit() (in module blayers.fit)</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.FittedModel">FittedModel (class in blayers.fit)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/layers.html#blayers.layers.FixedPriorLayer">FixedPriorLayer (class in blayers.layers)</a>
+</li>
       <li><a href="api/layers.html#blayers.layers.FM3Layer">FM3Layer (class in blayers.layers)</a>
 </li>
       <li><a href="api/layers.html#blayers.layers.FMLayer">FMLayer (class in blayers.layers)</a>
@@ -434,6 +469,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/links.html#blayers.links.gaussian_link">gaussian_link() (in module blayers.links)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.guide">guide (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id6">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -465,9 +504,11 @@
 </li>
       <li><a href="api/links.html#blayers.links.lognormal_link">lognormal_link() (in module blayers.links)</a>
 </li>
+      <li><a href="api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.loss">loss() (blayers.vi_infer.Batched_Trace_ELBO method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.vi_infer.Batched_Trace_ELBO.loss">loss() (blayers.vi_infer.Batched_Trace_ELBO method)</a>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.losses">losses (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id7">[1]</a>
 </li>
       <li><a href="api/layers.html#blayers.layers.LowRankBilinearLayer">LowRankBilinearLayer (class in blayers.layers)</a>
 </li>
@@ -479,15 +520,29 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/splines.html#blayers.splines.make_knots">make_knots() (in module blayers.splines)</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.Predictions.mean">mean (blayers.fit.Predictions attribute)</a>, <a href="api/fit.html#id0">[1]</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.method">method (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id4">[1]</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.model_fn">model_fn (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id3">[1]</a>
+</li>
       <li>
     module
 
       <ul>
+        <li><a href="api/decorators.html#module-blayers.decorators">blayers.decorators</a>
+</li>
+        <li><a href="api/fit.html#module-blayers.fit">blayers.fit</a>
+</li>
         <li><a href="api/layers.html#module-blayers.layers">blayers.layers</a>
 </li>
         <li><a href="api/links.html#module-blayers.links">blayers.links</a>
 </li>
-        <li><a href="api/infer.html#module-blayers.vi_infer">blayers.vi_infer</a>
+        <li><a href="api/splines.html#module-blayers.splines">blayers.splines</a>
+</li>
+        <li><a href="api/vi_infer.html#module-blayers.vi_infer">blayers.vi_infer</a>
 </li>
       </ul></li>
   </ul></td>
@@ -497,6 +552,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/links.html#blayers.links.negative_binomial_link">negative_binomial_link() (in module blayers.links)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.num_particles">num_particles (blayers.fit.FittedModel attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -512,7 +571,17 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.params">params (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id5">[1]</a>
+</li>
       <li><a href="api/links.html#blayers.links.poisson_link">poisson_link() (in module blayers.links)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.posterior_samples">posterior_samples (blayers.fit.FittedModel attribute)</a>, <a href="api/fit.html#id8">[1]</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.predict">predict() (blayers.fit.FittedModel method)</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.Predictions">Predictions (class in blayers.fit)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -532,11 +601,17 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/fit.html#blayers.fit.Predictions.samples">samples (blayers.fit.Predictions attribute)</a>, <a href="api/fit.html#id2">[1]</a>
+</li>
       <li><a href="api/layers.html#blayers.layers.SpikeAndSlabLayer">SpikeAndSlabLayer (class in blayers.layers)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/infer.html#blayers.vi_infer.svi_run_batched">svi_run_batched() (in module blayers.vi_infer)</a>
+      <li><a href="api/fit.html#blayers.fit.Predictions.std">std (blayers.fit.Predictions attribute)</a>, <a href="api/fit.html#id1">[1]</a>
+</li>
+      <li><a href="api/fit.html#blayers.fit.FittedModel.summary">summary() (blayers.fit.FittedModel method)</a>
+</li>
+      <li><a href="api/vi_infer.html#blayers.vi_infer.svi_run_batched">svi_run_batched() (in module blayers.vi_infer)</a>
 </li>
   </ul></td>
 </tr></table>
