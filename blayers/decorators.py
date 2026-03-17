@@ -83,16 +83,37 @@ def autoreshape(fn: Callable[..., Any]) -> Callable[..., Any]:
     return wrapped
 
 
-def autoreparam(centered: float = 0.0) -> Any:
-    def decorator(model_fn: Any) -> Any:
-        @wraps(model_fn)
+def autoreparam(model_fn: Callable[..., Any] | None = None, *, centered: float = 0.0) -> Any:
+    """Auto-reparameterize LocScale distributions in a model for MCMC.
+
+    Automatically applies ``LocScaleReparam`` to all LocScale distributions
+    (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel) found in the model,
+    which improves NUTS mixing by removing funnel geometries.
+
+    Works with or without parentheses::
+
+        @autoreparam
+        def model(x, y): ...
+
+        @autoreparam()
+        def model(x, y): ...
+
+        @autoreparam(centered=0.5)
+        def model(x, y): ...
+
+    Args:
+        model_fn: The model function (when used without parentheses).
+        centered: Degree of centering for ``LocScaleReparam``. 0.0 = fully
+            non-centered (default, best for weak data); 1.0 = fully centered
+            (better when data is informative).
+    """
+    def decorator(fn: Any) -> Any:
+        @wraps(fn)
         def wrapped_model(*args: Any, **kwargs: Any) -> Any:
-            # Use a fixed dummy seed so trace doesn't trigger global name
-            # collisions
             dummy_key = random.PRNGKey(0)
-            with seed(model_fn, rng_seed=dummy_key):
+            with seed(fn, rng_seed=dummy_key):
                 with trace() as tr:
-                    model_fn(*args, **kwargs)
+                    fn(*args, **kwargs)
 
             config = {}
             for name, site in tr.items():
@@ -104,9 +125,13 @@ def autoreparam(centered: float = 0.0) -> Any:
                 ):
                     config[name] = LocScaleReparam(centered=centered)
 
-            # Wrap and return reparam'd model
-            return numpyro_reparam(config=config)(model_fn)
+            return numpyro_reparam(config=config)(fn)
 
         return wrapped_model
 
+    # Called as @autoreparam (no parens) — model_fn is the decorated function
+    if model_fn is not None:
+        return decorator(model_fn)
+
+    # Called as @autoreparam() or @autoreparam(centered=0.5)
     return decorator
