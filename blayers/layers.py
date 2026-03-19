@@ -37,7 +37,7 @@ from blayers._utils import add_trailing_dim
 # ---- Matmul functions ------------------------------------------------------ #
 
 
-def _pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
+def pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
     """
     Compute all pairwise interactions between features in X and Y.
 
@@ -187,7 +187,7 @@ def _matmul_interaction(
     """
 
     # thanks chat GPT
-    interactions = _pairwise_interactions(x, z)
+    interactions = pairwise_interactions(x, z)
 
     return jnp.einsum("nd,du->nu", interactions, beta)
 
