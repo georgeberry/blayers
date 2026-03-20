@@ -348,16 +348,37 @@
 
 <div class="viewcode-block" id="autoreparam">
 <a class="viewcode-back" href="../../api/decorators.html#blayers.decorators.autoreparam">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span><span class="n">centered</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">model_fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="nd">@wraps</span><span class="p">(</span><span class="n">model_fn</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span><span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">centered</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto-reparameterize LocScale distributions in a model for MCMC.</span>
+
+<span class="sd">    Automatically applies ``LocScaleReparam`` to all LocScale distributions</span>
+<span class="sd">    (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel) found in the model,</span>
+<span class="sd">    which improves NUTS mixing by removing funnel geometries.</span>
+
+<span class="sd">    Works with or without parentheses::</span>
+
+<span class="sd">        @autoreparam</span>
+<span class="sd">        def model(x, y): ...</span>
+
+<span class="sd">        @autoreparam()</span>
+<span class="sd">        def model(x, y): ...</span>
+
+<span class="sd">        @autoreparam(centered=0.5)</span>
+<span class="sd">        def model(x, y): ...</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_fn: The model function (when used without parentheses).</span>
+<span class="sd">        centered: Degree of centering for ``LocScaleReparam``. 0.0 = fully</span>
+<span class="sd">            non-centered (default, best for weak data); 1.0 = fully centered</span>
+<span class="sd">            (better when data is informative).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="c1"># Use a fixed dummy seed so trace doesn&#39;t trigger global name</span>
-            <span class="c1"># collisions</span>
             <span class="n">dummy_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">seed</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">rng_seed</span><span class="o">=</span><span class="n">dummy_key</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">seed</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">rng_seed</span><span class="o">=</span><span class="n">dummy_key</span><span class="p">):</span>
                 <span class="k">with</span> <span class="n">trace</span><span class="p">()</span> <span class="k">as</span> <span class="n">tr</span><span class="p">:</span>
-                    <span class="n">model_fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
             <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -369,11 +390,15 @@
                 <span class="p">):</span>
                     <span class="n">config</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">LocScaleReparam</span><span class="p">(</span><span class="n">centered</span><span class="o">=</span><span class="n">centered</span><span class="p">)</span>
 
-            <span class="c1"># Wrap and return reparam&#39;d model</span>
-            <span class="k">return</span> <span class="n">numpyro_reparam</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)(</span><span class="n">model_fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">numpyro_reparam</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)(</span><span class="n">fn</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">wrapped_model</span>
 
+    <span class="c1"># Called as @autoreparam (no parens) — model_fn is the decorated function</span>
+    <span class="k">if</span> <span class="n">model_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">model_fn</span><span class="p">)</span>
+
+    <span class="c1"># Called as @autoreparam() or @autoreparam(centered=0.5)</span>
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 </pre></div>

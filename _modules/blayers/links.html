@@ -280,6 +280,7 @@
 
 <span class="sd">* ``gaussian_link``          — Normal likelihood, configurable sigma prior</span>
 <span class="sd">* ``lognormal_link``         — LogNormal likelihood, configurable sigma prior</span>
+<span class="sd">* ``student_t_link``         — StudentT likelihood for robust regression (default df=4)</span>
 <span class="sd">* ``logit_link``             — Bernoulli likelihood</span>
 <span class="sd">* ``poisson_link``           — Poisson likelihood</span>
 <span class="sd">* ``negative_binomial_link`` — NegativeBinomial2 likelihood, learned concentration</span>
@@ -295,6 +296,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dists</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample</span>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_loc_scale_link</span><span class="p">(</span>
@@ -387,6 +389,29 @@
 <span class="s2">    sigma_kwargs: Kwargs for ``sigma_dist``. Default ``{&quot;rate&quot;: 1.0}``.</span>
 <span class="s2">    scale: Known positive standard deviation.</span>
 <span class="s2">    untransformed_scale: Unbounded array transformed via ``softplus`` internally.</span>
+
+<span class="s2">Returns:</span>
+<span class="s2">    Sample site ``&quot;obs&quot;``.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<span class="n">student_t_link</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_loc_scale_link</span><span class="p">,</span> <span class="n">obs_dist</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">dists</span><span class="o">.</span><span class="n">StudentT</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="mf">4.0</span><span class="p">))</span>
+<span class="n">student_t_link</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;StudentT likelihood for robust regression.</span>
+
+<span class="s2">Heavier tails than Gaussian — large residuals are down-weighted rather than</span>
+<span class="s2">driving the fit.  Default ``df=4`` gives moderate robustness.  Customise via</span>
+<span class="s2">``functools.partial``::</span>
+
+<span class="s2">    from functools import partial</span>
+<span class="s2">    cauchy_link = partial(student_t_link, obs_dist=partial(dists.StudentT, df=1.0))</span>
+
+<span class="s2">Args:</span>
+<span class="s2">    y_hat: Predicted location, shape ``(n, 1)`` or ``(n,)``.</span>
+<span class="s2">    y: Observed values, or ``None``.</span>
+<span class="s2">    sigma_dist: Prior for scale. Default ``Exponential(rate=1.0)``.</span>
+<span class="s2">    sigma_kwargs: Kwargs for ``sigma_dist``.</span>
+<span class="s2">    scale: Known positive scale.</span>
+<span class="s2">    untransformed_scale: Unbounded scale transformed via softplus internally.</span>
 
 <span class="s2">Returns:</span>
 <span class="s2">    Sample site ``&quot;obs&quot;``.</span>

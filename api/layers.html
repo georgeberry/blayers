@@ -337,6 +337,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.pairwise_interactions"><code class="docutils literal notranslate"><span class="pre">pairwise_interactions()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__init__"><code class="docutils literal notranslate"><span class="pre">BLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__call__"><code class="docutils literal notranslate"><span class="pre">BLayer.__call__()</span></code></a></li>
@@ -456,6 +457,28 @@ produce an output, works like <code class="docutils literal notranslate"><span c
 </ul>
 </dd>
 </dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.layers.pairwise_interactions">
+<span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">pairwise_interactions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#pairwise_interactions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.pairwise_interactions" title="Link to this definition">#</a></dt>
+<dd><p>Compute all pairwise interactions between features in X and Y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – (n_samples, n_features1)</p></li>
+<li><p><strong>Y</strong> – (n_samples, n_features2)</p></li>
+<li><p><strong>x</strong> (<em>Array</em>)</p></li>
+<li><p><strong>z</strong> (<em>Array</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(n_samples, n_features1 * n_features2)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>interactions</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.layers.BLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">BLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BLayer" title="Link to this definition">#</a></dt>
@@ -616,10 +639,11 @@ prior.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.InterceptLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">InterceptLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#InterceptLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.InterceptLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian layer with a fixed prior distribution over coefficients.</p>
-<p>Generates coefficients from the model</p>
+<p>Bayesian intercept (bias) term with a fixed prior.</p>
+<p>Samples a scalar bias from</p>
 <div class="math notranslate nohighlight">
 \[\beta \sim Normal(0., 1.)\]</div>
+<p>and broadcasts it to every observation. No input <code class="docutils literal notranslate"><span class="pre">x</span></code> is needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -731,7 +755,19 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <dt class="sig sig-object py" id="blayers.layers.FM3Layer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FM3Layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FM3Layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FM3Layer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Order 3 FM. See <a class="reference external" href="https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf">Blondel et al 2016</a>.</p>
+<p>Bayesian order-3 factorization machine layer with adaptive prior.</p>
+<p>Samples low-rank factors from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\theta \sim Normal(0., \lambda), \quad \theta \in \mathbb{R}^{d \times l}\]</div>
+<p>Then computes the 3rd-order ANOVA kernel via Newton’s identity
+(<a class="reference external" href="https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf">Blondel et al. 2016</a>).
+Defining power sums <span class="math notranslate nohighlight">\(p_k = \sum_i x_i^k \theta_i^k\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\text{output} = \frac{p_1^3 - 3\, p_2\, p_1 + 2\, p_3}{6}\]</div>
+<p>This efficiently computes all 3rd-order interaction terms without
+enumerating all <span class="math notranslate nohighlight">\(\binom{d}{3}\)</span> triples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -786,7 +822,22 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <dt class="sig sig-object py" id="blayers.layers.LowRankInteractionLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">LowRankInteractionLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankInteractionLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankInteractionLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Takes two sets of features and learns a low-rank interaction matrix.</p>
+<p>Bayesian low-rank bilinear interaction between two feature sets (UV decomposition).</p>
+<p>Samples separate low-rank projections for <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">z</span></code> from the
+hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda_1 \sim HalfNormal(1.), \quad
+\theta_1 \sim Normal(0., \lambda_1), \quad \theta_1 \in \mathbb{R}^{d_1 \times l}\]</div>
+<div class="math notranslate nohighlight">
+\[\lambda_2 \sim HalfNormal(1.), \quad
+\theta_2 \sim Normal(0., \lambda_2), \quad \theta_2 \in \mathbb{R}^{d_2 \times l}\]</div>
+<p>and computes the element-wise product of the projections, summed over the
+low-rank dimension:</p>
+<div class="math notranslate nohighlight">
+\[\text{output} = \sum_{r=1}^{l} (x \theta_1)_r \cdot (z \theta_2)_r
+    = x^\top (\theta_1 \theta_2^\top) z\]</div>
+<p>This is equivalent to a rank-<span class="math notranslate nohighlight">\(l\)</span> approximation of the full bilinear
+form <span class="math notranslate nohighlight">\(x^\top W z\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -843,7 +894,20 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <dt class="sig sig-object py" id="blayers.layers.InteractionLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">InteractionLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#InteractionLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.InteractionLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Computes every interaction coefficient between two sets of inputs.</p>
+<p>Bayesian full pairwise interaction layer with adaptive prior.</p>
+<p>Samples one coefficient per pair of features from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\beta \sim Normal(0., \lambda), \quad
+\beta \in \mathbb{R}^{d_1 d_2}\]</div>
+<p>and computes the weighted sum of all outer-product interactions:</p>
+<div class="math notranslate nohighlight">
+\[\text{output} = (x \otimes z)\, \beta\]</div>
+<p>where <span class="math notranslate nohighlight">\(x \otimes z\)</span> is the flattened outer product of shape
+<span class="math notranslate nohighlight">\((n, d_1 d_2)\)</span>. For large inputs this scales as
+<span class="math notranslate nohighlight">\(O(d_1 d_2)\)</span> parameters; prefer <a class="reference internal" href="#blayers.layers.LowRankInteractionLayer" title="blayers.layers.LowRankInteractionLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a>
+when <span class="math notranslate nohighlight">\(d_1\)</span> or <span class="math notranslate nohighlight">\(d_2\)</span> is large.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -899,7 +963,18 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <dt class="sig sig-object py" id="blayers.layers.BilinearLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">BilinearLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#BilinearLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.BilinearLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian bilinear interaction layer: computes x^T W z.</p>
+<p>Bayesian full bilinear layer with adaptive prior.</p>
+<p>Samples a full interaction matrix from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[W \sim Normal(0., \lambda), \quad W \in \mathbb{R}^{d_1 \times d_2}\]</div>
+<p>and computes the bilinear form:</p>
+<div class="math notranslate nohighlight">
+\[\text{output} = x^\top W z\]</div>
+<p>This learns a distinct weight for every pair <span class="math notranslate nohighlight">\((x_i, z_j)\)</span>, making
+it the densest two-input layer. Has <span class="math notranslate nohighlight">\(O(d_1 d_2)\)</span> parameters;
+prefer <a class="reference internal" href="#blayers.layers.LowRankBilinearLayer" title="blayers.layers.LowRankBilinearLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code></a> when dimensions are large.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -954,7 +1029,21 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <dt class="sig sig-object py" id="blayers.layers.LowRankBilinearLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">LowRankBilinearLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#LowRankBilinearLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.LowRankBilinearLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Bayesian bilinear interaction layer: computes x^T W z. W low rank.</p>
+<p>Bayesian low-rank bilinear layer with adaptive prior.</p>
+<p>Samples shared-scale low-rank factors for both inputs from the
+hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[A \sim Normal(0., \lambda), \quad A \in \mathbb{R}^{d_1 \times l}\]</div>
+<div class="math notranslate nohighlight">
+\[B \sim Normal(0., \lambda), \quad B \in \mathbb{R}^{d_2 \times l}\]</div>
+<p>and computes the bilinear form with a rank-<span class="math notranslate nohighlight">\(l\)</span> weight matrix
+<span class="math notranslate nohighlight">\(W = AB^\top\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\text{output} = x^\top W z = (xA) \cdot (zB)\]</div>
+<p>Compared to <a class="reference internal" href="#blayers.layers.LowRankInteractionLayer" title="blayers.layers.LowRankInteractionLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code></a>, <code class="docutils literal notranslate"><span class="pre">A</span></code> and <code class="docutils literal notranslate"><span class="pre">B</span></code> share a
+single scale <span class="math notranslate nohighlight">\(\lambda\)</span>, tying the regularisation across both inputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1011,6 +1100,17 @@ if input covariates and <code class="docutils literal notranslate"><span class="
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">EmbeddingLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#EmbeddingLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.EmbeddingLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
 <p>Bayesian embedding layer for sparse categorical features.</p>
+<p>Samples an embedding table from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\theta \sim Normal(0., \lambda), \quad
+\theta \in \mathbb{R}^{c \times m}\]</div>
+<p>and performs a lookup for each observation:</p>
+<div class="math notranslate nohighlight">
+\[\text{output}_i = \theta[x_i]\]</div>
+<p>where <span class="math notranslate nohighlight">\(c\)</span> is the number of categories and <span class="math notranslate nohighlight">\(m\)</span> is the
+embedding dimension. For <span class="math notranslate nohighlight">\(m = 1\)</span> prefer <a class="reference internal" href="#blayers.layers.RandomEffectsLayer" title="blayers.layers.RandomEffectsLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1065,7 +1165,18 @@ prior.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.RandomEffectsLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomEffectsLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Exactly like the EmbeddingLayer but with <code class="docutils literal notranslate"><span class="pre">embedding_dim=1</span></code>.</p>
+<p>Bayesian random-effects layer — a scalar embedding per category.</p>
+<p>Special case of <a class="reference internal" href="#blayers.layers.EmbeddingLayer" title="blayers.layers.EmbeddingLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a> with <code class="docutils literal notranslate"><span class="pre">embedding_dim=1</span></code>.
+Samples one scalar random effect per category from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\theta \sim Normal(0., \lambda), \quad \theta \in \mathbb{R}^{c}\]</div>
+<p>and returns the scalar for each observation’s category:</p>
+<div class="math notranslate nohighlight">
+\[\text{output}_i = \theta[x_i]\]</div>
+<p>Equivalent to a classical mixed-effects intercept with a learned
+variance <span class="math notranslate nohighlight">\(\lambda^2\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1120,7 +1231,21 @@ prior.</p></li>
 <dt class="sig sig-object py" id="blayers.layers.RandomWalkLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomWalkLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'scale':</span> <span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomWalkLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomWalkLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Random walk of embedding dim <code class="docutils literal notranslate"><span class="pre">m</span></code>, defaults to Gaussian walk.</p>
+<p>Bayesian Gaussian random walk over ordered categories.</p>
+<p>Samples i.i.d. increments from the hierarchical model</p>
+<div class="math notranslate nohighlight">
+\[\lambda \sim HalfNormal(1.)\]</div>
+<div class="math notranslate nohighlight">
+\[\delta_t \sim Normal(0., \lambda), \quad t = 1, \ldots, c\]</div>
+<p>and accumulates them into positions via a cumulative sum:</p>
+<div class="math notranslate nohighlight">
+\[\theta_t = \sum_{s=1}^{t} \delta_s\]</div>
+<p>Each observation is then assigned the position of its category:</p>
+<div class="math notranslate nohighlight">
+\[\text{output}_i = \theta[x_i]\]</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">embedding_dim</span></code> <code class="docutils literal notranslate"><span class="pre">m</span></code> runs <code class="docutils literal notranslate"><span class="pre">m</span></code> independent walks in parallel,
+producing output of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">m)</span></code>. Typical use: a time index where
+adjacent periods share information through the walk prior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1431,6 +1556,7 @@ increases capacity.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.pairwise_interactions"><code class="docutils literal notranslate"><span class="pre">pairwise_interactions()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer"><code class="docutils literal notranslate"><span class="pre">BLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__init__"><code class="docutils literal notranslate"><span class="pre">BLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.BLayer.__call__"><code class="docutils literal notranslate"><span class="pre">BLayer.__call__()</span></code></a></li>

@@ -339,6 +339,7 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.student_t_link"><code class="docutils literal notranslate"><span class="pre">student_t_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poisson_link"><code class="docutils literal notranslate"><span class="pre">poisson_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
@@ -378,6 +379,7 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>          — Normal likelihood, configurable sigma prior</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>         — LogNormal likelihood, configurable sigma prior</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">student_t_link</span></code>         — StudentT likelihood for robust regression (default df=4)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code>             — Bernoulli likelihood</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">poisson_link</span></code>           — Poisson likelihood</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — NegativeBinomial2 likelihood, learned concentration</p></li>
@@ -442,6 +444,37 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <li><p><strong>sigma_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">1.0}</span></code>.</p></li>
 <li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive standard deviation.</p></li>
 <li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded array transformed via <code class="docutils literal notranslate"><span class="pre">softplus</span></code> internally.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.student_t_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">student_t_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">functools.partial(&lt;class</span> <span class="pre">'numpyro.distributions.continuous.StudentT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Exponential'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">untransformed_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#blayers.links.student_t_link" title="Link to this definition">#</a></dt>
+<dd><p>StudentT likelihood for robust regression.</p>
+<p>Heavier tails than Gaussian — large residuals are down-weighted rather than
+driving the fit.  Default <code class="docutils literal notranslate"><span class="pre">df=4</span></code> gives moderate robustness.  Customise via
+<code class="docutils literal notranslate"><span class="pre">functools.partial</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="n">cauchy_link</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">student_t_link</span><span class="p">,</span> <span class="n">obs_dist</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">dists</span><span class="o">.</span><span class="n">StudentT</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>) – Predicted location, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed values, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>sigma_dist</strong> – Prior for scale. Default <code class="docutils literal notranslate"><span class="pre">Exponential(rate=1.0)</span></code>.</p></li>
+<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>.</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive scale.</p></li>
+<li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded scale transformed via softplus internally.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -640,6 +673,7 @@ y \sim Beta(\bar{\mu}\,\phi,\; (1 - \bar{\mu})\,\phi)\]</div>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.student_t_link"><code class="docutils literal notranslate"><span class="pre">student_t_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poisson_link"><code class="docutils literal notranslate"><span class="pre">poisson_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>

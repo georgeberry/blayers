@@ -297,7 +297,9 @@
 <span class="c1"># ---- Matmul functions ------------------------------------------------------ #</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="pairwise_interactions">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.pairwise_interactions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute all pairwise interactions between features in X and Y.</span>
 
@@ -311,7 +313,8 @@
 
     <span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">shape</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">z</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">d2</span><span class="p">))</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -447,7 +450,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># thanks chat GPT</span>
-    <span class="n">interactions</span> <span class="o">=</span> <span class="n">_pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">interactions</span> <span class="o">=</span> <span class="n">pairwise_interactions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;nd,du-&gt;nu&quot;</span><span class="p">,</span> <span class="n">interactions</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
@@ -649,13 +652,14 @@
 <div class="viewcode-block" id="InterceptLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.InterceptLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InterceptLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian layer with a fixed prior distribution over coefficients.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian intercept (bias) term with a fixed prior.</span>
 
-<span class="sd">    Generates coefficients from the model</span>
+<span class="sd">    Samples a scalar bias from</span>
 
 <span class="sd">    .. math::</span>
-
 <span class="sd">        \\beta \\sim Normal(0., 1.)</span>
+
+<span class="sd">    and broadcasts it to every observation. No input ``x`` is needed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="InterceptLayer.__init__">
@@ -796,7 +800,26 @@
 <div class="viewcode-block" id="FM3Layer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.FM3Layer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FM3Layer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order 3 FM. See `Blondel et al 2016 &lt;https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf&gt;`_.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian order-3 factorization machine layer with adaptive prior.</span>
+
+<span class="sd">    Samples low-rank factors from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta \\sim Normal(0., \\lambda), \\quad \\theta \\in \\mathbb{R}^{d \\times l}</span>
+
+<span class="sd">    Then computes the 3rd-order ANOVA kernel via Newton&#39;s identity</span>
+<span class="sd">    (`Blondel et al. 2016 &lt;https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf&gt;`_).</span>
+<span class="sd">    Defining power sums :math:`p_k = \\sum_i x_i^k \\theta_i^k`:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output} = \\frac{p_1^3 - 3\\, p_2\\, p_1 + 2\\, p_3}{6}</span>
+
+<span class="sd">    This efficiently computes all 3rd-order interaction terms without</span>
+<span class="sd">    enumerating all :math:`\\binom{d}{3}` triples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="FM3Layer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.FM3Layer.__init__">[docs]</a>
@@ -868,7 +891,29 @@
 <div class="viewcode-block" id="LowRankInteractionLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankInteractionLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LowRankInteractionLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Takes two sets of features and learns a low-rank interaction matrix.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian low-rank bilinear interaction between two feature sets (UV decomposition).</span>
+
+<span class="sd">    Samples separate low-rank projections for ``x`` and ``z`` from the</span>
+<span class="sd">    hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda_1 \\sim HalfNormal(1.), \\quad</span>
+<span class="sd">        \\theta_1 \\sim Normal(0., \\lambda_1), \\quad \\theta_1 \\in \\mathbb{R}^{d_1 \\times l}</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda_2 \\sim HalfNormal(1.), \\quad</span>
+<span class="sd">        \\theta_2 \\sim Normal(0., \\lambda_2), \\quad \\theta_2 \\in \\mathbb{R}^{d_2 \\times l}</span>
+
+<span class="sd">    and computes the element-wise product of the projections, summed over the</span>
+<span class="sd">    low-rank dimension:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output} = \\sum_{r=1}^{l} (x \\theta_1)_r \\cdot (z \\theta_2)_r</span>
+<span class="sd">            = x^\\top (\\theta_1 \\theta_2^\\top) z</span>
+
+<span class="sd">    This is equivalent to a rank-:math:`l` approximation of the full bilinear</span>
+<span class="sd">    form :math:`x^\\top W z`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LowRankInteractionLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankInteractionLayer.__init__">[docs]</a>
@@ -946,7 +991,27 @@
 <div class="viewcode-block" id="InteractionLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InteractionLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes every interaction coefficient between two sets of inputs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian full pairwise interaction layer with adaptive prior.</span>
+
+<span class="sd">    Samples one coefficient per pair of features from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\beta \\sim Normal(0., \\lambda), \\quad</span>
+<span class="sd">        \\beta \\in \\mathbb{R}^{d_1 d_2}</span>
+
+<span class="sd">    and computes the weighted sum of all outer-product interactions:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output} = (x \\otimes z)\\, \\beta</span>
+
+<span class="sd">    where :math:`x \\otimes z` is the flattened outer product of shape</span>
+<span class="sd">    :math:`(n, d_1 d_2)`. For large inputs this scales as</span>
+<span class="sd">    :math:`O(d_1 d_2)` parameters; prefer :class:`LowRankInteractionLayer`</span>
+<span class="sd">    when :math:`d_1` or :math:`d_2` is large.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="InteractionLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.InteractionLayer.__init__">[docs]</a>
@@ -1013,7 +1078,25 @@
 <div class="viewcode-block" id="BilinearLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.BilinearLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BilinearLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian bilinear interaction layer: computes x^T W z.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian full bilinear layer with adaptive prior.</span>
+
+<span class="sd">    Samples a full interaction matrix from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        W \\sim Normal(0., \\lambda), \\quad W \\in \\mathbb{R}^{d_1 \\times d_2}</span>
+
+<span class="sd">    and computes the bilinear form:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output} = x^\\top W z</span>
+
+<span class="sd">    This learns a distinct weight for every pair :math:`(x_i, z_j)`, making</span>
+<span class="sd">    it the densest two-input layer. Has :math:`O(d_1 d_2)` parameters;</span>
+<span class="sd">    prefer :class:`LowRankBilinearLayer` when dimensions are large.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BilinearLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.BilinearLayer.__init__">[docs]</a>
@@ -1087,7 +1170,29 @@
 <div class="viewcode-block" id="LowRankBilinearLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankBilinearLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LowRankBilinearLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian bilinear interaction layer: computes x^T W z. W low rank.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian low-rank bilinear layer with adaptive prior.</span>
+
+<span class="sd">    Samples shared-scale low-rank factors for both inputs from the</span>
+<span class="sd">    hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        A \\sim Normal(0., \\lambda), \\quad A \\in \\mathbb{R}^{d_1 \\times l}</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        B \\sim Normal(0., \\lambda), \\quad B \\in \\mathbb{R}^{d_2 \\times l}</span>
+
+<span class="sd">    and computes the bilinear form with a rank-:math:`l` weight matrix</span>
+<span class="sd">    :math:`W = AB^\\top`:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output} = x^\\top W z = (xA) \\cdot (zB)</span>
+
+<span class="sd">    Compared to :class:`LowRankInteractionLayer`, ``A`` and ``B`` share a</span>
+<span class="sd">    single scale :math:`\\lambda`, tying the regularisation across both inputs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LowRankBilinearLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.LowRankBilinearLayer.__init__">[docs]</a>
@@ -1176,7 +1281,25 @@
 <div class="viewcode-block" id="EmbeddingLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian embedding layer for sparse categorical features.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian embedding layer for sparse categorical features.</span>
+
+<span class="sd">    Samples an embedding table from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta \\sim Normal(0., \\lambda), \\quad</span>
+<span class="sd">        \\theta \\in \\mathbb{R}^{c \\times m}</span>
+
+<span class="sd">    and performs a lookup for each observation:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output}_i = \\theta[x_i]</span>
+
+<span class="sd">    where :math:`c` is the number of categories and :math:`m` is the</span>
+<span class="sd">    embedding dimension. For :math:`m = 1` prefer :class:`RandomEffectsLayer`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="EmbeddingLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.EmbeddingLayer.__init__">[docs]</a>
@@ -1244,7 +1367,25 @@
 <div class="viewcode-block" id="RandomEffectsLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RandomEffectsLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exactly like the EmbeddingLayer but with ``embedding_dim=1``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian random-effects layer — a scalar embedding per category.</span>
+
+<span class="sd">    Special case of :class:`EmbeddingLayer` with ``embedding_dim=1``.</span>
+<span class="sd">    Samples one scalar random effect per category from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta \\sim Normal(0., \\lambda), \\quad \\theta \\in \\mathbb{R}^{c}</span>
+
+<span class="sd">    and returns the scalar for each observation&#39;s category:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output}_i = \\theta[x_i]</span>
+
+<span class="sd">    Equivalent to a classical mixed-effects intercept with a learned</span>
+<span class="sd">    variance :math:`\\lambda^2`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="RandomEffectsLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomEffectsLayer.__init__">[docs]</a>
@@ -1308,7 +1449,30 @@
 <div class="viewcode-block" id="RandomWalkLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomWalkLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RandomWalkLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Random walk of embedding dim ``m``, defaults to Gaussian walk.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bayesian Gaussian random walk over ordered categories.</span>
+
+<span class="sd">    Samples i.i.d. increments from the hierarchical model</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\lambda \\sim HalfNormal(1.)</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\delta_t \\sim Normal(0., \\lambda), \\quad t = 1, \\ldots, c</span>
+
+<span class="sd">    and accumulates them into positions via a cumulative sum:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta_t = \\sum_{s=1}^{t} \\delta_s</span>
+
+<span class="sd">    Each observation is then assigned the position of its category:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \\text{output}_i = \\theta[x_i]</span>
+
+<span class="sd">    The ``embedding_dim`` ``m`` runs ``m`` independent walks in parallel,</span>
+<span class="sd">    producing output of shape ``(n, m)``. Typical use: a time index where</span>
+<span class="sd">    adjacent periods share information through the walk prior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="RandomWalkLayer.__init__">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomWalkLayer.__init__">[docs]</a>
