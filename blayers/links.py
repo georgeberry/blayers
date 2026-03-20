@@ -20,6 +20,7 @@ Available links:
 
 * ``gaussian_link``          — Normal likelihood, configurable sigma prior
 * ``lognormal_link``         — LogNormal likelihood, configurable sigma prior
+* ``student_t_link``         — StudentT likelihood for robust regression (default df=4)
 * ``logit_link``             — Bernoulli likelihood
 * ``poisson_link``           — Poisson likelihood
 * ``negative_binomial_link`` — NegativeBinomial2 likelihood, learned concentration
@@ -35,6 +36,7 @@ import jax.nn as jnn
 import jax.numpy as jnp
 import numpyro.distributions as dists
 from numpyro import sample
+
 
 
 def _loc_scale_link(
@@ -127,6 +129,29 @@ Args:
     sigma_kwargs: Kwargs for ``sigma_dist``. Default ``{"rate": 1.0}``.
     scale: Known positive standard deviation.
     untransformed_scale: Unbounded array transformed via ``softplus`` internally.
+
+Returns:
+    Sample site ``"obs"``.
+"""
+
+
+student_t_link = partial(_loc_scale_link, obs_dist=partial(dists.StudentT, df=4.0))
+student_t_link.__doc__ = """StudentT likelihood for robust regression.
+
+Heavier tails than Gaussian — large residuals are down-weighted rather than
+driving the fit.  Default ``df=4`` gives moderate robustness.  Customise via
+``functools.partial``::
+
+    from functools import partial
+    cauchy_link = partial(student_t_link, obs_dist=partial(dists.StudentT, df=1.0))
+
+Args:
+    y_hat: Predicted location, shape ``(n, 1)`` or ``(n,)``.
+    y: Observed values, or ``None``.
+    sigma_dist: Prior for scale. Default ``Exponential(rate=1.0)``.
+    sigma_kwargs: Kwargs for ``sigma_dist``.
+    scale: Known positive scale.
+    untransformed_scale: Unbounded scale transformed via softplus internally.
 
 Returns:
     Sample site ``"obs"``.

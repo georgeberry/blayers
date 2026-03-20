@@ -5,7 +5,7 @@ import numpyro.distributions as dist
 from jax import random
 from numpyro.handlers import seed, trace
 
-from blayers.links import gaussian_link, logit_link, lognormal_link, negative_binomial_link
+from blayers.links import gaussian_link, logit_link, lognormal_link, negative_binomial_link, student_t_link
 
 
 def test_negative_binomial_link_sample_shape():
@@ -195,3 +195,42 @@ def test_lognormal_link_halfnormal_sigma():
 
     assert isinstance(tr["sigma"]["fn"], dist.HalfNormal)
     assert isinstance(tr["obs"]["fn"], dist.LogNormal)
+
+
+def test_student_t_link_sample_shape():
+    key = random.PRNGKey(0)
+
+    def model():
+        return student_t_link(y_hat=jnp.array([1.0, -1.0]))
+
+    tr = trace(seed(model, key)).get_trace()
+
+    assert "sigma" in tr
+    assert isinstance(tr["obs"]["fn"], dist.StudentT)
+    assert tr["obs"]["value"].shape == (2,)
+    assert tr["obs"]["fn"].df == 4.0
+
+
+def test_student_t_link_custom_df():
+    key = random.PRNGKey(1)
+    cauchy_link = partial(student_t_link, obs_dist=partial(dist.StudentT, df=1.0))
+
+    def model():
+        return cauchy_link(y_hat=jnp.array([1.0, -1.0]))
+
+    tr = trace(seed(model, key)).get_trace()
+
+    assert isinstance(tr["obs"]["fn"], dist.StudentT)
+    assert tr["obs"]["fn"].df == 1.0
+
+
+def test_student_t_link_with_obs():
+    key = random.PRNGKey(2)
+    y_obs = jnp.array([0.5, -0.5])
+
+    def model():
+        return student_t_link(y_hat=jnp.array([1.0, -1.0]), y=y_obs)
+
+    tr = trace(seed(model, key)).get_trace()
+    assert jnp.all(tr["obs"]["value"] == y_obs)
+    assert jnp.isfinite(tr["obs"]["fn"].log_prob(y_obs)).all()

@@ -37,7 +37,7 @@ from blayers._utils import add_trailing_dim
 # ---- Matmul functions ------------------------------------------------------ #
 
 
-def _pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
+def pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
     """
     Compute all pairwise interactions between features in X and Y.
 
@@ -187,7 +187,7 @@ def _matmul_interaction(
     """
 
     # thanks chat GPT
-    interactions = _pairwise_interactions(x, z)
+    interactions = pairwise_interactions(x, z)
 
     return jnp.einsum("nd,du->nu", interactions, beta)
 
@@ -360,13 +360,14 @@ class FixedPriorLayer(BLayer):
 
 
 class InterceptLayer(BLayer):
-    """Bayesian layer with a fixed prior distribution over coefficients.
+    """Bayesian intercept (bias) term with a fixed prior.
 
-    Generates coefficients from the model
+    Samples a scalar bias from
 
     .. math::
-
         \\beta \\sim Normal(0., 1.)
+
+    and broadcasts it to every observation. No input ``x`` is needed.
     """
 
     def __init__(
@@ -489,7 +490,26 @@ class FMLayer(BLayer):
 
 
 class FM3Layer(BLayer):
-    """Order 3 FM. See `Blondel et al 2016 <https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf>`_."""
+    """Bayesian order-3 factorization machine layer with adaptive prior.
+
+    Samples low-rank factors from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        \\theta \\sim Normal(0., \\lambda), \\quad \\theta \\in \\mathbb{R}^{d \\times l}
+
+    Then computes the 3rd-order ANOVA kernel via Newton's identity
+    (`Blondel et al. 2016 <https://proceedings.neurips.cc/paper/2016/file/158fc2ddd52ec2cf54d3c161f2dd6517-Paper.pdf>`_).
+    Defining power sums :math:`p_k = \\sum_i x_i^k \\theta_i^k`:
+
+    .. math::
+        \\text{output} = \\frac{p_1^3 - 3\\, p_2\\, p_1 + 2\\, p_3}{6}
+
+    This efficiently computes all 3rd-order interaction terms without
+    enumerating all :math:`\\binom{d}{3}` triples.
+    """
 
     def __init__(
         self,
@@ -552,7 +572,29 @@ class FM3Layer(BLayer):
 
 
 class LowRankInteractionLayer(BLayer):
-    """Takes two sets of features and learns a low-rank interaction matrix."""
+    """Bayesian low-rank bilinear interaction between two feature sets (UV decomposition).
+
+    Samples separate low-rank projections for ``x`` and ``z`` from the
+    hierarchical model
+
+    .. math::
+        \\lambda_1 \\sim HalfNormal(1.), \\quad
+        \\theta_1 \\sim Normal(0., \\lambda_1), \\quad \\theta_1 \\in \\mathbb{R}^{d_1 \\times l}
+
+    .. math::
+        \\lambda_2 \\sim HalfNormal(1.), \\quad
+        \\theta_2 \\sim Normal(0., \\lambda_2), \\quad \\theta_2 \\in \\mathbb{R}^{d_2 \\times l}
+
+    and computes the element-wise product of the projections, summed over the
+    low-rank dimension:
+
+    .. math::
+        \\text{output} = \\sum_{r=1}^{l} (x \\theta_1)_r \\cdot (z \\theta_2)_r
+            = x^\\top (\\theta_1 \\theta_2^\\top) z
+
+    This is equivalent to a rank-:math:`l` approximation of the full bilinear
+    form :math:`x^\\top W z`.
+    """
 
     def __init__(
         self,
@@ -621,7 +663,27 @@ class LowRankInteractionLayer(BLayer):
 
 
 class InteractionLayer(BLayer):
-    """Computes every interaction coefficient between two sets of inputs."""
+    """Bayesian full pairwise interaction layer with adaptive prior.
+
+    Samples one coefficient per pair of features from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        \\beta \\sim Normal(0., \\lambda), \\quad
+        \\beta \\in \\mathbb{R}^{d_1 d_2}
+
+    and computes the weighted sum of all outer-product interactions:
+
+    .. math::
+        \\text{output} = (x \\otimes z)\\, \\beta
+
+    where :math:`x \\otimes z` is the flattened outer product of shape
+    :math:`(n, d_1 d_2)`. For large inputs this scales as
+    :math:`O(d_1 d_2)` parameters; prefer :class:`LowRankInteractionLayer`
+    when :math:`d_1` or :math:`d_2` is large.
+    """
 
     def __init__(
         self,
@@ -679,7 +741,25 @@ class InteractionLayer(BLayer):
 
 
 class BilinearLayer(BLayer):
-    """Bayesian bilinear interaction layer: computes x^T W z."""
+    """Bayesian full bilinear layer with adaptive prior.
+
+    Samples a full interaction matrix from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        W \\sim Normal(0., \\lambda), \\quad W \\in \\mathbb{R}^{d_1 \\times d_2}
+
+    and computes the bilinear form:
+
+    .. math::
+        \\text{output} = x^\\top W z
+
+    This learns a distinct weight for every pair :math:`(x_i, z_j)`, making
+    it the densest two-input layer. Has :math:`O(d_1 d_2)` parameters;
+    prefer :class:`LowRankBilinearLayer` when dimensions are large.
+    """
 
     def __init__(
         self,
@@ -744,7 +824,29 @@ class BilinearLayer(BLayer):
 
 
 class LowRankBilinearLayer(BLayer):
-    """Bayesian bilinear interaction layer: computes x^T W z. W low rank."""
+    """Bayesian low-rank bilinear layer with adaptive prior.
+
+    Samples shared-scale low-rank factors for both inputs from the
+    hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        A \\sim Normal(0., \\lambda), \\quad A \\in \\mathbb{R}^{d_1 \\times l}
+
+    .. math::
+        B \\sim Normal(0., \\lambda), \\quad B \\in \\mathbb{R}^{d_2 \\times l}
+
+    and computes the bilinear form with a rank-:math:`l` weight matrix
+    :math:`W = AB^\\top`:
+
+    .. math::
+        \\text{output} = x^\\top W z = (xA) \\cdot (zB)
+
+    Compared to :class:`LowRankInteractionLayer`, ``A`` and ``B`` share a
+    single scale :math:`\\lambda`, tying the regularisation across both inputs.
+    """
 
     def __init__(
         self,
@@ -824,7 +926,25 @@ class LowRankBilinearLayer(BLayer):
 
 
 class EmbeddingLayer(BLayer):
-    """Bayesian embedding layer for sparse categorical features."""
+    """Bayesian embedding layer for sparse categorical features.
+
+    Samples an embedding table from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        \\theta \\sim Normal(0., \\lambda), \\quad
+        \\theta \\in \\mathbb{R}^{c \\times m}
+
+    and performs a lookup for each observation:
+
+    .. math::
+        \\text{output}_i = \\theta[x_i]
+
+    where :math:`c` is the number of categories and :math:`m` is the
+    embedding dimension. For :math:`m = 1` prefer :class:`RandomEffectsLayer`.
+    """
 
     def __init__(
         self,
@@ -883,7 +1003,25 @@ class EmbeddingLayer(BLayer):
 
 
 class RandomEffectsLayer(BLayer):
-    """Exactly like the EmbeddingLayer but with ``embedding_dim=1``."""
+    """Bayesian random-effects layer — a scalar embedding per category.
+
+    Special case of :class:`EmbeddingLayer` with ``embedding_dim=1``.
+    Samples one scalar random effect per category from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        \\theta \\sim Normal(0., \\lambda), \\quad \\theta \\in \\mathbb{R}^{c}
+
+    and returns the scalar for each observation's category:
+
+    .. math::
+        \\text{output}_i = \\theta[x_i]
+
+    Equivalent to a classical mixed-effects intercept with a learned
+    variance :math:`\\lambda^2`.
+    """
 
     def __init__(
         self,
@@ -938,7 +1076,30 @@ class RandomEffectsLayer(BLayer):
 
 
 class RandomWalkLayer(BLayer):
-    """Random walk of embedding dim ``m``, defaults to Gaussian walk."""
+    """Bayesian Gaussian random walk over ordered categories.
+
+    Samples i.i.d. increments from the hierarchical model
+
+    .. math::
+        \\lambda \\sim HalfNormal(1.)
+
+    .. math::
+        \\delta_t \\sim Normal(0., \\lambda), \\quad t = 1, \\ldots, c
+
+    and accumulates them into positions via a cumulative sum:
+
+    .. math::
+        \\theta_t = \\sum_{s=1}^{t} \\delta_s
+
+    Each observation is then assigned the position of its category:
+
+    .. math::
+        \\text{output}_i = \\theta[x_i]
+
+    The ``embedding_dim`` ``m`` runs ``m`` independent walks in parallel,
+    producing output of shape ``(n, m)``. Typical use: a time index where
+    adjacent periods share information through the walk prior.
+    """
 
     def __init__(
         self,
