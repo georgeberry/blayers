@@ -38,12 +38,13 @@ choice without having to rewrite models
 ## The starting point
 
 The simplest non-trivial (and most important!) Bayesian regression model form is
-the adaptive prior,
+the adaptive prior (note I'm using a `.` to denote the regression sigma and any
+prior on it just to save space),
 
 ```
 scale ~ HalfNormal(1)
 beta  ~ Normal(0, scale)
-y     ~ Normal(beta * x, 1)
+y     ~ Normal(beta * x, .)
 ```
 
 BLayers encapsulates a generative model structure like this in a `BLayer`. The
@@ -93,7 +94,7 @@ The `AdaptiveLayer` is also fully parameterizable via arguments to the class, so
 ```
 scale ~ HalfNormal(1)
 beta  ~ Normal(0, scale)
-y     ~ Normal(beta * x, 1)
+y     ~ Normal(beta * x, .)
 ```
 
 to
@@ -101,7 +102,7 @@ to
 ```
 scale ~ Exponential(1.)
 beta  ~ LogNormal(0, scale)
-y     ~ Normal(beta * x, 1)
+y     ~ Normal(beta * x, .)
 ```
 
 you can just do this directly via arguments
