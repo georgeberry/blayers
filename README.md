@@ -342,11 +342,11 @@ svi_result = svi_run_batched(
 
 **⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
 
-`Batched_Trace_ELBO` is known to have issues when your model uses `numpyro.plate`. If your model needs plates, either:
+`Batched_Trace_ELBO` does not support `numpyro.plate`: its `N / batch_size` log-likelihood rescaling double-counts plate-subsampled sites and yields an incorrect ELBO. If your model needs plates, either:
 1. Batch via `plate` and use the standard `Trace_ELBO`, or
 1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
-`Batched_Trace_ELBO` will warn if your model has plates.
+`Batched_Trace_ELBO` **raises `ValueError`** if your model contains a plate.
 
 
 ### Reparameterizing

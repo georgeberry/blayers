@@ -9,7 +9,6 @@ Use ``Batched_Trace_ELBO`` + ``svi_run_batched`` for plate-free batched VI;
 fall back to standard ``Trace_ELBO`` if your model already uses plates.
 """
 
-import warnings
 from typing import Any, Callable
 
 import jax
@@ -24,14 +23,15 @@ from numpyro.infer.svi import SVIRunResult, SVIState
 from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
 
 
-def _warn_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
+def _raise_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
     if any(site["type"] == "plate" for site in model_trace.values()):
-        warnings.warn(
-            "Model contains plates. Batched_Trace_ELBO is known to have"
-            " issues with plates. Please batch via plates if you need"
-            " to use plates for your model.",
-            UserWarning,
-            stacklevel=2,  # makes the warning point to user code
+        raise ValueError(
+            "Batched_Trace_ELBO does not support models that use "
+            "numpyro.plate: the N/B log-likelihood rescaling double-counts "
+            "plate-subsampled sites and produces an incorrect ELBO. Either "
+            "(a) batch via plate and use the standard numpyro Trace_ELBO, or "
+            "(b) remove the plate and use Batched_Trace_ELBO + "
+            "svi_run_batched."
         )
 
 
@@ -57,8 +57,10 @@ class Batched_Trace_ELBO(ELBO):
             dimension of the first batched kwarg at loss-evaluation time.
 
     Warning:
-        Does not mix with ``numpyro.plate``.  A ``UserWarning`` is raised if
-        a plate is detected in the model trace.
+        Does not mix with ``numpyro.plate``.  A ``ValueError`` is raised if a
+        plate is detected in the model trace — the ``num_obs / batch_size``
+        rescaling double-counts plate-subsampled sites, so the ELBO would be
+        silently wrong.  Use the standard ``Trace_ELBO`` with plates instead.
     """
 
     def __init__(
@@ -147,7 +149,7 @@ class Batched_Trace_ELBO(ELBO):
                 **kwargs,
             )
 
-            _warn_if_has_plate(model_trace)
+            _raise_if_has_plate(model_trace)
 
             # log p(x | z)
             # upscale here by N / B where N is the nubmer of observations and B

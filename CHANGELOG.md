@@ -20,6 +20,11 @@ may carry breaking changes).
 - `__version__` on the top-level package.
 
 ### Changed
+- **`Batched_Trace_ELBO` now raises `ValueError` on models that use
+  `numpyro.plate`** (previously it emitted a `UserWarning` and continued).
+  The `num_obs / batch_size` rescaling double-counts plate-subsampled sites,
+  so the ELBO was silently wrong — better to fail closed. Use the standard
+  `Trace_ELBO` with plates instead.
 - **Requires Python >= 3.12** (was declared `>=3.9`, but the codebase's
   `X | None` annotations never actually supported 3.9; arviz 1.x also needs
   3.12). CI, docs, and publish workflows now run on 3.12.
