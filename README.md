@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main)](https://coveralls.io/github/georgeberry/blayers?branch=main) [![License](https://img.shields.io/github/license/georgeberry/blayers)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers) [![PyPI Downloads](https://static.pepy.tech/badge/blayers)](https://pepy.tech/projects/blayers)
+[![Coverage Status](https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main)](https://coveralls.io/github/georgeberry/blayers?branch=main) [![License](https://img.shields.io/github/license/georgeberry/blayers)](https://github.com/georgeberry/blayers/blob/main/LICENSE) [![PyPI](https://img.shields.io/pypi/v/blayers)](https://pypi.org/project/blayers/) [![Read - Docs](https://img.shields.io/badge/Read-Docs-2ea44f)](https://georgeberry.github.io/blayers/) [![View - GitHub](https://img.shields.io/badge/View-GitHub-89CFF0)](https://github.com/georgeberry/blayers) [![PyPI Downloads](https://static.pepy.tech/badge/blayers)](https://pepy.tech/projects/blayers)
 
 
 
@@ -25,6 +25,18 @@ Easily build Bayesian models from parts, abstract away the boilerplate, and
 tweak priors as you wish.
 
 Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
+
+**Scope.** BLayers is for *structured* Bayesian regression — GLMs, hierarchical /
+mixed-effects models, factorization machines, splines, and sparse priors. Layers
+are meant to be **added together into a linear predictor** (`mu = layer1(...) +
+layer2(...) + ...`), the way you'd build a GLM or GAM — not stacked into a deep
+network. Each term stays interpretable, and the priors and inference (NUTS / VI /
+SVGD) are chosen for honest posteriors over a modest number of meaningful
+parameters. If you want a true Bayesian *neural network* (composed nonlinear
+layers, weight-space inference), reach for
+[`numpyro.contrib.module`](https://num.pyro.ai/en/stable/primitives.html#module)'s
+`random_flax_module` / `random_haiku_module` instead — they drop a full Flax or
+Haiku net into a NumPyro model with priors on the weights.
 
 BLayers provides tools to
 
@@ -161,7 +173,6 @@ The full set of layers included with BLayers:
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
 - `SpikeAndSlabLayer` — Spike-and-slab prior; `z ~ Beta(0.5, 0.5)` inclusion weights times a configurable slab.
-- `AttentionLayer` — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation ([Gorishniy et al. 2021](https://arxiv.org/abs/2106.11959)). `head_dim` is per-head so total embedding dim is `head_dim * num_heads` — adding heads increases capacity.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 
@@ -171,16 +182,18 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 
 - `gaussian_link` — Gaussian likelihood with configurable sigma prior (see below).
 - `lognormal_link` — LogNormal likelihood with configurable sigma prior.
-- `logit_link` — Bernoulli link for logistic regression.
+- `student_t_link` — StudentT likelihood for robust regression (default `df=4`).
+- `logit_link` — Bernoulli link for binary logistic regression.
+- `categorical_link` — Categorical / softmax link for multiclass classification (`units = num_classes`).
 - `poisson_link` — Poisson link with log-rate input.
 - `negative_binomial_link` — NegativeBinomial2 for overdispersed counts; learned concentration via `Exponential`.
 - `ordinal_link` — Cumulative logit / proportional odds for ordinal outcomes.
 - `zip_link` — Zero-inflated Poisson for count data with excess zeros.
 - `beta_link` — Beta regression for proportions strictly in (0, 1).
 
-### `gaussian_link` and `lognormal_link`
+### `gaussian_link`, `lognormal_link`, and `student_t_link`
 
-Both links are built on a common base and support three scale modes:
+All three share a common location-scale base and support three scale modes:
 
 ```python
 from blayers.layers import AdaptiveLayer
@@ -277,6 +290,31 @@ summary = result.summary(x=X)
 
 Keyword arguments that are JAX arrays are treated as **data** (batched during training). Non-array kwargs are bound as **constants**.
 
+### Diagnostics & model comparison (ArviZ)
+
+`result.to_arviz()` hands the fit to [ArviZ](https://python.arviz.org) for R-hat,
+ESS, divergences, PSIS-LOO, and the full plotting suite — reusing NumPyro's own
+ArviZ bridge rather than reinventing diagnostics. Install with `pip install
+blayers[arviz]` (arviz ≥ 1.0, Python ≥ 3.12).
+
+```python
+import arviz as az
+
+# MCMC: divergences, R-hat, ESS, and log-likelihood come through automatically
+idata = fit(model, y=y, method="mcmc", num_chains=2, x=X).to_arviz()
+az.summary(idata)          # R-hat / ESS per latent
+az.loo(idata)              # PSIS-LOO
+
+# VI: pass the observed y (and inputs) so the log_likelihood group can be built
+idata_vi = fit(model, y=y, num_steps=2000, x=X).to_arviz(y=y, x=X)
+
+# Compare models on out-of-sample predictive fit
+az.compare({"mcmc": idata, "vi": idata_vi})
+```
+
+SVGD is not supported by `to_arviz()` (too few particles to be a meaningful
+sample for LOO); fit with `method="mcmc"` or `method="vi"` for comparison.
+
 ## Batched loss
 
 The default Numpyro way to fit batched VI models is to use `plate`, which confuses
@@ -304,16 +342,18 @@ svi_result = svi_run_batched(
 
 **⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
 
-`Batched_Trace_ELBO` is known to have issues when your model uses `numpyro.plate`. If your model needs plates, either:
+`Batched_Trace_ELBO` does not support `numpyro.plate`: its `N / batch_size` log-likelihood rescaling double-counts plate-subsampled sites and yields an incorrect ELBO. If your model needs plates, either:
 1. Batch via `plate` and use the standard `Trace_ELBO`, or
 1. Remove plates and use `Batched_Trace_ELBO` + `svi_run_batched`.
 
-`Batched_Trace_ELBO` will warn if your model has plates.
+`Batched_Trace_ELBO` **raises `ValueError`** if your model contains a plate.
 
 
 ### Reparameterizing
 
 To fit MCMC models well it is crucial to [reparameterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this via `@autoreparam`, which automatically applies `LocScaleReparam` to all `LocScale` distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).
+
+> **Note:** `fit(method="mcmc")` already applies `@autoreparam` for you (controlled by `autoreparam_model=True`, on by default). You only need to apply the decorator yourself when driving NUTS / HMC manually, as shown below.
 
 ```python
 from numpyro.infer import MCMC, NUTS

@@ -1,5 +1,3 @@
-import warnings
-
 import jax
 import jax.numpy as jnp
 import numpyro
@@ -11,7 +9,7 @@ from numpyro.handlers import seed, substitute, trace
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.vi_infer import Batched_Trace_ELBO, _warn_if_has_plate
+from blayers.vi_infer import Batched_Trace_ELBO, _raise_if_has_plate
 
 
 def test_builtin_vs_batched_elbo_simple() -> None:
@@ -125,7 +123,7 @@ def test_no_batch_error() -> None:
         svi_batched.evaluate(state_batched)
 
 
-def test_plate_warning() -> None:
+def test_plate_raises() -> None:
     key = jax.random.PRNGKey(0)
     data = jnp.ones(10)
 
@@ -138,11 +136,11 @@ def test_plate_warning() -> None:
         data
     )
 
-    with pytest.warns(UserWarning, match="Model contains plates"):
-        _warn_if_has_plate(model_trace)
+    with pytest.raises(ValueError, match="does not support"):
+        _raise_if_has_plate(model_trace)
 
 
-def test_no_plate_no_warning() -> None:
+def test_no_plate_does_not_raise() -> None:
     key = jax.random.PRNGKey(0)
     data = jnp.ones(10)
 
@@ -154,7 +152,27 @@ def test_no_plate_no_warning() -> None:
         data
     )
 
-    with warnings.catch_warnings(record=True) as w:
-        _warn_if_has_plate(model_trace)
+    _raise_if_has_plate(model_trace)  # should not raise
 
-    assert len(w) == 0
+
+def test_plate_raises_through_elbo() -> None:
+    """A plate model must fail when the batched ELBO is actually evaluated."""
+    key = jax.random.PRNGKey(0)
+    data = jnp.ones(10)
+
+    def model_with_plate(data: jax.Array) -> None:
+        mu = sample("mu", dist.Normal(0, 1))
+        with plate("data", len(data)):
+            sample("obs", dist.Normal(mu, 1), obs=data)
+
+    guide = AutoDiagonalNormal(model_with_plate)
+    loss = Batched_Trace_ELBO(num_obs=10, batch_size=5)
+
+    with pytest.raises(ValueError, match="does not support"):
+        loss.loss(
+            key,
+            {},
+            model_with_plate,
+            guide,
+            data,
+        )

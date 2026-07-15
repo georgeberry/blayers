@@ -1,24 +1,27 @@
+from importlib.metadata import PackageNotFoundError, version
+
+from blayers.decorators import autoreparam, autoreshape
+from blayers.fit import FittedModel, Predictions, fit, sample_prior
 from blayers.layers import (
     AdaptiveLayer,
-    AttentionLayer,
     BilinearLayer,
     EmbeddingLayer,
     FixedPriorLayer,
-    FMLayer,
     FM3Layer,
+    FMLayer,
     HorseshoeLayer,
     InteractionLayer,
     InterceptLayer,
     LowRankBilinearLayer,
     LowRankInteractionLayer,
-    pairwise_interactions,
     RandomEffectsLayer,
     RandomWalkLayer,
     SpikeAndSlabLayer,
+    pairwise_interactions,
 )
-
 from blayers.links import (
     beta_link,
+    categorical_link,
     gaussian_link,
     logit_link,
     lognormal_link,
@@ -29,21 +32,15 @@ from blayers.links import (
     zip_link,
 )
 
-from blayers.decorators import (
-    autoreparam,
-    autoreshape,
-)
-
-from blayers.fit import (
-    fit,
-    FittedModel,
-    Predictions,
-)
+try:
+    __version__ = version("blayers")
+except PackageNotFoundError:  # package not installed (e.g. running from source)
+    __version__ = "0.0.0"
 
 __all__ = [
+    "__version__",
     # Layers
     "AdaptiveLayer",
-    "AttentionLayer",
     "BilinearLayer",
     "EmbeddingLayer",
     "FixedPriorLayer",
@@ -60,6 +57,7 @@ __all__ = [
     "SpikeAndSlabLayer",
     # Links
     "beta_link",
+    "categorical_link",
     "gaussian_link",
     "logit_link",
     "lognormal_link",
@@ -73,6 +71,7 @@ __all__ = [
     "autoreshape",
     # Fit
     "fit",
+    "sample_prior",
     "FittedModel",
     "Predictions",
 ]

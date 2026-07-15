@@ -1,7 +1,5 @@
 """Tests for the high-level ``blayers.fit`` API."""
 
-from typing import Any
-
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -12,10 +10,16 @@ from numpyro.infer import Predictive
 from numpyro.infer.autoguide import AutoDiagonalNormal, AutoMultivariateNormal
 
 from blayers._utils import rmse
-from blayers.fit import FittedModel, Predictions, _is_array, _split_data_and_constants, fit
+from blayers.decorators import autoreshape
+from blayers.fit import (
+    FittedModel,
+    Predictions,
+    _is_array,
+    _split_data_and_constants,
+    fit,
+)
 from blayers.layers import AdaptiveLayer, InterceptLayer
 from blayers.links import gaussian_link
-from blayers.decorators import autoreshape
 
 NUM_OBS = 2000
 K = 3
@@ -291,7 +295,9 @@ def test_both_epochs_and_steps_raises(sim_data: dict[str, jax.Array]) -> None:
         )
 
 
-def test_neither_epochs_nor_steps_raises(sim_data: dict[str, jax.Array]) -> None:
+def test_neither_epochs_nor_steps_raises(
+    sim_data: dict[str, jax.Array]
+) -> None:
     with pytest.raises(ValueError, match="exactly one"):
         fit(
             linear_model,
@@ -516,11 +522,14 @@ def test_fit_svgd_num_epochs(sim_data: dict[str, jax.Array]) -> None:
 
 def test_fit_learns_coefficients(sim_data: dict[str, jax.Array]) -> None:
     """Verify that fit() produces predictions that are better than chance."""
+    # This DGP has an irreducible noise floor near 0.47 * baseline (SNR ~3.5),
+    # so we train to convergence rather than testing an under-fit model whose
+    # loss depends on the exact minibatch trajectory.
     result = fit(
         linear_model,
         y=sim_data["y"],
         batch_size=512,
-        num_epochs=50,
+        num_epochs=200,
         lr=0.05,
         seed=0,
         x=sim_data["x"],
@@ -532,7 +541,7 @@ def test_fit_learns_coefficients(sim_data: dict[str, jax.Array]) -> None:
     prediction_rmse = float(rmse(preds.mean, y))
     baseline_rmse = float(rmse(jnp.zeros_like(y), y))
 
-    # Model should do meaningfully better than predicting zero
+    # Model should do meaningfully better than predicting zero (halve the RMSE).
     assert prediction_rmse < baseline_rmse * 0.5
 
 
@@ -566,7 +575,9 @@ def test_fit_svgd_learns(sim_data: dict[str, jax.Array]) -> None:
 
 def test_predict_unknown_method_raises(sim_data: dict[str, jax.Array]) -> None:
     """predict() raises on an unknown method string."""
-    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+    result = fit(
+        linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"]
+    )
     result.method = "unknown"
     with pytest.raises(ValueError, match="Unknown method"):
         result.predict(x=sim_data["x"])
@@ -574,20 +585,28 @@ def test_predict_unknown_method_raises(sim_data: dict[str, jax.Array]) -> None:
 
 def test_summary_unknown_method_raises(sim_data: dict[str, jax.Array]) -> None:
     """summary() raises on an unknown method string."""
-    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+    result = fit(
+        linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"]
+    )
     result.method = "unknown"
     with pytest.raises(ValueError, match="Unknown method"):
         result.summary(x=sim_data["x"])
 
 
-def test_summary_vi_missing_guide_raises(sim_data: dict[str, jax.Array]) -> None:
-    result = fit(linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"])
+def test_summary_vi_missing_guide_raises(
+    sim_data: dict[str, jax.Array]
+) -> None:
+    result = fit(
+        linear_model, y=sim_data["y"], num_steps=100, seed=0, x=sim_data["x"]
+    )
     result.guide = None
     with pytest.raises(RuntimeError, match="guide or params"):
         result.summary(x=sim_data["x"])
 
 
-def test_summary_svgd_missing_params_raises(sim_data: dict[str, jax.Array]) -> None:
+def test_summary_svgd_missing_params_raises(
+    sim_data: dict[str, jax.Array]
+) -> None:
     result = fit(
         linear_model,
         y=sim_data["y"],
@@ -602,7 +621,9 @@ def test_summary_svgd_missing_params_raises(sim_data: dict[str, jax.Array]) -> N
         result.summary(x=sim_data["x"])
 
 
-def test_summary_mcmc_missing_samples_raises(sim_data: dict[str, jax.Array]) -> None:
+def test_summary_mcmc_missing_samples_raises(
+    sim_data: dict[str, jax.Array]
+) -> None:
     result = fit(
         linear_model,
         y=sim_data["y"],
@@ -613,11 +634,15 @@ def test_summary_mcmc_missing_samples_raises(sim_data: dict[str, jax.Array]) -> 
         x=sim_data["x"],
     )
     result.posterior_samples = None
-    with pytest.raises(RuntimeError, match="MCMC results missing posterior_samples"):
+    with pytest.raises(
+        RuntimeError, match="MCMC results missing posterior_samples"
+    ):
         result.summary(x=sim_data["x"])
 
 
-def test_fit_svgd_epochs_steps_conflict_raises(sim_data: dict[str, jax.Array]) -> None:
+def test_fit_svgd_epochs_steps_conflict_raises(
+    sim_data: dict[str, jax.Array]
+) -> None:
     """SVGD raises if both num_epochs and num_steps are given."""
     with pytest.raises(ValueError, match="exactly one"):
         fit(

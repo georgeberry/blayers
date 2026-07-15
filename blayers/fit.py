@@ -52,13 +52,20 @@ from typing import Any, Callable, Literal
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
-from numpyro.infer import MCMC, NUTS, SVI, Predictive, Trace_ELBO
+from numpyro.infer import (
+    MCMC,
+    NUTS,
+    SVI,
+    Predictive,
+    Trace_ELBO,
+    log_likelihood,
+)
 from numpyro.infer.autoguide import AutoDiagonalNormal, AutoGuide
 
-from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 from blayers.decorators import autoreparam
-
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 
 # --------------------------------------------------------------------------- #
 # Helpers
@@ -87,6 +94,24 @@ def _split_data_and_constants(
         else:
             constants[k] = v
     return data, constants
+
+
+def _datatree_to_numpy(idata: Any) -> Any:
+    """Coerce every variable in an ArviZ ``DataTree`` to a NumPy array.
+
+    ``arviz.from_numpyro`` stores JAX-backed arrays; arviz-stats routines such
+    as PSIS-LOO mutate arrays in place, which raises on immutable JAX arrays.
+    Re-backing each variable with ``np.asarray`` sidesteps that.
+    """
+
+    def _to_numpy(ds: Any) -> Any:
+        return ds.copy(
+            data={
+                name: np.asarray(da.values) for name, da in ds.data_vars.items()
+            }
+        )
+
+    return idata.map_over_datasets(_to_numpy)
 
 
 def _make_schedule(
@@ -120,21 +145,16 @@ def _make_schedule(
 
 @dataclass
 class Predictions:
-    """Posterior predictive output from :meth:`FittedModel.predict`.
-
-    Attributes
-    ----------
-    mean : jax.Array
-        Point predictions averaged over posterior samples.  Shape ``(n,)``.
-    std : jax.Array
-        Predictive standard deviation over posterior samples.  Shape ``(n,)``.
-    samples : jax.Array
-        Raw posterior predictive draws.  Shape ``(num_samples, n, ...)``.
-    """
+    """Posterior predictive output from :meth:`FittedModel.predict`."""
 
     mean: jax.Array
+    """Point predictions averaged over posterior samples.  Shape ``(n,)``."""
+
     std: jax.Array
+    """Predictive standard deviation over posterior samples.  Shape ``(n,)``."""
+
     samples: jax.Array
+    """Raw posterior predictive draws.  Shape ``(num_samples, n, ...)``."""
 
 
 @dataclass
@@ -143,33 +163,36 @@ class FittedModel:
 
     Created by :func:`fit`.  Provides :meth:`predict` for posterior predictive
     inference and :meth:`summary` for inspecting latent variable posteriors.
-
-    Attributes
-    ----------
-    model_fn : Callable
-        The model function with any constants already bound.
-    method : str
-        ``"vi"`` or ``"mcmc"``.
-    params : dict or None
-        SVI parameters (VI only).
-    guide : AutoGuide or None
-        Fitted variational guide (VI only).
-    losses : jax.Array or None
-        Per-step ELBO loss curve (VI only).
-    posterior_samples : dict or None
-        MCMC posterior samples (MCMC only).
     """
 
-    model_fn: Callable
+    model_fn: Callable[..., Any]
+    """The model function with any constants already bound."""
+
     method: str
+    """One of ``"vi"``, ``"mcmc"``, or ``"svgd"``."""
+
     # VI / SVGD
-    params: dict | None = None
+    params: dict[str, Any] | None = None
+    """SVI / SVGD parameters."""
+
     guide: Any | None = None
+    """Fitted variational / Stein guide."""
+
     losses: jax.Array | None = field(default=None, repr=False)
+    """Per-step loss curve (VI / SVGD)."""
+
     # MCMC
-    posterior_samples: dict | None = field(default=None, repr=False)
+    posterior_samples: dict[str, Any] | None = field(default=None, repr=False)
+    """MCMC posterior samples (MCMC only)."""
+
+    mcmc: Any | None = field(default=None, repr=False)
+    """The fitted ``numpyro.infer.MCMC`` object (MCMC only).  Retained so
+    :meth:`to_arviz` can hand it straight to ``arviz.from_numpyro`` for
+    divergences, R-hat, ESS, and log-likelihood."""
+
     # SVGD
     num_particles: int | None = None
+    """Number of Stein particles (SVGD only)."""
 
     def predict(
         self,
@@ -186,7 +209,9 @@ class FittedModel:
             Number of posterior samples to draw.  For VI this controls the
             guide; for MCMC all posterior samples are used regardless.
         seed : int
-            Random seed for the predictive distribution.
+            Random seed for the predictive distribution.  Fixed by default, so
+            repeated calls return identical draws — vary it to see Monte Carlo
+            variability (identical reruns are not method determinism).
         **data
             Model inputs **excluding** ``y``.  Constants that were auto-bound
             during :func:`fit` should *not* be passed again.
@@ -194,6 +219,14 @@ class FittedModel:
         Returns
         -------
         Predictions
+
+        Notes
+        -----
+        ``.mean`` / ``.std`` assume a continuous outcome.  For the
+        classification / discrete links (``logit_link``, ``categorical_link``,
+        ``ordinal_link``, count links) the label mean is not meaningful — work
+        from ``.samples`` instead (e.g. per-observation modal class, or class
+        probabilities via ``(samples == k).mean(axis=0)``).
         """
         rng_key = jax.random.PRNGKey(seed)
 
@@ -248,7 +281,8 @@ class FittedModel:
         num_samples : int
             Samples to draw from the guide (VI only; ignored for MCMC).
         seed : int
-            Random seed.
+            Random seed.  Fixed by default, so repeated calls return identical
+            draws — vary it to see Monte Carlo variability.
         **data
             Model inputs (excluding ``y``) needed so the guide can determine
             parameter shapes.  Required for VI; ignored for MCMC.
@@ -296,6 +330,117 @@ class FittedModel:
             }
         return result
 
+    def to_arviz(
+        self,
+        *,
+        y: jax.Array | None = None,
+        num_samples: int = 1000,
+        seed: int = 3,
+        **data: Any,
+    ) -> Any:
+        """Convert the fit to an ArviZ ``InferenceData``.
+
+        Reuses NumPyro's own ArviZ bridge rather than reimplementing
+        diagnostics:
+
+        * **MCMC** — delegates to ``arviz.from_numpyro(mcmc)``, which carries
+          over posterior draws, sample stats (divergences), and
+          per-observation log-likelihood.  ``y`` / ``**data`` are ignored
+          (already baked into the completed MCMC run).
+        * **VI** — draws from the fitted guide, computes per-observation
+          log-likelihood with ``numpyro.infer.log_likelihood``, and assembles
+          an ``InferenceData`` via ``arviz.from_dict``.  The observed ``y``
+          (and any model inputs) are required so the ``log_likelihood`` and
+          ``observed_data`` groups can be built.
+
+        The result plugs straight into ``arviz.summary`` (R-hat / ESS),
+        ``arviz.waic``, ``arviz.loo``, and the ArviZ plotting suite — so model
+        comparison is ``az.compare({"a": fit_a.to_arviz(...), ...})``.
+
+        Parameters
+        ----------
+        y : jax.Array, optional
+            Observed target.  Required for VI (to build the ``log_likelihood``
+            and ``observed_data`` groups); ignored for MCMC.
+        num_samples : int
+            Posterior draws to take from the guide (VI only).
+        seed : int
+            Random seed for guide sampling (VI only).
+        **data
+            Model inputs (e.g. ``x``) needed to evaluate the model.  Ignored
+            for MCMC.
+
+        Returns
+        -------
+        arviz.InferenceData
+
+        Notes
+        -----
+        SVGD is not supported: its handful of Stein particles do not form a
+        meaningful sample for WAIC/LOO, and its params do not map cleanly onto
+        model sites.  Fit with ``method="mcmc"`` or ``method="vi"`` for
+        ArviZ-based comparison.
+        """
+        try:
+            import arviz as az
+        except ImportError as e:  # pragma: no cover - optional dependency
+            raise ImportError(
+                "to_arviz() requires arviz. Install it with "
+                "`pip install arviz` or `pip install blayers[arviz]`."
+            ) from e
+
+        if self.method == "mcmc":
+            if self.mcmc is None:
+                raise RuntimeError("MCMC results missing the mcmc object")
+            # log_likelihood defaults to False in arviz >= 1.0; request it so
+            # az.loo / az.compare work.  R-hat needs >= 2 chains (num_chains).
+            idata = az.from_numpyro(self.mcmc, log_likelihood=True)
+            # from_numpyro stores JAX-backed arrays; arviz-stats (PSIS-LOO)
+            # does in-place assignment, which fails on immutable JAX arrays.
+            return _datatree_to_numpy(idata)
+
+        if self.method == "svgd":
+            raise NotImplementedError(
+                "to_arviz() does not support SVGD; refit with method='mcmc' "
+                "or method='vi' for ArviZ diagnostics and model comparison."
+            )
+
+        if self.method != "vi":
+            raise ValueError(f"Unknown method {self.method!r}")
+
+        # VI: build InferenceData from guide draws + per-obs log-likelihood.
+        if y is None:
+            raise ValueError(
+                "to_arviz() needs the observed `y` for VI to build the "
+                "log_likelihood and observed_data groups."
+            )
+        if self.guide is None or self.params is None:
+            raise RuntimeError("VI results missing guide or params")
+
+        rng_key = jax.random.PRNGKey(seed)
+        latent = Predictive(
+            self.guide, params=self.params, num_samples=num_samples
+        )(rng_key, **data)
+        # Keep only latent sample sites (a guide should not emit "obs", but be
+        # defensive in case a custom guide does).
+        latent = {k: v for k, v in latent.items() if k != "obs"}
+
+        ll = log_likelihood(self.model_fn, latent, y=y, **data)
+
+        # ArviZ expects (chain, draw, *shape); treat the draws as one chain.
+        # Cast to NumPy: arviz-stats (PSIS-LOO) does in-place assignment, which
+        # fails on immutable JAX arrays.
+        posterior = {k: np.asarray(v)[None, ...] for k, v in latent.items()}
+        log_lik = {k: np.asarray(v)[None, ...] for k, v in ll.items()}
+
+        return az.from_dict(
+            {
+                "posterior": posterior,
+                "log_likelihood": log_lik,
+                "observed_data": {"obs": np.asarray(y)},
+            }
+        )
+
 
 # --------------------------------------------------------------------------- #
 # Main entry point
@@ -303,7 +448,7 @@ class FittedModel:
 
 
 def fit(
-    model_fn: Callable,
+    model_fn: Callable[..., Any],
     *,
     y: jax.Array,
     method: Literal["vi", "mcmc", "svgd"] = "vi",
@@ -419,7 +564,11 @@ def fit(
     # ------------------------------------------------------------------ #
     data, constants = _split_data_and_constants(kwargs)
 
-    bound_model = partial(model_fn, **constants) if constants else model_fn
+    bound_model: Callable[..., Any]
+    if constants:
+        bound_model = partial(model_fn, **constants)
+    else:
+        bound_model = model_fn
 
     data["y"] = y
     n_obs = y.shape[0]
@@ -457,6 +606,7 @@ def fit(
                 "Provide exactly one of num_epochs or num_steps, not both (or neither)."
             )
         total_steps = num_epochs if num_epochs is not None else num_steps
+        assert total_steps is not None  # guaranteed by check above
 
         return _fit_svgd(
             bound_model,
@@ -473,13 +623,64 @@ def fit(
         )
 
 
+def sample_prior(
+    model_fn: Callable[..., Any],
+    *,
+    num_samples: int = 500,
+    seed: int = 0,
+    **data: Any,
+) -> dict[str, jax.Array]:
+    """Draw from a model's prior (and prior predictive) *before* fitting.
+
+    Runs the model with no observed ``y``, so every latent site and the
+    ``"obs"`` site are sampled straight from the prior.  Use it to sanity-check
+    that your priors imply sensible outcomes — the core of the "tweak priors as
+    you wish" workflow — before committing to inference.
+
+    Parameters
+    ----------
+    model_fn : Callable
+        A blayers / NumPyro model.  Pass inputs the same way you would to
+        :func:`fit`, but **without** ``y`` — supplying ``y`` would condition the
+        ``"obs"`` site and defeat the purpose.
+    num_samples : int
+        Number of prior draws (default 500).
+    seed : int
+        Random seed (default 0).
+    **data
+        Model inputs (e.g. ``x``) and any constants, used to fix the shapes of
+        the sampled sites.
+
+    Returns
+    -------
+    dict
+        ``{site_name: array of shape (num_samples, *site_shape)}``, including
+        the prior-predictive ``"obs"`` site.
+
+    Examples
+    --------
+    >>> prior = sample_prior(model, x=x_train, num_samples=1000)
+    >>> prior["obs"].shape        # (1000, n) prior-predictive outcomes
+    >>> prior["AdaptiveLayer_mu_beta"].mean(axis=0)   # prior mean of a latent
+    """
+    if "y" in data:
+        raise ValueError(
+            "sample_prior() draws from the prior predictive; do not pass `y` "
+            "(it would condition the obs site). Pass only model inputs."
+        )
+    rng_key = jax.random.PRNGKey(seed)
+    predictive = Predictive(model_fn, num_samples=num_samples)
+    samples: dict[str, jax.Array] = predictive(rng_key, **data)
+    return samples
+
+
 # --------------------------------------------------------------------------- #
 # VI
 # --------------------------------------------------------------------------- #
 
 
 def _fit_vi(
-    model_fn: Callable,
+    model_fn: Callable[..., Any],
     *,
     data: dict[str, jax.Array],
     n_obs: int,
@@ -500,17 +701,18 @@ def _fit_vi(
         )
 
     # ---- Compute total gradient steps (needed for LR schedule) ----
-    batched = batch_size is not None
-
-    if batched:
+    if batch_size is not None:
         steps_per_epoch = (n_obs + batch_size - 1) // batch_size
         total_steps = (
-            steps_per_epoch * num_epochs if num_epochs is not None else num_steps
+            steps_per_epoch * num_epochs
+            if num_epochs is not None
+            else num_steps
         )
     else:
         # Without batching each gradient step sees the full dataset,
         # so one step ≡ one epoch.
         total_steps = num_epochs if num_epochs is not None else num_steps
+    assert total_steps is not None  # guaranteed by the epoch/steps check above
 
     # ---- Guide ----
     if guide is None:
@@ -529,7 +731,8 @@ def _fit_vi(
         opt = optimizer
 
     # ---- Loss ----
-    if batched:
+    loss: Batched_Trace_ELBO | Trace_ELBO
+    if batch_size is not None:
         loss = Batched_Trace_ELBO(num_obs=n_obs, batch_size=batch_size)
     else:
         loss = Trace_ELBO()
@@ -537,7 +740,7 @@ def _fit_vi(
     # ---- Run SVI ----
     svi = SVI(model_fn, guide_instance, opt, loss=loss)
 
-    if batched:
+    if batch_size is not None:
         result = svi_run_batched(
             svi,
             rng_key,
@@ -564,7 +767,7 @@ def _fit_vi(
 
 
 def _fit_mcmc(
-    model_fn: Callable,
+    model_fn: Callable[..., Any],
     *,
     data: dict[str, jax.Array],
     num_warmup: int,
@@ -591,6 +794,7 @@ def _fit_mcmc(
         model_fn=model_fn,
         method="mcmc",
         posterior_samples=mcmc.get_samples(),
+        mcmc=mcmc,
     )
 
 
@@ -600,7 +804,7 @@ def _fit_mcmc(
 
 
 def _fit_svgd(
-    model_fn: Callable,
+    model_fn: Callable[..., Any],
     *,
     data: dict[str, jax.Array],
     num_steps: int,

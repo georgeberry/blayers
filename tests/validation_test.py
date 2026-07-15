@@ -5,20 +5,18 @@ from numpyro import distributions
 
 from blayers.layers import (
     AdaptiveLayer,
-    AttentionLayer,
     BilinearLayer,
     EmbeddingLayer,
-    FMLayer,
-    FM3Layer,
     FixedPriorLayer,
-    InterceptLayer,
+    FM3Layer,
+    FMLayer,
     InteractionLayer,
+    InterceptLayer,
     LowRankBilinearLayer,
     LowRankInteractionLayer,
     RandomEffectsLayer,
     RandomWalkLayer,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Adaptive-prior layers (lmbda + coef)
@@ -59,15 +57,6 @@ class TestFM3LayerValidation:
     def test_bad_coef_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
             FM3Layer(coef_kwargs={"loc": 0.0, "bad_kwarg": 1.0})
-
-
-class TestAttentionLayerValidation:
-    def test_valid_defaults(self):
-        AttentionLayer()
-
-    def test_bad_scale_kwargs(self):
-        with pytest.raises(TypeError, match="Invalid distribution kwargs"):
-            AttentionLayer(scale_kwargs={"oops": 2.0})
 
 
 class TestEmbeddingLayerValidation:

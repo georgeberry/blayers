@@ -1,16 +1,15 @@
 """
 Model decorators for blayers.
 
-- `reshape_inputs`: Auto-reshape 1D arrays to (n, 1)
-- `autoreparam`: Auto-reparameterize LocScale distributions for MCMC
+- ``autoreshape``: Auto-reshape 1D arrays to (n, 1)
+- ``autoreparam``: Auto-reparameterize LocScale distributions for MCMC
 
-Usage:
-```
-@reshape_inputs
-@autoreparam
-def my_model(x, y=None):
-    ...
-```
+Usage::
+
+    @autoreshape
+    @autoreparam
+    def my_model(x, y=None):
+        ...
 """
 
 import logging
@@ -83,7 +82,9 @@ def autoreshape(fn: Callable[..., Any]) -> Callable[..., Any]:
     return wrapped
 
 
-def autoreparam(model_fn: Callable[..., Any] | None = None, *, centered: float = 0.0) -> Any:
+def autoreparam(
+    model_fn: Callable[..., Any] | None = None, *, centered: float = 0.0
+) -> Any:
     """Auto-reparameterize LocScale distributions in a model for MCMC.
 
     Automatically applies ``LocScaleReparam`` to all LocScale distributions
@@ -107,6 +108,7 @@ def autoreparam(model_fn: Callable[..., Any] | None = None, *, centered: float =
             non-centered (default, best for weak data); 1.0 = fully centered
             (better when data is informative).
     """
+
     def decorator(fn: Any) -> Any:
         @wraps(fn)
         def wrapped_model(*args: Any, **kwargs: Any) -> Any:
