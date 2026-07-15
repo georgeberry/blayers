@@ -21,7 +21,8 @@ Available links:
 * ``gaussian_link``          — Normal likelihood, configurable sigma prior
 * ``lognormal_link``         — LogNormal likelihood, configurable sigma prior
 * ``student_t_link``         — StudentT likelihood for robust regression (default df=4)
-* ``logit_link``             — Bernoulli likelihood
+* ``logit_link``             — Bernoulli likelihood (binary)
+* ``categorical_link``       — Categorical / softmax likelihood (multiclass)
 * ``poisson_link``           — Poisson likelihood
 * ``negative_binomial_link`` — NegativeBinomial2 likelihood, learned concentration
 * ``ordinal_link``           — Ordinal (cumulative logit / proportional odds)
@@ -30,6 +31,7 @@ Available links:
 """
 
 from functools import partial
+from typing import Any
 
 import jax
 import jax.nn as jnn
@@ -38,13 +40,12 @@ import numpyro.distributions as dists
 from numpyro import sample
 
 
-
 def _loc_scale_link(
     y_hat: jax.Array,
     y: jax.Array | None = None,
-    obs_dist=dists.Normal,
-    sigma_dist=dists.Exponential,
-    sigma_kwargs: dict | None = None,
+    obs_dist: Any = dists.Normal,
+    sigma_dist: Any = dists.Exponential,
+    sigma_kwargs: dict[str, Any] | None = None,
     scale: float | jax.Array | None = None,
     untransformed_scale: jax.Array | None = None,
 ) -> jax.Array:
@@ -73,13 +74,14 @@ def _loc_scale_link(
     if sigma_kwargs is None:
         sigma_kwargs = {"rate": 1.0}
 
+    sigma: float | jax.Array
     if untransformed_scale is not None:
         sigma = jax.nn.softplus(untransformed_scale)
     elif scale is not None:
         sigma = scale
     else:
         sigma = sample("sigma", sigma_dist(**sigma_kwargs))
-    return sample("obs", obs_dist(loc=y_hat, scale=sigma), obs=y)
+    return jnp.asarray(sample("obs", obs_dist(loc=y_hat, scale=sigma), obs=y))
 
 
 gaussian_link = partial(_loc_scale_link, obs_dist=dists.Normal)
@@ -135,7 +137,9 @@ Returns:
 """
 
 
-student_t_link = partial(_loc_scale_link, obs_dist=partial(dists.StudentT, df=4.0))
+student_t_link = partial(
+    _loc_scale_link, obs_dist=partial(dists.StudentT, df=4.0)
+)
 student_t_link.__doc__ = """StudentT likelihood for robust regression.
 
 Heavier tails than Gaussian — large residuals are down-weighted rather than
@@ -171,7 +175,44 @@ def logit_link(
     Returns:
         Sample site ``"obs"``.
     """
-    return sample("obs", dists.Bernoulli(logits=y_hat), obs=y)
+    return jnp.asarray(sample("obs", dists.Bernoulli(logits=y_hat), obs=y))
+
+
+def categorical_link(
+    logits: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Categorical (softmax) likelihood for multiclass classification.
+
+    The multiclass generalisation of :func:`logit_link`.  Produce one logit per
+    class with a layer's ``units`` argument (``units = num_classes``); the
+    number of classes is read from the trailing dimension of ``logits``.
+
+    .. math::
+        P(Y = k \\mid \\text{logits}) = \\mathrm{softmax}(\\text{logits})_k
+
+    Args:
+        logits: Unnormalised class scores of shape ``(n, num_classes)`` — e.g.
+            ``AdaptiveLayer()("beta", x, units=K)``.  A trailing singleton
+            (``(n, num_classes, 1)``) is squeezed automatically.
+        y: Integer class labels in ``{0, ..., num_classes - 1}``, or ``None``
+            for prior predictive / inference.
+
+    Returns:
+        Sample site ``"obs"`` with integer values in ``{0, …, num_classes-1}``.
+
+    Example::
+
+        from blayers.layers import AdaptiveLayer
+        from blayers.links import categorical_link
+
+        def model(x, y=None):
+            logits = AdaptiveLayer()("beta", x, units=4)   # 4 classes
+            return categorical_link(logits, y)
+    """
+    if logits.ndim == 3 and logits.shape[-1] == 1:
+        logits = logits.squeeze(-1)
+    return jnp.asarray(sample("obs", dists.Categorical(logits=logits), obs=y))
 
 
 def poisson_link(
@@ -187,7 +228,7 @@ def poisson_link(
     Returns:
         Sample site ``"obs"``.
     """
-    return sample("obs", dists.Poisson(rate=jnp.exp(y_hat)), obs=y)
+    return jnp.asarray(sample("obs", dists.Poisson(rate=jnp.exp(y_hat)), obs=y))
 
 
 def negative_binomial_link(
@@ -206,17 +247,20 @@ def negative_binomial_link(
         Sample site ``"obs"``.
     """
     concentration = sample("sigma", dists.Exponential(rate=rate))
-    return sample(
-        "obs",
-        dists.NegativeBinomial2(mean=y_hat, concentration=concentration),
-        obs=y,
+    return jnp.asarray(
+        sample(
+            "obs",
+            dists.NegativeBinomial2(mean=y_hat, concentration=concentration),
+            obs=y,
+        )
     )
 
 
 def ordinal_link(
     mu: jax.Array,
     y: jax.Array | None = None,
-    num_classes: int = None,
+    *,
+    num_classes: int,
 ) -> jax.Array:
     """Cumulative logit (proportional odds) link for ordinal outcomes.
 
@@ -255,7 +299,7 @@ def ordinal_link(
     probs_parts.append(1.0 - cum_probs[:, -1:])
     probs = jnp.clip(jnp.concatenate(probs_parts, axis=1), 1e-8, 1.0)
 
-    return sample("obs", dists.Categorical(probs=probs), obs=y)
+    return jnp.asarray(sample("obs", dists.Categorical(probs=probs), obs=y))
 
 
 def zip_link(
@@ -277,7 +321,9 @@ def zip_link(
     """
     rate = jnp.exp(mu.squeeze())
     gate = sample("zip_gate", dists.Beta(1.0, 10.0))
-    return sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
+    return jnp.asarray(
+        sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
+    )
 
 
 def beta_link(
@@ -302,4 +348,6 @@ def beta_link(
     """
     mean = jnn.sigmoid(mu.squeeze())
     phi = sample("beta_phi", dists.Exponential(1.0))
-    return sample("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), obs=y)
+    return jnp.asarray(
+        sample("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), obs=y)
+    )

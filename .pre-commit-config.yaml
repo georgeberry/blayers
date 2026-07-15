@@ -7,19 +7,14 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 23.12.1
     hooks:
       - id: black
+        language_version: python3.11
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0  # Known working version (not Poetry-based)
     hooks:
       - id: isort
-        language_version: python3.11
-
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
-    hooks:
-      - id: black
         language_version: python3.11
 
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -28,7 +23,9 @@ repos:
       - id: mypy
         additional_dependencies: [types-requests]  # Add any stubs your project needs
         language_version: python3.11
-        exclude: ^docs/
+        # Type-check the library strictly; tests are exercised by pytest, not
+        # type-checked (the suite is only partially annotated).
+        exclude: ^(docs|tests)/
 
   - repo: https://github.com/myint/autoflake
     rev: v2.2.1

@@ -1,4 +1,3 @@
-import itertools
 from typing import Generator
 
 import jax
@@ -38,15 +37,37 @@ def yield_batches(
     batch_size: int,
     num_batches: int,
     steps_per_epoch: int,
+    rng_key: jax.Array | None = None,
 ) -> Generator[dict[str, jax.Array], None, None]:
-    def batch_iter() -> Generator[dict[str, jax.Array], None, None]:
-        for i in range(steps_per_epoch):
-            start = i * batch_size
-            end = start + batch_size
-            yield {k: v[start:end] for k, v in data.items()}
+    """Yield ``num_batches`` minibatches, cycling over the data as needed.
 
-    for batch in itertools.islice(itertools.cycle(batch_iter()), num_batches):
-        yield batch
+    Each epoch, the row order is re-permuted when ``rng_key`` is supplied so
+    that minibatch VI sees i.i.d. batches rather than the same fixed slices in
+    the same order every pass (which biases the ELBO gradient, especially on
+    sorted data).  Pass ``rng_key=None`` for the legacy contiguous ordering.
+    """
+    dataset_size = get_dataset_size(data)
+
+    def epoch_batches(
+        perm: jax.Array,
+    ) -> Generator[dict[str, jax.Array], None, None]:
+        for i in range(steps_per_epoch):
+            idx = perm[i * batch_size : (i + 1) * batch_size]
+            yield {k: v[idx] for k, v in data.items()}
+
+    key = rng_key
+    emitted = 0
+    while emitted < num_batches:
+        if key is not None:
+            key, subkey = jax.random.split(key)
+            perm = jax.random.permutation(subkey, dataset_size)
+        else:
+            perm = jnp.arange(dataset_size)
+        for batch in epoch_batches(perm):
+            if emitted >= num_batches:
+                break
+            yield batch
+            emitted += 1
 
 
 # ---- Helpers --------------------------------------------------------------- #

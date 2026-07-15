@@ -1,3 +1,14 @@
+"""
+Variational-inference utilities for blayers.
+
+Provides :class:`Batched_Trace_ELBO`, a drop-in ``Trace_ELBO`` replacement
+that handles minibatching without requiring the model to use ``numpyro.plate``,
+and :func:`svi_run_batched`, an ``svi.run``-style helper that drives it.
+
+Use ``Batched_Trace_ELBO`` + ``svi_run_batched`` for plate-free batched VI;
+fall back to standard ``Trace_ELBO`` if your model already uses plates.
+"""
+
 import warnings
 from typing import Any, Callable
 
@@ -25,6 +36,31 @@ def _warn_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
 
 
 class Batched_Trace_ELBO(ELBO):
+    """ELBO estimator for minibatched VI without ``numpyro.plate``.
+
+    Behaves like ``Trace_ELBO`` but rescales the per-batch log-likelihood by
+    ``num_obs / batch_size`` so the gradient is an unbiased estimate of the
+    full-dataset ELBO.  Drive it with :func:`svi_run_batched`.
+
+    **Assumes all latent variables are global.**  The whole observed
+    log-likelihood is scaled by ``num_obs / batch_size`` and the KL over
+    latents is *not* rescaled, which is only correct when every latent is
+    shared across observations (the usual case for BLayers: coefficients,
+    scales, embeddings).  Models with **per-observation (local) latents** —
+    e.g. a latent variable sampled once per row — are **not supported** here;
+    use ``numpyro.plate`` with the standard ``Trace_ELBO`` instead.
+
+    Args:
+        num_obs: Total number of observations in the full training set.
+        num_particles: Number of Monte Carlo samples per gradient step.
+        batch_size: Minibatch size.  If ``None``, inferred from the leading
+            dimension of the first batched kwarg at loss-evaluation time.
+
+    Warning:
+        Does not mix with ``numpyro.plate``.  A ``UserWarning`` is raised if
+        a plate is detected in the model trace.
+    """
+
     def __init__(
         self,
         num_obs: int,
@@ -164,7 +200,7 @@ def svi_run_batched(
     batch_size: int,
     num_steps: int | None = None,
     num_epochs: int | None = None,
-    **data: dict[str, jax.Array],
+    **data: jax.Array,
 ) -> SVIRunResult:
     @jax.jit
     def update(svi_state: SVIState, **kwargs: Any) -> SVIState:
@@ -177,7 +213,8 @@ def svi_run_batched(
         num_epochs,
     )
 
-    svi_state = svi.init(rng_key, **data)
+    init_key, batch_key = random.split(rng_key)
+    svi_state = svi.init(init_key, **data)
     losses = []
     for batch in tqdm.tqdm(
         yield_batches(
@@ -185,6 +222,7 @@ def svi_run_batched(
             batch_size,
             total_steps_to_run,
             steps_per_epoch,
+            rng_key=batch_key,
         ),
         total=total_steps_to_run,
     ):

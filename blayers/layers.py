@@ -29,7 +29,6 @@ from typing import Any, Callable
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
-import numpy as np
 from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
@@ -39,14 +38,15 @@ from blayers._utils import add_trailing_dim
 
 def pairwise_interactions(x: jax.Array, z: jax.Array) -> jax.Array:
     """
-    Compute all pairwise interactions between features in X and Y.
+    Compute all pairwise interactions between features in ``x`` and ``z``.
 
-    Parameters:
-        X: (n_samples, n_features1)
-        Y: (n_samples, n_features2)
+    Args:
+        x: Input matrix of shape ``(n, d1)``.
+        z: Input matrix of shape ``(n, d2)``.
 
     Returns:
-        interactions: (n_samples, n_features1 * n_features2)
+        jax.Array of shape ``(n, d1 * d2)`` containing the flattened outer
+        product ``x[:, i] * z[:, j]`` for each pair ``(i, j)``.
     """
 
     n, d1 = x.shape
@@ -88,12 +88,17 @@ def _matmul_factorization_machine(x: jax.Array, theta: jax.Array) -> jax.Array:
 
 
 def _matmul_fm3(x: jax.Array, theta: jax.Array) -> jax.Array:
-    """Apply second-order factorization machine interaction.
+    """Apply third-order factorization machine interaction.
 
-    Based on Rendle (2010). Computes:
+    Computes all triple-product interactions via Newton's identities
+    (Blondel et al. 2016).  Defining the per-rank power sums
+    :math:`p_k = \\sum_i x_i^k \\theta_i^k`:
 
     .. math::
-        0.5 * sum((xV)^2 - (x^2 V^2))
+        \\text{output} = \\sum_l \\frac{p_1^3 - 3 p_2 p_1 + 2 p_3}{6}
+
+    This computes all :math:`\\binom{d}{3}` triplet interactions without
+    enumerating them.
 
     Args:
         theta: Weight matrix of shape `(d, l, u)`.
@@ -124,14 +129,12 @@ def _matmul_uv_decomp(
     x: jax.Array,
     z: jax.Array,
 ) -> jax.Array:
-    """Implements low rank multiplication.
+    """Low-rank factorised bilinear interaction between ``x`` and ``z``.
 
-    According to ChatGPT this is a "factorized bilinear interaction".
-    Basically, you just need to project x and z down to a common number of
-    low rank terms and then just multiply those terms.
-
-    This is equivalent to a UV decomposition where you use n=low_rank_dim
-    on the columns of the U/V matrices.
+    Projects each input into a shared ``l``-dimensional space via ``theta1``
+    and ``theta2``, then computes the element-wise product summed over the
+    low-rank axis.  Equivalent to a rank-``l`` approximation of the full
+    bilinear form ``x^T (theta1 theta2^T) z``.
 
     Args:
         theta1: Weight matrix of shape `(d1, l, u)`.
@@ -165,7 +168,7 @@ def _matmul_randomwalk(
 
     """
     theta_cumsum = jnp.cumsum(theta, axis=0)
-    idx_flat = idx.squeeze().astype(jnp.int32)
+    idx_flat = idx.reshape(-1).astype(jnp.int32)
     return theta_cumsum[idx_flat]
 
 
@@ -174,19 +177,19 @@ def _matmul_interaction(
     x: jax.Array,
     z: jax.Array,
 ) -> jax.Array:
-    """Full interaction between `x` and `z`.
+    """Full pairwise interaction between ``x`` and ``z``.
+
+    Builds the flattened outer product of ``x`` and ``z`` and contracts it
+    against a per-pair weight matrix.
 
     Args:
-        beta: Weight matrix for each interaction between `x` and `z`.
-        x: First feature matrix.
-        z: Second feature matrix.
+        beta: Weight matrix of shape ``(d1 * d2, u)``.
+        x: Input matrix of shape ``(n, d1)``.
+        z: Input matrix of shape ``(n, d2)``.
 
     Returns:
-        jax.Array
-
+        jax.Array of shape ``(n, u)``.
     """
-
-    # thanks chat GPT
     interactions = pairwise_interactions(x, z)
 
     return jnp.einsum("nd,du->nu", interactions, beta)
@@ -195,7 +198,12 @@ def _matmul_interaction(
 # ---- Classes --------------------------------------------------------------- #
 
 
-def _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist=None, scale_kwargs=None):
+def _validate_prior_kwargs(
+    coef_dist: type[distributions.Distribution],
+    coef_kwargs: dict[str, Any],
+    scale_dist: type[distributions.Distribution] | None = None,
+    scale_kwargs: dict[str, Any] | None = None,
+) -> None:
     """Eagerly instantiate distributions at construction time to catch bad kwargs.
 
     Raises ``TypeError`` immediately if the supplied kwargs are incompatible
@@ -203,6 +211,7 @@ def _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist=None, scale_kwargs
     """
     try:
         if scale_dist is not None:
+            assert scale_kwargs is not None
             scale_dist(**scale_kwargs)
             coef_dist(scale=1.0, **coef_kwargs)
         else:
@@ -550,7 +559,7 @@ class FM3Layer(BLayer):
             activation: Activation function to apply to output.
 
         Returns:
-            jax.Array: Output array of shape ``(n,)``.
+            jax.Array: Output array of shape ``(n, u)``.
         """
         # get shapes and reshape if necessary
         x = add_trailing_dim(x)
@@ -603,6 +612,14 @@ class LowRankInteractionLayer(BLayer):
         coef_kwargs: dict[str, float] = {"loc": 0.0},
         scale_kwargs: dict[str, float] = {"scale": 1.0},
     ):
+        """
+        Args:
+            scale_dist: NumPyro distribution class for the scale (λ) of the
+                prior.  Each input gets its own scale.
+            coef_dist: NumPyro distribution class for the coefficient prior.
+            coef_kwargs: Parameters for the prior distribution.
+            scale_kwargs: Parameters for the scale distribution.
+        """
         self.scale_dist = scale_dist
         self.coef_dist = coef_dist
         self.coef_kwargs = coef_kwargs
@@ -619,7 +636,11 @@ class LowRankInteractionLayer(BLayer):
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Interaction between feature matrices X and Z in a low rank way. UV decomp.
+        Low-rank bilinear interaction ``x^T (theta1 theta2^T) z`` between X and Z.
+
+        Projects ``x`` and ``z`` into a shared ``low_rank_dim``-dimensional
+        space via independent factors ``theta1`` and ``theta2``, then
+        contracts.
 
         Args:
             name: Variable name scope.
@@ -707,7 +728,10 @@ class InteractionLayer(BLayer):
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Interaction between feature matrices X and Z in a low rank way. UV decomp.
+        Full pairwise interaction between feature matrices X and Z.
+
+        Samples one coefficient per ``(x_i, z_j)`` pair (``d1 * d2`` total)
+        and returns the weighted sum of all outer-product interactions.
 
         Args:
             name: Variable name scope.
@@ -790,7 +814,10 @@ class BilinearLayer(BLayer):
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Interaction between feature matrices X and Z in a low rank way. UV decomp.
+        Full bilinear form ``x^T W z`` between feature matrices X and Z.
+
+        Samples a dense weight tensor ``W`` of shape ``(d1, d2, units)`` and
+        contracts it against ``x`` and ``z``.
 
         Args:
             name: Variable name scope.
@@ -878,7 +905,10 @@ class LowRankBilinearLayer(BLayer):
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Interaction between feature matrices X and Z in a low rank way. UV decomp.
+        Low-rank bilinear form ``x^T (A B^T) z``.
+
+        Projects ``x`` and ``z`` into a shared ``low_rank_dim``-dimensional
+        space via shared-scale factors ``A`` and ``B``, then contracts.
 
         Args:
             name: Variable name scope.
@@ -999,7 +1029,7 @@ class EmbeddingLayer(BLayer):
             ),
         )
         # matmul and return
-        return theta[x.squeeze()]
+        return jnp.asarray(theta[x.reshape(-1).astype(jnp.int32)])
 
 
 class RandomEffectsLayer(BLayer):
@@ -1032,10 +1062,11 @@ class RandomEffectsLayer(BLayer):
     ):
         """
         Args:
-            num_embeddings: Total number of discrete embedding entries.
-            embedding_dim: Dimensionality of each embedding vector.
-            coef_dist: Prior distribution for embedding weights.
+            scale_dist: NumPyro distribution class for the scale (λ) of the
+                prior.
+            coef_dist: NumPyro distribution class for the coefficient prior.
             coef_kwargs: Parameters for the prior distribution.
+            scale_kwargs: Parameters for the scale distribution.
         """
         self.scale_dist = scale_dist
         self.coef_dist = coef_dist
@@ -1050,15 +1081,15 @@ class RandomEffectsLayer(BLayer):
         num_categories: int,
     ) -> jax.Array:
         """
-        Forward pass through embedding lookup.
+        Forward pass through scalar random-effect lookup.
 
         Args:
             name: Variable name scope.
-            x: Integer indicating embeddings to use.
-            num_categories: The number of distinct things getting an embedding
+            x: Integer indices indicating which random effect to use.
+            num_categories: The number of distinct random-effect groups.
 
         Returns:
-            jax.Array: Embedding vectors of shape (n, embedding_dim).
+            jax.Array: Random-effect values of shape ``(n, 1)``.
         """
 
         # sampling block
@@ -1072,7 +1103,7 @@ class RandomEffectsLayer(BLayer):
                 [num_categories, 1]
             ),
         )
-        return theta[x.squeeze()]
+        return jnp.asarray(theta[x.reshape(-1).astype(jnp.int32)])
 
 
 class RandomWalkLayer(BLayer):
@@ -1253,7 +1284,10 @@ class HorseshoeLayer(BLayer):
         else:
             scale = tau * scale  # (d, units)
 
-        beta = sample(f"{cls}_{name}_beta", self.coef_dist(scale=scale, **self.coef_kwargs))
+        beta = sample(
+            f"{cls}_{name}_beta",
+            self.coef_dist(scale=scale, **self.coef_kwargs),
+        )
         return activation(_matmul_dot_product(x, beta))
 
 
@@ -1335,131 +1369,3 @@ class SpikeAndSlabLayer(BLayer):
 
         # Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)
         return activation(_matmul_dot_product(x, z * beta))
-
-
-# ---- Attention ------------------------------------------------------------- #
-
-
-class AttentionLayer(BLayer):
-    """Multi-head Bayesian self-attention over the feature dimension.
-
-    Treats the ``d`` input features as tokens using FT-Transformer style
-    tokenisation (Gorishniy et al. 2021, https://arxiv.org/abs/2106.11959):
-    each feature gets a per-column bias embedding (identity) plus a
-    value-scaled embedding, so tokens are distinct even when the feature
-    value is zero.
-
-    For each observation ``x_i ∈ R^d``:
-
-    1. Tokenise: ``H_j = x_{i,j} · W_emb_j + W_bias_j``  (``head_dim``-dim each)
-    2. Per head: ``Q_m, K_m, V_m = H W_Q_m, H W_K_m, H W_V_m``
-    3. ``Attn_m = softmax(Q_m K_m^T / √h_k)``
-    4. Concatenate heads  →  mean-pool over features  →  project to ``units``
-
-    Requires ``d ≥ 2`` for attention to be non-trivial.
-    Total embedding dimension is ``head_dim * num_heads`` — adding heads
-    increases capacity rather than splitting a fixed budget.
-    """
-
-    def __init__(
-        self,
-        scale_dist: distributions.Distribution = distributions.HalfNormal,
-        coef_dist: distributions.Distribution = distributions.Normal,
-        coef_kwargs: dict[str, float] = {"loc": 0.0},
-        scale_kwargs: dict[str, float] = {"scale": 1.0},
-    ):
-        self.scale_dist = scale_dist
-        self.coef_dist = coef_dist
-        self.coef_kwargs = coef_kwargs
-        self.scale_kwargs = scale_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs, scale_dist, scale_kwargs)
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        head_dim: int = 8,
-        num_heads: int = 1,
-        units: int = 1,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
-    ) -> jax.Array:
-        """
-        Args:
-            name: Variable name scope.
-            x: Input of shape ``(n, d)``.  Each column is a feature token.
-            head_dim: Dimension of each individual head.  Total embedding
-                dimension is ``head_dim * num_heads``, so adding heads
-                increases capacity.
-            num_heads: Number of attention heads.
-            units: Number of output dimensions.
-            activation: Activation function.
-
-        Returns:
-            jax.Array of shape ``(n, units)``.
-        """
-        x = add_trailing_dim(x)
-        n, d = x.shape[0], x.shape[1]
-        h_k = head_dim        # per-head dimension
-        m = num_heads
-        h = head_dim * m      # total embedding dimension
-        cls = self.__class__.__name__
-
-        # FT-Transformer tokenisation: value scaling + per-column bias
-        # H[i,j] = x[i,j] * W_emb[j] + W_bias[j]  → (n, d, h)
-        scale_emb = sample(
-            f"{cls}_{name}_scale_emb",
-            self.scale_dist(**self.scale_kwargs).expand([h]),
-        )
-        W_emb = sample(
-            f"{cls}_{name}_W_emb",
-            self.coef_dist(scale=scale_emb, **self.coef_kwargs).expand([d, h]),
-        )
-        W_bias = sample(
-            f"{cls}_{name}_W_bias",
-            self.coef_dist(scale=scale_emb, **self.coef_kwargs).expand([d, h]),
-        )
-        H = x[:, :, None] * W_emb[None, :, :] + W_bias[None, :, :]  # (n, d, h)
-
-        # Q, K, V projections — one set per head: (m, h, h_k)
-        # scale_qkv is (m, h_k); unsqueeze to (m, 1, h_k) so it broadcasts to (m, h, h_k)
-        scale_qkv = sample(
-            f"{cls}_{name}_scale_qkv",
-            self.scale_dist(**self.scale_kwargs).expand([m, h_k]),
-        )
-        scale_qkv_bc = scale_qkv[:, None, :]  # (m, 1, h_k)
-        W_Q = sample(
-            f"{cls}_{name}_W_Q",
-            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
-        )
-        W_K = sample(
-            f"{cls}_{name}_W_K",
-            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
-        )
-        W_V = sample(
-            f"{cls}_{name}_W_V",
-            self.coef_dist(scale=scale_qkv_bc, **self.coef_kwargs).expand([m, h, h_k]),
-        )
-
-        # Project to per-head Q/K/V: (n, d, m, h_k)
-        Q = jnp.einsum("ndh,mhk->ndmk", H, W_Q)
-        K = jnp.einsum("ndh,mhk->ndmk", H, W_K)
-        V = jnp.einsum("ndh,mhk->ndmk", H, W_V)
-
-        # Scaled dot-product attention per head: (n, m, d, d)
-        scores = jnp.einsum("ndmk,nqmk->nmdq", Q, K) / h_k**0.5
-        weights = jax.nn.softmax(scores, axis=-1)
-        out = jnp.einsum("nmdq,nqmk->ndmk", weights, V)  # (n, d, m, h_k)
-
-        # Concatenate heads, mean-pool over features: (n, h)
-        pooled = out.reshape(n, d, h).mean(axis=1)
-
-        # Output projection
-        scale_out = sample(
-            f"{cls}_{name}_scale_out",
-            self.scale_dist(**self.scale_kwargs).expand([units]),
-        )
-        W_out = sample(
-            f"{cls}_{name}_W_out",
-            self.coef_dist(scale=scale_out, **self.coef_kwargs).expand([h, units]),
-        )
-        return activation(pooled @ W_out)

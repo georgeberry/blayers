@@ -1,24 +1,24 @@
-"""Tests for HorseshoeLayer, AttentionLayer, ordinal_link, zip_link, beta_link, gaussian_link."""
+"""Tests for HorseshoeLayer, ordinal_link, zip_link, beta_link, gaussian_link,
+categorical_link, and sample_prior."""
 
 import jax
 import jax.numpy as jnp
 import jax.random as random
-import numpyro.distributions as dist
 import pytest
-from numpyro import deterministic, sample
+from numpyro import deterministic
 from numpyro.infer import Predictive
 
 from blayers._utils import rmse
-from blayers.fit import fit
-from blayers.layers import AdaptiveLayer, AttentionLayer, HorseshoeLayer, SpikeAndSlabLayer
+from blayers.decorators import autoreshape
+from blayers.fit import fit, sample_prior
+from blayers.layers import AdaptiveLayer, HorseshoeLayer, SpikeAndSlabLayer
 from blayers.links import (
     beta_link,
+    categorical_link,
     gaussian_link,
     ordinal_link,
     zip_link,
 )
-
-from blayers.decorators import autoreshape
 
 NUM_OBS = 1000
 
@@ -80,7 +80,9 @@ class TestHorseshoeLayer:
 
         samples = _prior_samples(model, x=x)
         assert "HorseshoeLayer_beta_c2" in samples
-        assert samples["HorseshoeLayer_beta_c2"].shape == (4,)  # scalar per sample
+        assert samples["HorseshoeLayer_beta_c2"].shape == (
+            4,
+        )  # scalar per sample
 
     def test_fit_runs(self) -> None:
         """HorseshoeLayer should work end-to-end with fit()."""
@@ -112,99 +114,9 @@ class TestHorseshoeLayer:
 
         result = fit(sparse_model, y=y, x=x, num_steps=500, lr=0.01, seed=0)
         preds = result.predict(x=x, num_samples=100)
-        assert float(rmse(preds.mean, y)) < float(rmse(jnp.zeros_like(y), y)) * 0.5
-
-
-# --------------------------------------------------------------------------- #
-# AttentionLayer
-# --------------------------------------------------------------------------- #
-
-
-class TestAttentionLayer:
-    def test_output_shape(self) -> None:
-        x = random.normal(random.PRNGKey(0), (30, 5))
-
-        def model(x):
-            out = AttentionLayer()("attn", x, head_dim=4)
-            return deterministic("out", out)
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 30, 1)
-
-    def test_output_shape_units(self) -> None:
-        x = random.normal(random.PRNGKey(0), (30, 5))
-
-        def model(x):
-            out = AttentionLayer()("attn", x, head_dim=4, units=2)
-            return deterministic("out", out)
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 30, 2)
-
-    def test_sample_sites_present(self) -> None:
-        x = random.normal(random.PRNGKey(0), (20, 4))
-
-        def model(x):
-            return AttentionLayer()("a", x, head_dim=4)
-
-        samples = _prior_samples(model, x=x)
-        for site in ["W_emb", "W_bias", "W_Q", "W_K", "W_V", "W_out"]:
-            assert f"AttentionLayer_a_{site}" in samples
-
-    def test_multihead_output_shape(self) -> None:
-        x = random.normal(random.PRNGKey(0), (30, 5))
-
-        def model(x):
-            out = AttentionLayer()("attn", x, head_dim=4, num_heads=2)
-            return deterministic("out", out)
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 30, 1)
-
-    def test_multihead_units(self) -> None:
-        x = random.normal(random.PRNGKey(0), (30, 5))
-
-        def model(x):
-            out = AttentionLayer()("attn", x, head_dim=4, num_heads=2, units=3)
-            return deterministic("out", out)
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 30, 3)
-
-    def test_bias_site_present(self) -> None:
-        """W_bias (per-column identity embedding) should be sampled."""
-        x = random.normal(random.PRNGKey(0), (20, 4))
-
-        def model(x):
-            return AttentionLayer()("a", x, head_dim=4)
-
-        samples = _prior_samples(model, x=x)
-        assert "AttentionLayer_a_W_bias" in samples
-
-    def test_fit_runs(self) -> None:
-        """AttentionLayer should run end-to-end with fit()."""
-        x = random.normal(random.PRNGKey(0), (NUM_OBS, 4))
-        y = jnp.sin(x[:, 0]) * x[:, 1] + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.2
-
-        @autoreshape
-        def attn_model(x, y=None):
-            mu = AttentionLayer()("attn", x, head_dim=4)
-            return gaussian_link(mu, y)
-
-        result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
-        assert result.params is not None
-
-    def test_multihead_fit_runs(self) -> None:
-        x = random.normal(random.PRNGKey(0), (NUM_OBS, 4))
-        y = jnp.sin(x[:, 0]) * x[:, 1] + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.2
-
-        @autoreshape
-        def attn_model(x, y=None):
-            mu = AttentionLayer()("attn", x, head_dim=4, num_heads=2)
-            return gaussian_link(mu, y)
-
-        result = fit(attn_model, y=y, x=x, num_steps=200, lr=0.01, seed=0)
-        assert result.params is not None
+        assert (
+            float(rmse(preds.mean, y)) < float(rmse(jnp.zeros_like(y), y)) * 0.5
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -283,8 +195,8 @@ def _make_count_data(num_obs=NUM_OBS, seed=0):
     key = random.PRNGKey(seed)
     k1, k2, k3 = random.split(key, 3)
     x = random.normal(k1, (num_obs, 2))
-    log_rate = x[:, 0]                              # true log-rate
-    gate = jnp.full((num_obs,), 0.3)               # 30% extra zeros
+    log_rate = x[:, 0]  # true log-rate
+    gate = jnp.full((num_obs,), 0.3)  # 30% extra zeros
     is_zero = random.bernoulli(k2, gate)
     counts = random.poisson(k3, jnp.exp(log_rate))
     y = jnp.where(is_zero, 0, counts)
@@ -332,7 +244,9 @@ class TestZipLink:
             mu = AdaptiveLayer()("beta", x)
             return zip_link(mu, y)
 
-        result = fit(zip_model, y=y.astype(float), x=x, num_steps=300, lr=0.02, seed=0)
+        result = fit(
+            zip_model, y=y.astype(float), x=x, num_steps=300, lr=0.02, seed=0
+        )
         assert result.params is not None
 
 
@@ -576,3 +490,109 @@ class TestSpikeAndSlabLayer:
 
         result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
         assert result.params is not None
+
+
+# --------------------------------------------------------------------------- #
+# categorical_link
+# --------------------------------------------------------------------------- #
+
+
+def _make_multiclass_data(num_obs=NUM_OBS, K=4, seed=0):
+    """Multiclass DGP: argmax of a linear score per class."""
+    key = random.PRNGKey(seed)
+    k1, k2 = random.split(key)
+    x = random.normal(k1, (num_obs, 3))
+    w = random.normal(k2, (3, K))
+    logits = x @ w
+    y = jnp.argmax(logits, axis=1).astype(jnp.int32)
+    return x, y
+
+
+class TestCategoricalLink:
+    K = 4
+
+    def test_prior_obs_shape(self) -> None:
+        x = random.normal(random.PRNGKey(0), (30, 3))
+
+        def model(x, y=None):
+            logits = AdaptiveLayer()("beta", x, units=self.K)
+            return categorical_link(logits, y)
+
+        samples = _prior_samples(model, x=x)
+        assert samples["obs"].shape == (4, 30)
+
+    def test_prior_obs_range(self) -> None:
+        """Prior samples should be integers in {0, ..., K-1}."""
+        x = random.normal(random.PRNGKey(0), (50, 3))
+
+        def model(x, y=None):
+            logits = AdaptiveLayer()("beta", x, units=self.K)
+            return categorical_link(logits, y)
+
+        samples = _prior_samples(model, num_samples=10, x=x)
+        obs = samples["obs"]
+        assert jnp.all(obs >= 0)
+        assert jnp.all(obs < self.K)
+
+    def test_fit_learns(self) -> None:
+        """Categorical fit should beat random-guess accuracy on separable data."""
+        x, y = _make_multiclass_data(K=self.K)
+
+        @autoreshape
+        def model(x, y=None):
+            logits = AdaptiveLayer()("beta", x, units=self.K)
+            return categorical_link(logits, y)
+
+        result = fit(model, y=y, x=x, num_steps=500, lr=0.05, seed=0)
+        preds = result.predict(x=x, num_samples=200)
+        # preds.mean is the mean class label; recover per-obs modal class from
+        # samples instead for an accuracy check.
+        modal = jnp.round(
+            jnp.median(
+                preds.samples.reshape(-1, preds.samples.shape[-1]), axis=0
+            )
+        )
+        acc = float(jnp.mean(modal == y))
+        assert acc > 1.0 / self.K  # better than chance
+
+
+# --------------------------------------------------------------------------- #
+# sample_prior
+# --------------------------------------------------------------------------- #
+
+
+class TestSamplePrior:
+    def test_returns_obs_and_latents(self) -> None:
+        x = random.normal(random.PRNGKey(0), (40, 3))
+
+        @autoreshape
+        def model(x, y=None):
+            mu = AdaptiveLayer()("mu", x)
+            return gaussian_link(mu, y)
+
+        prior = sample_prior(model, x=x, num_samples=64)
+        assert prior["obs"].shape[0] == 64
+        assert prior["obs"].shape[-2] == 40
+        # a latent site from the AdaptiveLayer is present
+        assert "AdaptiveLayer_mu_beta" in prior
+
+    def test_num_samples_respected(self) -> None:
+        x = random.normal(random.PRNGKey(0), (20, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            return gaussian_link(AdaptiveLayer()("mu", x), y)
+
+        prior = sample_prior(model, x=x, num_samples=17, seed=3)
+        assert prior["obs"].shape[0] == 17
+
+    def test_rejects_y(self) -> None:
+        x = random.normal(random.PRNGKey(0), (10, 2))
+        y = random.normal(random.PRNGKey(1), (10,))
+
+        @autoreshape
+        def model(x, y=None):
+            return gaussian_link(AdaptiveLayer()("mu", x), y)
+
+        with pytest.raises(ValueError, match="do not pass `y`"):
+            sample_prior(model, x=x, y=y)

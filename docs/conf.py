@@ -9,13 +9,18 @@
 
 import os
 import sys
+import tomllib
 
 sys.path.insert(0, os.path.abspath(".."))
 
 project = "blayers"
 copyright = "2025, George Berry"
 author = "George Berry"
-release = "0.2.9"
+
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "pyproject.toml"), "rb"
+) as _f:
+    release = tomllib.load(_f)["project"]["version"]
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -31,7 +36,6 @@ extensions = [
 
 autosummary_generate = True
 
-templates_path = ["_templates"]
 exclude_patterns = []
 
 autodoc_typehints = "description"

@@ -21,8 +21,13 @@ Homepage = "https://github.com/georgeberry/blayers"
 Documentation = "https://georgeberry.github.io/blayers/"
 
 [project.optional-dependencies]
+arviz = [
+    # arviz 1.x (nested from_dict API, PSIS-LOO) requires Python >= 3.12.
+    "arviz>=1.0; python_version >= '3.12'",
+]
 dev = [
     "optax",
+    "arviz>=1.0; python_version >= '3.12'",
     "pytest",
     "pytest-check",
     "mypy",

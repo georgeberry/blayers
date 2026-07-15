@@ -19,10 +19,10 @@ from blayers._utils import (
     outer_product_upper_tril_no_diag,
     rmse,
 )
-from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
+from blayers.decorators import autoreparam
 from blayers.layers import (
-    BilinearLayer,
     AdaptiveLayer,
+    BilinearLayer,
     EmbeddingLayer,
     FixedPriorLayer,
     FM3Layer,
@@ -39,7 +39,7 @@ from blayers.layers import (
     _matmul_uv_decomp,
 )
 from blayers.links import gaussian_link
-from blayers.decorators import autoreparam
+from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
 
 NUM_OBS = 10000
 LOW_RANK_DIM = 3
@@ -883,3 +883,42 @@ def test_low_rank_bilinear_units() -> None:
     predictive = Predictive(model, num_samples=4)
     samples = predictive(random.PRNGKey(2), x=x, z=z)
     assert samples["out"].shape == (4, 20, 3)
+
+
+def test_embedding_size_one_batch() -> None:
+    """Regression: a single-row batch must keep its leading dim (not squeeze to scalar)."""
+    x = jnp.array([[2]])  # (1, 1) index
+
+    def model(x):
+        out = EmbeddingLayer()("beta", x, num_categories=5, embedding_dim=3)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert samples["out"].shape == (4, 1, 3)
+
+
+def test_random_effects_size_one_batch() -> None:
+    """Regression: single-row batch stays shape (1, 1)."""
+    x = jnp.array([[3]])
+
+    def model(x):
+        out = RandomEffectsLayer()("beta", x, num_categories=5)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert samples["out"].shape == (4, 1, 1)
+
+
+def test_embedding_float_index_dtype() -> None:
+    """Float-typed indices should be accepted (cast to int internally)."""
+    x = jnp.array([[0.0], [2.0], [4.0]])  # float indices
+
+    def model(x):
+        out = EmbeddingLayer()("beta", x, num_categories=5, embedding_dim=2)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert samples["out"].shape == (4, 3, 2)
