@@ -219,6 +219,14 @@ class FittedModel:
         Returns
         -------
         Predictions
+
+        Notes
+        -----
+        ``.mean`` / ``.std`` assume a continuous outcome.  For the
+        classification / discrete links (``logit_link``, ``categorical_link``,
+        ``ordinal_link``, count links) the label mean is not meaningful — work
+        from ``.samples`` instead (e.g. per-observation modal class, or class
+        probabilities via ``(samples == k).mean(axis=0)``).
         """
         rng_key = jax.random.PRNGKey(seed)
 

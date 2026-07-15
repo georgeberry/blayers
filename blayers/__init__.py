@@ -1,3 +1,5 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from blayers.decorators import autoreparam, autoreshape
 from blayers.fit import FittedModel, Predictions, fit, sample_prior
 from blayers.layers import (
@@ -30,7 +32,13 @@ from blayers.links import (
     zip_link,
 )
 
+try:
+    __version__ = version("blayers")
+except PackageNotFoundError:  # package not installed (e.g. running from source)
+    __version__ = "0.0.0"
+
 __all__ = [
+    "__version__",
     # Layers
     "AdaptiveLayer",
     "BilinearLayer",

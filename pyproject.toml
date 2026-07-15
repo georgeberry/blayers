@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "blayers"
-version = "0.3.0"
+version = "0.3.1"
 description = "Bayesian layers for NumPyro and Jax"
 authors = [{ name = "George Berry", email = "george.e.berry@gmail.com" }]
 readme = "README.md"
 license = { file = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "jax",
     "numpyro",
@@ -22,12 +22,12 @@ Documentation = "https://georgeberry.github.io/blayers/"
 
 [project.optional-dependencies]
 arviz = [
-    # arviz 1.x (nested from_dict API, PSIS-LOO) requires Python >= 3.12.
-    "arviz>=1.0; python_version >= '3.12'",
+    # arviz 1.x: nested from_dict API + PSIS-LOO (WAIC dropped upstream).
+    "arviz>=1.0",
 ]
 dev = [
     "optax",
-    "arviz>=1.0; python_version >= '3.12'",
+    "arviz>=1.0",
     "pytest",
     "pytest-check",
     "mypy",
@@ -61,7 +61,7 @@ force_grid_wrap = 0
 
 [tool.black]
 line-length = 80
-target-version = ["py311"]
+target-version = ["py312"]
 
 [tool.ruff]
 ignore = ["E731"]
