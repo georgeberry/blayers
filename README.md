@@ -4,7 +4,7 @@
 
 # BLayers
 
-The missing layers package for Bayesian inference.
+The missing layers package for Bayesian regression.
 
 **BLayers is in beta, errors are possible! We invite you to contribute on [GitHub](https://github.com/georgeberry/blayers).**
 
@@ -26,14 +26,10 @@ tweak priors as you wish.
 
 Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.
 
-**Scope.** BLayers is for *structured* Bayesian regression — GLMs, hierarchical /
+**Scope.** BLayers works best for *structured* Bayesian regression — GLMs, hierarchical /
 mixed-effects models, factorization machines, splines, and sparse priors. Layers
 are meant to be **added together into a linear predictor** (`mu = layer1(...) +
-layer2(...) + ...`), the way you'd build a GLM or GAM — not stacked into a deep
-network. Each term stays interpretable, and the priors and inference (NUTS / VI /
-SVGD) are chosen for honest posteriors over a modest number of meaningful
-parameters. If you want a true Bayesian *neural network* (composed nonlinear
-layers, weight-space inference), reach for
+layer2(...) + ...`). You can stack them into a deep net, but better tools exist for this:
 [`numpyro.contrib.module`](https://num.pyro.ai/en/stable/primitives.html#module)'s
 `random_flax_module` / `random_haiku_module` instead — they drop a full Flax or
 Haiku net into a NumPyro model with priors on the weights.
@@ -173,6 +169,8 @@ The full set of layers included with BLayers:
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
 - `SpikeAndSlabLayer` — Spike-and-slab prior; `z ~ Beta(0.5, 0.5)` inclusion weights times a configurable slab.
+- `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a `Dirichlet` (or fixed) weight; the component indicator is marginalised so it works under VI *and* MCMC. Good for robustness / elastic-net-style priors.
+- `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
 
@@ -183,12 +181,15 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 - `gaussian_link` — Gaussian likelihood with configurable sigma prior (see below).
 - `lognormal_link` — LogNormal likelihood with configurable sigma prior.
 - `student_t_link` — StudentT likelihood for robust regression (default `df=4`).
+- `gamma_link` — Gamma likelihood (log link) for positive continuous data; learned shape.
+- `exponential_link` — Exponential likelihood (log link) for positive / survival data.
 - `logit_link` — Bernoulli link for binary logistic regression.
 - `categorical_link` — Categorical / softmax link for multiclass classification (`units = num_classes`).
 - `poisson_link` — Poisson link with log-rate input.
 - `negative_binomial_link` — NegativeBinomial2 for overdispersed counts; learned concentration via `Exponential`.
 - `ordinal_link` — Cumulative logit / proportional odds for ordinal outcomes.
 - `zip_link` — Zero-inflated Poisson for count data with excess zeros.
+- `zinb_link` — Zero-inflated NegativeBinomial2 for overdispersed, zero-heavy counts.
 - `beta_link` — Beta regression for proportions strictly in (0, 1).
 
 ### `gaussian_link`, `lognormal_link`, and `student_t_link`

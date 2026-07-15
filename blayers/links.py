@@ -21,12 +21,15 @@ Available links:
 * ``gaussian_link``          — Normal likelihood, configurable sigma prior
 * ``lognormal_link``         — LogNormal likelihood, configurable sigma prior
 * ``student_t_link``         — StudentT likelihood for robust regression (default df=4)
+* ``gamma_link``             — Gamma likelihood (log link) for positive continuous data
+* ``exponential_link``       — Exponential likelihood (log link) for positive / survival data
 * ``logit_link``             — Bernoulli likelihood (binary)
 * ``categorical_link``       — Categorical / softmax likelihood (multiclass)
 * ``poisson_link``           — Poisson likelihood
 * ``negative_binomial_link`` — NegativeBinomial2 likelihood, learned concentration
 * ``ordinal_link``           — Ordinal (cumulative logit / proportional odds)
 * ``zip_link``               — Zero-inflated Poisson
+* ``zinb_link``              — Zero-inflated NegativeBinomial2 (overdispersed counts)
 * ``beta_link``              — Beta regression for proportions in (0, 1)
 """
 
@@ -160,6 +163,60 @@ Args:
 Returns:
     Sample site ``"obs"``.
 """
+
+
+def gamma_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+    rate: float = 1.0,
+) -> jax.Array:
+    """Gamma likelihood (log link) for positive continuous data.
+
+    Uses a mean parameterisation with a learned shape ``k``:
+
+    .. math::
+        \\mu = \\exp(\\hat{y}), \\quad
+        k \\sim \\mathrm{Exponential}(\\text{rate}), \\quad
+        y \\sim \\mathrm{Gamma}(k,\\; k / \\mu)
+
+    so ``E[y] = mu`` and ``Var[y] = mu^2 / k``.
+
+    Args:
+        y_hat: Log mean, shape ``(n, 1)`` or ``(n,)``.
+        y: Observed positive values, or ``None``.
+        rate: Rate of the ``Exponential`` prior on the shape ``k``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    mean = jnp.exp(y_hat.reshape(-1))
+    k = sample("gamma_shape", dists.Exponential(rate=rate))
+    return jnp.asarray(
+        sample("obs", dists.Gamma(concentration=k, rate=k / mean), obs=y)
+    )
+
+
+def exponential_link(
+    y_hat: jax.Array,
+    y: jax.Array | None = None,
+) -> jax.Array:
+    """Exponential likelihood (log link) for positive continuous / survival data.
+
+    .. math::
+        \\mu = \\exp(\\hat{y}), \\quad y \\sim \\mathrm{Exponential}(1 / \\mu)
+
+    A single-parameter special case of :func:`gamma_link` (shape fixed at 1);
+    the mean fully determines the variance (``Var[y] = mu^2``).
+
+    Args:
+        y_hat: Log mean, shape ``(n, 1)`` or ``(n,)``.
+        y: Observed positive values, or ``None``.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    rate = jnp.exp(-y_hat.reshape(-1))
+    return jnp.asarray(sample("obs", dists.Exponential(rate=rate), obs=y))
 
 
 def logit_link(
@@ -323,6 +380,40 @@ def zip_link(
     gate = sample("zip_gate", dists.Beta(1.0, 10.0))
     return jnp.asarray(
         sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
+    )
+
+
+def zinb_link(
+    mu: jax.Array,
+    y: jax.Array | None = None,
+    rate: float = 1.0,
+) -> jax.Array:
+    """Zero-inflated NegativeBinomial2 link for overdispersed counts with excess zeros.
+
+    The overdispersed counterpart of :func:`zip_link`: a mixture that emits an
+    exact 0 with probability π, and otherwise a NegativeBinomial2 count with
+    ``mean = exp(μ)`` and a learned concentration (so the non-zero part can be
+    more dispersed than Poisson).
+
+    .. math::
+        \\text{gate} \\sim \\mathrm{Beta}(1, 10), \\quad
+        \\phi \\sim \\mathrm{Exponential}(\\text{rate}), \\quad
+        y \\sim \\mathrm{ZINB}(\\exp(\\mu),\\; \\phi,\\; \\text{gate})
+
+    Args:
+        mu: Log mean, shape ``(n, 1)`` or ``(n,)``.
+        y: Non-negative integer observations, or ``None``.
+        rate: Rate of the ``Exponential`` prior on the concentration.
+
+    Returns:
+        Sample site ``"obs"``.
+    """
+    mean = jnp.exp(mu.reshape(-1))
+    concentration = sample("zinb_concentration", dists.Exponential(rate=rate))
+    gate = sample("zinb_gate", dists.Beta(1.0, 10.0))
+    base = dists.NegativeBinomial2(mean=mean, concentration=concentration)
+    return jnp.asarray(
+        sample("obs", dists.ZeroInflatedDistribution(base, gate=gate), obs=y)
     )
 
 

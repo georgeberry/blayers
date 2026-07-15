@@ -30,6 +30,7 @@ dev = [
     "arviz>=1.0",
     "pytest",
     "pytest-check",
+    "pytest-xdist",
     "mypy",
     "black",
     "isort",

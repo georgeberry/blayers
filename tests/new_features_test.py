@@ -15,8 +15,11 @@ from blayers.layers import AdaptiveLayer, HorseshoeLayer, SpikeAndSlabLayer
 from blayers.links import (
     beta_link,
     categorical_link,
+    exponential_link,
+    gamma_link,
     gaussian_link,
     ordinal_link,
+    zinb_link,
     zip_link,
 )
 
@@ -596,3 +599,93 @@ class TestSamplePrior:
 
         with pytest.raises(ValueError, match="do not pass `y`"):
             sample_prior(model, x=x, y=y)
+
+
+# --------------------------------------------------------------------------- #
+# gamma_link / exponential_link
+# --------------------------------------------------------------------------- #
+
+
+class TestGammaLink:
+    def test_prior_positive(self) -> None:
+        x = random.normal(random.PRNGKey(0), (40, 3))
+
+        @autoreshape
+        def model(x, y=None):
+            return gamma_link(AdaptiveLayer()("b", x), y)
+
+        samples = _prior_samples(model, num_samples=8, x=x)
+        # Gamma support is positive; a tiny sampled shape can underflow to
+        # exactly 0.0 in float32, so assert non-negative + finite.
+        assert jnp.all(samples["obs"] >= 0)
+        assert jnp.all(jnp.isfinite(samples["obs"]))
+
+    def test_fit_runs(self) -> None:
+        key = random.PRNGKey(0)
+        x = random.normal(key, (NUM_OBS, 3))
+        mean = jnp.exp(0.5 * x[:, 0])
+        y = random.gamma(key, 2.0, (NUM_OBS,)) / 2.0 * mean
+
+        @autoreshape
+        def model(x, y=None):
+            return gamma_link(AdaptiveLayer()("b", x), y)
+
+        result = fit(model, y=y, x=x, num_steps=300, lr=0.02, seed=0)
+        assert result.params is not None
+
+
+class TestExponentialLink:
+    def test_prior_positive(self) -> None:
+        x = random.normal(random.PRNGKey(0), (40, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            return exponential_link(AdaptiveLayer()("b", x), y)
+
+        samples = _prior_samples(model, num_samples=8, x=x)
+        # positive support, but float32 draws can underflow to 0.0
+        assert jnp.all(samples["obs"] >= 0)
+        assert jnp.all(jnp.isfinite(samples["obs"]))
+
+    def test_fit_runs(self) -> None:
+        key = random.PRNGKey(0)
+        x = random.normal(key, (NUM_OBS, 2))
+        y = random.exponential(key, (NUM_OBS,)) * jnp.exp(0.3 * x[:, 0])
+
+        @autoreshape
+        def model(x, y=None):
+            return exponential_link(AdaptiveLayer()("b", x), y)
+
+        result = fit(model, y=y, x=x, num_steps=200, lr=0.02, seed=0)
+        assert result.params is not None
+
+
+# --------------------------------------------------------------------------- #
+# zinb_link
+# --------------------------------------------------------------------------- #
+
+
+class TestZinbLink:
+    def test_prior_non_negative(self) -> None:
+        x = random.normal(random.PRNGKey(0), (40, 2))
+
+        @autoreshape
+        def model(x, y=None):
+            return zinb_link(AdaptiveLayer()("b", x), y)
+
+        samples = _prior_samples(model, num_samples=8, x=x)
+        assert jnp.all(samples["obs"] >= 0)
+
+    def test_fit_runs(self) -> None:
+        key = random.PRNGKey(0)
+        x = random.normal(key, (NUM_OBS, 2))
+        counts = random.poisson(key, jnp.exp(0.4 * x[:, 0]), (NUM_OBS,))
+        is_zero = random.bernoulli(random.PRNGKey(9), 0.3, (NUM_OBS,))
+        y = jnp.where(is_zero, 0, counts).astype(float)
+
+        @autoreshape
+        def model(x, y=None):
+            return zinb_link(AdaptiveLayer()("b", x), y)
+
+        result = fit(model, y=y, x=x, num_steps=200, lr=0.02, seed=0)
+        assert result.params is not None
