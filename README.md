@@ -256,6 +256,40 @@ def model(x1, x2, y=None):
     return gaussian_link(f1 + f2, y)
 ```
 
+## Gaussian processes (HSGP)
+
+`HSGPLayer` is a Hilbert-space approximate GP ([Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)) — a smoother like splines, but it learns its own lengthscale and carries a proper GP interpretation. Pick the domain boundary `L` once on the training inputs with `hsgp_L` and reuse it at predict time; `m` is the number of basis functions (~20–50).
+
+```python
+from blayers.layers import HSGPLayer, hsgp_L
+from blayers.links import gaussian_link
+from blayers.decorators import autoreshape
+
+L = hsgp_L(x_train)     # domain boundary = 1.5 * max(|x|); fixed across fit/predict
+
+@autoreshape
+def model(x, y=None, L=L, m=30):
+    f = HSGPLayer()("f", x, L=L, m=m)
+    return gaussian_link(f, y)
+```
+
+Like splines, HSGP terms add for a GAM-style additive model (`f1(x1) + f2(x2) + ...`). Center/scale each input so it lies within `[-L, L]`.
+
+## Mixture priors
+
+`MixtureLayer` draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a `Dirichlet` prior by default, or pass fixed `weights=`. The component indicator is marginalised internally, so it works under **both VI and MCMC**.
+
+```python
+from blayers.layers import MixtureLayer
+from blayers.links import gaussian_link
+
+def model(x, y=None):
+    mu = MixtureLayer()("beta", x)                 # Normal + Laplace, Dirichlet weights
+    return gaussian_link(mu, y)
+```
+
+For pure sparsity prefer `HorseshoeLayer`; for explicit variable selection prefer `SpikeAndSlabLayer`.
+
 ## fit() helpers
 
 `fit()` handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.
