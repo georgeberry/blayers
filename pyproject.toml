@@ -8,7 +8,7 @@ version = "0.3.2"
 description = "Bayesian layers for NumPyro and Jax"
 authors = [{ name = "George Berry", email = "george.e.berry@gmail.com" }]
 readme = "README.md"
-license = { file = "MIT" }
+license = { text = "MIT" }
 requires-python = ">=3.12"
 dependencies = [
     "jax",
@@ -46,6 +46,9 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
+# Package only the library — without this, tests/ (it has an __init__.py) and
+# docs/ leak into the wheel and pollute users' site-packages.
+include = ["blayers*"]
 
 [tool.mypy]
 strict = true
