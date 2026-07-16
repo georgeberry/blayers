@@ -7,6 +7,7 @@ from blayers.layers import (
     AdaptiveLayer,
     BilinearLayer,
     EmbeddingLayer,
+    FixedEffectsLayer,
     FixedPriorLayer,
     FM3Layer,
     FMLayer,
@@ -75,6 +76,15 @@ class TestRandomEffectsLayerValidation:
     def test_bad_scale_kwargs(self):
         with pytest.raises(TypeError, match="Invalid distribution kwargs"):
             RandomEffectsLayer(scale_kwargs={"bad": 1.0})
+
+
+class TestFixedEffectsLayerValidation:
+    def test_valid_defaults(self):
+        FixedEffectsLayer()
+
+    def test_bad_coef_kwargs(self):
+        with pytest.raises(TypeError, match="Invalid distribution kwargs"):
+            FixedEffectsLayer(coef_kwargs={"loc": 0.0, "nope": 1.0})
 
 
 class TestRandomWalkLayerValidation:

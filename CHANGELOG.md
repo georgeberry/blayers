@@ -19,6 +19,15 @@ may carry breaking changes).
   squared-exponential; Riutort-Mayol et al. 2021), a GP smoother that learns
   its own lengthscale. Helper `hsgp_L(x)` picks the domain boundary; reuse the
   same `L` at fit and predict time.
+- **`FixedEffectsLayer`** — per-category coefficients with a fixed,
+  user-specified prior; the no-pooling counterpart of `RandomEffectsLayer`
+  (whose learned variance component is what drives partial pooling).
+
+### Fixed
+- **Packaging**: wheels no longer ship the `tests/` package and `docs/conf.py`
+  (they leaked into site-packages via an unfiltered `packages.find`); license
+  metadata now correctly reports `License: MIT` (previously pointed at a
+  nonexistent file).
 
 ### Development
 - CI test suite parallelized with `pytest-xdist` (`pytest -n auto`).

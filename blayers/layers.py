@@ -1107,6 +1107,69 @@ class RandomEffectsLayer(BLayer):
         return jnp.asarray(theta[x.reshape(-1).astype(jnp.int32)])
 
 
+class FixedEffectsLayer(BLayer):
+    """Bayesian fixed-effects layer — per-category coefficients, fixed prior.
+
+    The no-pooling counterpart of :class:`RandomEffectsLayer`: each category
+    gets its own scalar coefficient drawn from a fixed, user-specified prior
+
+    .. math::
+        \\theta_c \\sim Normal(0., 1.), \\quad \\theta \\in \\mathbb{R}^{c}
+
+    with **no learned variance component**. The learned scale is exactly what
+    makes a random effect "random" (it drives the partial pooling); fixing the
+    prior instead gives the Bayesian analogue of classical fixed effects —
+    ridge-regularised per-category dummies, with the prior scale controlling
+    the regularisation strength.
+
+    Each observation gets the coefficient of its category:
+
+    .. math::
+        \\text{output}_i = \\theta[x_i]
+
+    Prefer :class:`RandomEffectsLayer` when you have many small groups that
+    should share information; use this layer when groups are few and
+    well-observed, or when you explicitly do not want pooling.
+    """
+
+    def __init__(
+        self,
+        coef_dist: distributions.Distribution = distributions.Normal,
+        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
+    ):
+        """
+        Args:
+            coef_dist: NumPyro distribution class for the coefficients.
+            coef_kwargs: Parameters to initialize the prior distribution.
+        """
+        self.coef_dist = coef_dist
+        self.coef_kwargs = coef_kwargs
+        _validate_prior_kwargs(coef_dist, coef_kwargs)
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        num_categories: int,
+    ) -> jax.Array:
+        """
+        Forward pass through scalar fixed-effect lookup.
+
+        Args:
+            name: Variable name scope.
+            x: Integer indices indicating which effect to use.
+            num_categories: The number of distinct groups.
+
+        Returns:
+            jax.Array: Effect values of shape ``(n, 1)``.
+        """
+        theta = sample(
+            name=f"{self.__class__.__name__}_{name}_theta",
+            fn=self.coef_dist(**self.coef_kwargs).expand([num_categories, 1]),
+        )
+        return jnp.asarray(theta[x.reshape(-1).astype(jnp.int32)])
+
+
 class RandomWalkLayer(BLayer):
     """Bayesian Gaussian random walk over ordered categories.
 

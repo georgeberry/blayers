@@ -159,7 +159,8 @@ The full set of layers included with BLayers:
 - `FixedPriorLayer` — Fixed prior over coefficients (e.g., Normal or Laplace), no hierarchical scale.
 - `InterceptLayer` — Intercept-only layer (bias term).
 - `EmbeddingLayer` — Bayesian embeddings for sparse categorical features.
-- `RandomEffectsLayer` — Classical random-effects (embedding with output dim 1).
+- `RandomEffectsLayer` — Classical random-effects (embedding with output dim 1); learned variance component → partial pooling.
+- `FixedEffectsLayer` — Per-category coefficients with a fixed, user-specified prior; the no-pooling counterpart of `RandomEffectsLayer`.
 - `FMLayer` — Factorization Machine (order 2) for pairwise interaction terms.
 - `FM3Layer` — Factorization Machine (order 3).
 - `LowRankInteractionLayer` — Low-rank interaction between two feature sets.

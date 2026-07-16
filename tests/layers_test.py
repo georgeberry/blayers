@@ -19,11 +19,13 @@ from blayers._utils import (
     outer_product_upper_tril_no_diag,
     rmse,
 )
-from blayers.decorators import autoreparam
+from blayers.decorators import autoreparam, autoreshape
+from blayers.fit import fit
 from blayers.layers import (
     AdaptiveLayer,
     BilinearLayer,
     EmbeddingLayer,
+    FixedEffectsLayer,
     FixedPriorLayer,
     FM3Layer,
     FMLayer,
@@ -922,3 +924,63 @@ def test_embedding_float_index_dtype() -> None:
     predictive = Predictive(model, num_samples=4)
     samples = predictive(random.PRNGKey(0), x=x)
     assert samples["out"].shape == (4, 3, 2)
+
+
+def test_fixed_effects_output_shape() -> None:
+    x = jnp.array([[0], [2], [4], [1]])
+
+    def model(x):
+        out = FixedEffectsLayer()("fe", x, num_categories=5)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert samples["out"].shape == (4, 4, 1)
+
+
+def test_fixed_effects_no_scale_site() -> None:
+    """Unlike RandomEffectsLayer, no adaptive scale site is sampled."""
+    x = jnp.array([[0], [1]])
+
+    def model(x):
+        return FixedEffectsLayer()("fe", x, num_categories=3)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert "FixedEffectsLayer_fe_theta" in samples
+    assert "FixedEffectsLayer_fe_scale" not in samples
+
+
+def test_fixed_effects_size_one_batch() -> None:
+    """Single-row batch keeps its leading dim."""
+    x = jnp.array([[3]])
+
+    def model(x):
+        out = FixedEffectsLayer()("fe", x, num_categories=5)
+        return deterministic("out", out)
+
+    predictive = Predictive(model, num_samples=4)
+    samples = predictive(random.PRNGKey(0), x=x)
+    assert samples["out"].shape == (4, 1, 1)
+
+
+def test_fixed_effects_fit_learns() -> None:
+    """Recovers per-group effects well enough to beat the zero baseline."""
+    key = random.PRNGKey(0)
+    n, c = 2000, 6
+    idx = random.randint(key, (n, 1), 0, c)
+    true_effects = jnp.array([2.0, -1.0, 0.5, 3.0, -2.0, 0.0])
+    y = true_effects[idx.reshape(-1)] + 0.3 * random.normal(
+        random.PRNGKey(1), (n,)
+    )
+
+    @autoreshape
+    def model(x, y=None, num_categories=c):
+        mu = FixedEffectsLayer()("fe", x, num_categories=num_categories)
+        return gaussian_link(mu, y)
+
+    result = fit(
+        model, y=y, x=idx, num_categories=c, num_steps=500, lr=0.05, seed=0
+    )
+    preds = result.predict(x=idx, num_categories=c, num_samples=100)
+    assert float(rmse(preds.mean, y)) < float(rmse(jnp.zeros_like(y), y)) * 0.5
