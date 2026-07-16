@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BLayers &#8212; blayers 0.2.9 documentation</title>
+    <title>BLayers &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -126,7 +126,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -347,11 +347,16 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-and-lognormal-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-lognormal-link-and-student-t-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-processes-hsgp">Gaussian processes (HSGP)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-priors">Mixture priors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-model-comparison-arviz">Diagnostics &amp; model comparison (ArviZ)</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>
@@ -372,10 +377,10 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p><a class="reference external" href="https://coveralls.io/github/georgeberry/blayers?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main" /></a> <a class="reference internal" href="#LICENSE"><span class="xref myst"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></span></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a> <a class="reference external" href="https://georgeberry.github.io/blayers/"><img alt="Read - Docs" src="https://img.shields.io/badge/Read-Docs-2ea44f" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers"><img alt="View - GitHub" src="https://img.shields.io/badge/View-GitHub-89CFF0" /></a> <a class="reference external" href="https://pepy.tech/projects/blayers"><img alt="PyPI Downloads" src="https://static.pepy.tech/badge/blayers" /></a></p>
+  <p><a class="reference external" href="https://coveralls.io/github/georgeberry/blayers?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/georgeberry/blayers/badge.svg?branch=main" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/georgeberry/blayers" /></a> <a class="reference external" href="https://pypi.org/project/blayers/"><img alt="PyPI" src="https://img.shields.io/pypi/v/blayers" /></a> <a class="reference external" href="https://georgeberry.github.io/blayers/"><img alt="Read - Docs" src="https://img.shields.io/badge/Read-Docs-2ea44f" /></a> <a class="reference external" href="https://github.com/georgeberry/blayers"><img alt="View - GitHub" src="https://img.shields.io/badge/View-GitHub-89CFF0" /></a> <a class="reference external" href="https://pepy.tech/projects/blayers"><img alt="PyPI Downloads" src="https://static.pepy.tech/badge/blayers" /></a></p>
 <section id="blayers">
 <h1>BLayers<a class="headerlink" href="#blayers" title="Link to this heading">#</a></h1>
-<p>The missing layers package for Bayesian inference.</p>
+<p>The missing layers package for Bayesian regression.</p>
 <p><strong>BLayers is in beta, errors are possible! We invite you to contribute on <a class="reference external" href="https://github.com/georgeberry/blayers">GitHub</a>.</strong></p>
 <section id="write-code-immediately">
 <h2>Write code immediately<a class="headerlink" href="#write-code-immediately" title="Link to this heading">#</a></h2>
@@ -390,6 +395,12 @@
 <p>Easily build Bayesian models from parts, abstract away the boilerplate, and
 tweak priors as you wish.</p>
 <p>Inspiration from Keras and Tensorflow Probability, but made specifically for Numpyro + Jax.</p>
+<p><strong>Scope.</strong> BLayers works best for <em>structured</em> Bayesian regression — GLMs, hierarchical /
+mixed-effects models, factorization machines, splines, and sparse priors. Layers
+are meant to be <strong>added together into a linear predictor</strong> (<code class="docutils literal notranslate"><span class="pre">mu</span> <span class="pre">=</span> <span class="pre">layer1(...)</span> <span class="pre">+</span> <span class="pre">layer2(...)</span> <span class="pre">+</span> <span class="pre">...</span></code>). You can stack them into a deep net, but better tools exist for this:
+<a class="reference external" href="https://num.pyro.ai/en/stable/primitives.html#module"><code class="docutils literal notranslate"><span class="pre">numpyro.contrib.module</span></code></a>’s
+<code class="docutils literal notranslate"><span class="pre">random_flax_module</span></code> / <code class="docutils literal notranslate"><span class="pre">random_haiku_module</span></code> instead — they drop a full Flax or
+Haiku net into a NumPyro model with priors on the weights.</p>
 <p>BLayers provides tools to</p>
 <ul class="simple">
 <li><p>Quickly build Bayesian models from layers which encapsulate useful model parts</p></li>
@@ -403,10 +414,11 @@ choice without having to rewrite models</p></li>
 <section id="the-starting-point">
 <h2>The starting point<a class="headerlink" href="#the-starting-point" title="Link to this heading">#</a></h2>
 <p>The simplest non-trivial (and most important!) Bayesian regression model form is
-the adaptive prior,</p>
+the adaptive prior (note I’m using a <code class="docutils literal notranslate"><span class="pre">.</span></code> to denote the regression sigma and any
+prior on it just to save space),</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">~</span> <span class="n">HalfNormal</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">beta</span>  <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
-<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="o">.</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>BLayers encapsulates a generative model structure like this in a <code class="docutils literal notranslate"><span class="pre">BLayer</span></code>. The
@@ -450,13 +462,13 @@ model is exactly equivalent to writing the following, just using way less code.<
 <p>The <code class="docutils literal notranslate"><span class="pre">AdaptiveLayer</span></code> is also fully parameterizable via arguments to the class, so let’s say you wanted to change the model from</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">~</span> <span class="n">HalfNormal</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">beta</span>  <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
-<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="o">.</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>to</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span> <span class="o">~</span> <span class="n">Exponential</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 <span class="n">beta</span>  <span class="o">~</span> <span class="n">LogNormal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
-<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span>     <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="o">.</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>you can just do this directly via arguments</p>
@@ -504,7 +516,8 @@ model is exactly equivalent to writing the following, just using way less code.<
 <li><p><code class="docutils literal notranslate"><span class="pre">FixedPriorLayer</span></code> — Fixed prior over coefficients (e.g., Normal or Laplace), no hierarchical scale.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code> — Intercept-only layer (bias term).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code> — Bayesian embeddings for sparse categorical features.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects (embedding with output dim 1).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects (embedding with output dim 1); learned variance component → partial pooling.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code> — Per-category coefficients with a fixed, user-specified prior; the no-pooling counterpart of <code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code> — Factorization Machine (order 2) for pairwise interaction terms.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code> — Factorization Machine (order 3).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankInteractionLayer</span></code> — Low-rank interaction between two feature sets.</p></li>
@@ -514,7 +527,8 @@ model is exactly equivalent to writing the following, just using way less code.<
 <li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Gaussian random walk prior over an ordered index (e.g., time).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code> — Spike-and-slab prior; <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">~</span> <span class="pre">Beta(0.5,</span> <span class="pre">0.5)</span></code> inclusion weights times a configurable slab.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code> — Multi-head self-attention over the feature dimension with FT-Transformer tokenisation (<a class="reference external" href="https://arxiv.org/abs/2106.11959">Gorishniy et al. 2021</a>). <code class="docutils literal notranslate"><span class="pre">head_dim</span></code> is per-head so total embedding dim is <code class="docutils literal notranslate"><span class="pre">head_dim</span> <span class="pre">*</span> <span class="pre">num_heads</span></code> — adding heads increases capacity.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code> — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a <code class="docutils literal notranslate"><span class="pre">Dirichlet</span></code> (or fixed) weight; the component indicator is marginalised so it works under VI <em>and</em> MCMC. Good for robustness / elastic-net-style priors.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code> — Hilbert-space approximate Gaussian process (1-D, squared-exponential; <a class="reference external" href="https://arxiv.org/abs/2004.11408">Riutort-Mayol et al. 2021</a>). A GP smoother that learns its own lengthscale; use <code class="docutils literal notranslate"><span class="pre">hsgp_L(x_train)</span></code> to pick the domain boundary.</p></li>
 </ul>
 <p>All layer prior kwargs are validated at construction time — bad kwargs raise <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> immediately.</p>
 </section>
@@ -524,16 +538,21 @@ model is exactly equivalent to writing the following, just using way less code.<
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> — Gaussian likelihood with configurable sigma prior (see below).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code> — LogNormal likelihood with configurable sigma prior.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for logistic regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">student_t_link</span></code> — StudentT likelihood for robust regression (default <code class="docutils literal notranslate"><span class="pre">df=4</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma_link</span></code> — Gamma likelihood (log link) for positive continuous data; learned shape.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exponential_link</span></code> — Exponential likelihood (log link) for positive / survival data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code> — Bernoulli link for binary logistic regression.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical_link</span></code> — Categorical / softmax link for multiclass classification (<code class="docutils literal notranslate"><span class="pre">units</span> <span class="pre">=</span> <span class="pre">num_classes</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">poisson_link</span></code> — Poisson link with log-rate input.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — NegativeBinomial2 for overdispersed counts; learned concentration via <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ordinal_link</span></code> — Cumulative logit / proportional odds for ordinal outcomes.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">zip_link</span></code> — Zero-inflated Poisson for count data with excess zeros.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zinb_link</span></code> — Zero-inflated NegativeBinomial2 for overdispersed, zero-heavy counts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta_link</span></code> — Beta regression for proportions strictly in (0, 1).</p></li>
 </ul>
-<section id="gaussian-link-and-lognormal-link">
-<h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code><a class="headerlink" href="#gaussian-link-and-lognormal-link" title="Link to this heading">#</a></h3>
-<p>Both links are built on a common base and support three scale modes:</p>
+<section id="gaussian-link-lognormal-link-and-student-t-link">
+<h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code><a class="headerlink" href="#gaussian-link-lognormal-link-and-student-t-link" title="Link to this heading">#</a></h3>
+<p>All three share a common location-scale base and support three scale modes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
@@ -590,6 +609,36 @@ model is exactly equivalent to writing the following, just using way less code.<
 </pre></div>
 </div>
 </section>
+<section id="gaussian-processes-hsgp">
+<h2>Gaussian processes (HSGP)<a class="headerlink" href="#gaussian-processes-hsgp" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code> is a Hilbert-space approximate GP (<a class="reference external" href="https://arxiv.org/abs/2004.11408">Riutort-Mayol et al. 2021</a>) — a smoother like splines, but it learns its own lengthscale and carries a proper GP interpretation. Pick the domain boundary <code class="docutils literal notranslate"><span class="pre">L</span></code> once on the training inputs with <code class="docutils literal notranslate"><span class="pre">hsgp_L</span></code> and reuse it at predict time; <code class="docutils literal notranslate"><span class="pre">m</span></code> is the number of basis functions (~20–50).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">HSGPLayer</span><span class="p">,</span> <span class="n">hsgp_L</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreshape</span>
+
+<span class="n">L</span> <span class="o">=</span> <span class="n">hsgp_L</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>     <span class="c1"># domain boundary = 1.5 * max(|x|); fixed across fit/predict</span>
+
+<span class="nd">@autoreshape</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">HSGPLayer</span><span class="p">()(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Like splines, HSGP terms add for a GAM-style additive model (<code class="docutils literal notranslate"><span class="pre">f1(x1)</span> <span class="pre">+</span> <span class="pre">f2(x2)</span> <span class="pre">+</span> <span class="pre">...</span></code>). Center/scale each input so it lies within <code class="docutils literal notranslate"><span class="pre">[-L,</span> <span class="pre">L]</span></code>.</p>
+</section>
+<section id="mixture-priors">
+<h2>Mixture priors<a class="headerlink" href="#mixture-priors" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code> draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a <code class="docutils literal notranslate"><span class="pre">Dirichlet</span></code> prior by default, or pass fixed <code class="docutils literal notranslate"><span class="pre">weights=</span></code>. The component indicator is marginalised internally, so it works under <strong>both VI and MCMC</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixtureLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">MixtureLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                 <span class="c1"># Normal + Laplace, Dirichlet weights</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For pure sparsity prefer <code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code>; for explicit variable selection prefer <code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code>.</p>
+</section>
 <section id="fit-helpers">
 <h2>fit() helpers<a class="headerlink" href="#fit-helpers" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.</p>
@@ -620,6 +669,28 @@ model is exactly equivalent to writing the following, just using way less code.<
 </pre></div>
 </div>
 <p>Keyword arguments that are JAX arrays are treated as <strong>data</strong> (batched during training). Non-array kwargs are bound as <strong>constants</strong>.</p>
+<section id="diagnostics-model-comparison-arviz">
+<h3>Diagnostics &amp; model comparison (ArviZ)<a class="headerlink" href="#diagnostics-model-comparison-arviz" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">result.to_arviz()</span></code> hands the fit to <a class="reference external" href="https://python.arviz.org">ArviZ</a> for R-hat,
+ESS, divergences, PSIS-LOO, and the full plotting suite — reusing NumPyro’s own
+ArviZ bridge rather than reinventing diagnostics. Install with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">blayers[arviz]</span></code> (arviz ≥ 1.0, Python ≥ 3.12).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+
+<span class="c1"># MCMC: divergences, R-hat, ESS, and log-likelihood come through automatically</span>
+<span class="n">idata</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mcmc&quot;</span><span class="p">,</span> <span class="n">num_chains</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">()</span>
+<span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">idata</span><span class="p">)</span>          <span class="c1"># R-hat / ESS per latent</span>
+<span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">idata</span><span class="p">)</span>              <span class="c1"># PSIS-LOO</span>
+
+<span class="c1"># VI: pass the observed y (and inputs) so the log_likelihood group can be built</span>
+<span class="n">idata_vi</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+
+<span class="c1"># Compare models on out-of-sample predictive fit</span>
+<span class="n">az</span><span class="o">.</span><span class="n">compare</span><span class="p">({</span><span class="s2">&quot;mcmc&quot;</span><span class="p">:</span> <span class="n">idata</span><span class="p">,</span> <span class="s2">&quot;vi&quot;</span><span class="p">:</span> <span class="n">idata_vi</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>SVGD is not supported by <code class="docutils literal notranslate"><span class="pre">to_arviz()</span></code> (too few particles to be a meaningful
+sample for LOO); fit with <code class="docutils literal notranslate"><span class="pre">method=&quot;mcmc&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">method=&quot;vi&quot;</span></code> for comparison.</p>
+</section>
 </section>
 <section id="batched-loss">
 <h2>Batched loss<a class="headerlink" href="#batched-loss" title="Link to this heading">#</a></h2>
@@ -645,15 +716,18 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </pre></div>
 </div>
 <p><strong>⚠️⚠️⚠️ <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code> + <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> do not mix. ⚠️⚠️⚠️</strong></p>
-<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> is known to have issues when your model uses <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>. If your model needs plates, either:</p>
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> does not support <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>: its <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">/</span> <span class="pre">batch_size</span></code> log-likelihood rescaling double-counts plate-subsampled sites and yields an incorrect ELBO. If your model needs plates, either:</p>
 <ol class="arabic simple">
 <li><p>Batch via <code class="docutils literal notranslate"><span class="pre">plate</span></code> and use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code>, or</p></li>
 <li><p>Remove plates and use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code>.</p></li>
 </ol>
-<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> will warn if your model has plates.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> <strong>raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code></strong> if your model contains a plate.</p>
 <section id="reparameterizing">
 <h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
 <p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparameterize</a>. BLayers helps you do this via <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code>, which automatically applies <code class="docutils literal notranslate"><span class="pre">LocScaleReparam</span></code> to all <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).</p>
+<blockquote>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">fit(method=&quot;mcmc&quot;)</span></code> already applies <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code> for you (controlled by <code class="docutils literal notranslate"><span class="pre">autoreparam_model=True</span></code>, on by default). You only need to apply the decorator yourself when driving NUTS / HMC manually, as shown below.</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
@@ -708,21 +782,28 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankBilinearLayer"><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FixedEffectsLayer"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HorseshoeLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.SpikeAndSlabLayer"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AttentionLayer"><code class="docutils literal notranslate"><span class="pre">AttentionLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.MixtureLayer"><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.hsgp_L"><code class="docutils literal notranslate"><span class="pre">hsgp_L()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HSGPLayer"><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/links.html">Links</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.student_t_link"><code class="docutils literal notranslate"><span class="pre">student_t_link()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.gamma_link"><code class="docutils literal notranslate"><span class="pre">gamma_link()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.exponential_link"><code class="docutils literal notranslate"><span class="pre">exponential_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.categorical_link"><code class="docutils literal notranslate"><span class="pre">categorical_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.poisson_link"><code class="docutils literal notranslate"><span class="pre">poisson_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.ordinal_link"><code class="docutils literal notranslate"><span class="pre">ordinal_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.zip_link"><code class="docutils literal notranslate"><span class="pre">zip_link()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.zinb_link"><code class="docutils literal notranslate"><span class="pre">zinb_link()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/links.html#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
 </li>
@@ -735,6 +816,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.Predictions"><code class="docutils literal notranslate"><span class="pre">Predictions</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.FittedModel"><code class="docutils literal notranslate"><span class="pre">FittedModel</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.fit"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/fit.html#blayers.fit.sample_prior"><code class="docutils literal notranslate"><span class="pre">sample_prior()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/decorators.html">Decorators</a><ul>
@@ -799,11 +881,16 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-and-lognormal-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code> and <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-lognormal-link-and-student-t-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-processes-hsgp">Gaussian processes (HSGP)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-priors">Mixture priors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-model-comparison-arviz">Diagnostics &amp; model comparison (ArviZ)</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-loss">Batched loss</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#reparameterizing">Reparameterizing</a></li>
 </ul>

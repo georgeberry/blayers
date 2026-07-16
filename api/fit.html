@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Fit &#8212; blayers 0.2.9 documentation</title>
+    <title>Fit &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -340,9 +340,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.mean"><code class="docutils literal notranslate"><span class="pre">Predictions.mean</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.std"><code class="docutils literal notranslate"><span class="pre">Predictions.std</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.samples"><code class="docutils literal notranslate"><span class="pre">Predictions.samples</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">Predictions.mean</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">Predictions.std</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">Predictions.samples</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.__init__"><code class="docutils literal notranslate"><span class="pre">Predictions.__init__()</span></code></a></li>
 </ul>
 </li>
@@ -353,19 +350,16 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.guide"><code class="docutils literal notranslate"><span class="pre">FittedModel.guide</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.losses"><code class="docutils literal notranslate"><span class="pre">FittedModel.losses</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.posterior_samples"><code class="docutils literal notranslate"><span class="pre">FittedModel.posterior_samples</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">FittedModel.model_fn</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">FittedModel.method</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">FittedModel.params</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">FittedModel.guide</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">FittedModel.losses</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">FittedModel.posterior_samples</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.__init__"><code class="docutils literal notranslate"><span class="pre">FittedModel.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.mcmc"><code class="docutils literal notranslate"><span class="pre">FittedModel.mcmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.num_particles"><code class="docutils literal notranslate"><span class="pre">FittedModel.num_particles</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.predict"><code class="docutils literal notranslate"><span class="pre">FittedModel.predict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.summary"><code class="docutils literal notranslate"><span class="pre">FittedModel.summary()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.__init__"><code class="docutils literal notranslate"><span class="pre">FittedModel.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.to_arviz"><code class="docutils literal notranslate"><span class="pre">FittedModel.to_arviz()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.fit"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.sample_prior"><code class="docutils literal notranslate"><span class="pre">sample_prior()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -433,51 +427,21 @@ so you never need to wrap your model manually:</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.Predictions.mean">
-<span class="sig-name descname"><span class="pre">mean</span></span><a class="headerlink" href="#blayers.fit.Predictions.mean" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#blayers.fit.Predictions.mean" title="Link to this definition">#</a></dt>
 <dd><p>Point predictions averaged over posterior samples.  Shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>jax.Array</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.Predictions.std">
-<span class="sig-name descname"><span class="pre">std</span></span><a class="headerlink" href="#blayers.fit.Predictions.std" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">std</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#blayers.fit.Predictions.std" title="Link to this definition">#</a></dt>
 <dd><p>Predictive standard deviation over posterior samples.  Shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>jax.Array</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.Predictions.samples">
-<span class="sig-name descname"><span class="pre">samples</span></span><a class="headerlink" href="#blayers.fit.Predictions.samples" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">samples</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#blayers.fit.Predictions.samples" title="Link to this definition">#</a></dt>
 <dd><p>Raw posterior predictive draws.  Shape <code class="docutils literal notranslate"><span class="pre">(num_samples,</span> <span class="pre">n,</span> <span class="pre">...)</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>jax.Array</p>
-</dd>
-</dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">mean</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">std</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">samples</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span></span><a class="headerlink" href="#id2" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.fit.Predictions.__init__">
@@ -500,7 +464,7 @@ so you never need to wrap your model manually:</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.fit.</span></span><span class="sig-name descname"><span class="pre">FittedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/fit.html#FittedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.fit.FittedModel" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.fit.</span></span><span class="sig-name descname"><span class="pre">FittedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/fit.html#FittedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.fit.FittedModel" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A fitted blayers model.</p>
 <p>Created by <a class="reference internal" href="#blayers.fit.fit" title="blayers.fit.fit"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit()</span></code></a>.  Provides <a class="reference internal" href="#blayers.fit.FittedModel.predict" title="blayers.fit.FittedModel.predict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">predict()</span></code></a> for posterior predictive
@@ -508,116 +472,88 @@ inference and <a class="reference internal" href="#blayers.fit.FittedModel.summa
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_fn</strong> (<em>Callable</em>)</p></li>
+<li><p><strong>model_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
 <li><p><strong>method</strong> (<em>str</em>)</p></li>
-<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>guide</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>losses</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>posterior_samples</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>posterior_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>mcmc</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>num_particles</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.model_fn">
-<span class="sig-name descname"><span class="pre">model_fn</span></span><a class="headerlink" href="#blayers.fit.FittedModel.model_fn" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">model_fn</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#blayers.fit.FittedModel.model_fn" title="Link to this definition">#</a></dt>
 <dd><p>The model function with any constants already bound.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Callable</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.method">
-<span class="sig-name descname"><span class="pre">method</span></span><a class="headerlink" href="#blayers.fit.FittedModel.method" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">&quot;vi&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;mcmc&quot;</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">method</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#blayers.fit.FittedModel.method" title="Link to this definition">#</a></dt>
+<dd><p>One of <code class="docutils literal notranslate"><span class="pre">&quot;vi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mcmc&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;svgd&quot;</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.params">
-<span class="sig-name descname"><span class="pre">params</span></span><a class="headerlink" href="#blayers.fit.FittedModel.params" title="Link to this definition">#</a></dt>
-<dd><p>SVI parameters (VI only).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict or None</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.params" title="Link to this definition">#</a></dt>
+<dd><p>SVI / SVGD parameters.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.guide">
-<span class="sig-name descname"><span class="pre">guide</span></span><a class="headerlink" href="#blayers.fit.FittedModel.guide" title="Link to this definition">#</a></dt>
-<dd><p>Fitted variational guide (VI only).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>AutoGuide or None</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">guide</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.guide" title="Link to this definition">#</a></dt>
+<dd><p>Fitted variational / Stein guide.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.losses">
-<span class="sig-name descname"><span class="pre">losses</span></span><a class="headerlink" href="#blayers.fit.FittedModel.losses" title="Link to this definition">#</a></dt>
-<dd><p>Per-step ELBO loss curve (VI only).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>jax.Array or None</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">losses</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.losses" title="Link to this definition">#</a></dt>
+<dd><p>Per-step loss curve (VI / SVGD).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.posterior_samples">
-<span class="sig-name descname"><span class="pre">posterior_samples</span></span><a class="headerlink" href="#blayers.fit.FittedModel.posterior_samples" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">posterior_samples</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.posterior_samples" title="Link to this definition">#</a></dt>
 <dd><p>MCMC posterior samples (MCMC only).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict or None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.fit.FittedModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#blayers.fit.FittedModel.__init__" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>method</strong> (<em>str</em>)</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>guide</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>losses</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>posterior_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>mcmc</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>num_particles</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id3">
-<span class="sig-name descname"><span class="pre">model_fn</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="headerlink" href="#id3" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id4">
-<span class="sig-name descname"><span class="pre">method</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#id4" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id5">
-<span class="sig-name descname"><span class="pre">params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#id5" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id6">
-<span class="sig-name descname"><span class="pre">guide</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#id6" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id7">
-<span class="sig-name descname"><span class="pre">losses</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#id7" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id8">
-<span class="sig-name descname"><span class="pre">posterior_samples</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#id8" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="blayers.fit.FittedModel.mcmc">
+<span class="sig-name descname"><span class="pre">mcmc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.mcmc" title="Link to this definition">#</a></dt>
+<dd><p>The fitted <code class="docutils literal notranslate"><span class="pre">numpyro.infer.MCMC</span></code> object (MCMC only).  Retained so
+<a class="reference internal" href="#blayers.fit.FittedModel.to_arviz" title="blayers.fit.FittedModel.to_arviz"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_arviz()</span></code></a> can hand it straight to <code class="docutils literal notranslate"><span class="pre">arviz.from_numpyro</span></code> for
+divergences, R-hat, ESS, and log-likelihood.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.num_particles">
-<span class="sig-name descname"><span class="pre">num_particles</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.num_particles" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">num_particles</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#blayers.fit.FittedModel.num_particles" title="Link to this definition">#</a></dt>
+<dd><p>Number of Stein particles (SVGD only).</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.fit.FittedModel.predict">
@@ -628,7 +564,9 @@ inference and <a class="reference internal" href="#blayers.fit.FittedModel.summa
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_samples</strong> (<em>int</em>) – Number of posterior samples to draw.  For VI this controls the
 guide; for MCMC all posterior samples are used regardless.</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – Random seed for the predictive distribution.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for the predictive distribution.  Fixed by default, so
+repeated calls return identical draws — vary it to see Monte Carlo
+variability (identical reruns are not method determinism).</p></li>
 <li><p><strong>**data</strong> – Model inputs <strong>excluding</strong> <code class="docutils literal notranslate"><span class="pre">y</span></code>.  Constants that were auto-bound
 during <a class="reference internal" href="#blayers.fit.fit" title="blayers.fit.fit"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit()</span></code></a> should <em>not</em> be passed again.</p></li>
 </ul>
@@ -637,6 +575,12 @@ during <a class="reference internal" href="#blayers.fit.fit" title="blayers.fit.
 <dd class="field-even"><p><a class="reference internal" href="#blayers.fit.Predictions" title="blayers.fit.Predictions">Predictions</a></p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">.mean</span></code> / <code class="docutils literal notranslate"><span class="pre">.std</span></code> assume a continuous outcome.  For the
+classification / discrete links (<code class="docutils literal notranslate"><span class="pre">logit_link</span></code>, <code class="docutils literal notranslate"><span class="pre">categorical_link</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ordinal_link</span></code>, count links) the label mean is not meaningful — work
+from <code class="docutils literal notranslate"><span class="pre">.samples</span></code> instead (e.g. per-observation modal class, or class
+probabilities via <code class="docutils literal notranslate"><span class="pre">(samples</span> <span class="pre">==</span> <span class="pre">k).mean(axis=0)</span></code>).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -647,7 +591,8 @@ during <a class="reference internal" href="#blayers.fit.fit" title="blayers.fit.
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_samples</strong> (<em>int</em>) – Samples to draw from the guide (VI only; ignored for MCMC).</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – Random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed.  Fixed by default, so repeated calls return identical
+draws — vary it to see Monte Carlo variability.</p></li>
 <li><p><strong>**data</strong> – Model inputs (excluding <code class="docutils literal notranslate"><span class="pre">y</span></code>) needed so the guide can determine
 parameter shapes.  Required for VI; ignored for MCMC.</p></li>
 </ul>
@@ -663,24 +608,45 @@ parameter shapes.  Required for VI; ignored for MCMC.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="blayers.fit.FittedModel.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guide</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">losses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#blayers.fit.FittedModel.__init__" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="blayers.fit.FittedModel.to_arviz">
+<span class="sig-name descname"><span class="pre">to_arviz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/fit.html#FittedModel.to_arviz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.fit.FittedModel.to_arviz" title="Link to this definition">#</a></dt>
+<dd><p>Convert the fit to an ArviZ <code class="docutils literal notranslate"><span class="pre">InferenceData</span></code>.</p>
+<p>Reuses NumPyro’s own ArviZ bridge rather than reimplementing
+diagnostics:</p>
+<ul class="simple">
+<li><p><strong>MCMC</strong> — delegates to <code class="docutils literal notranslate"><span class="pre">arviz.from_numpyro(mcmc)</span></code>, which carries
+over posterior draws, sample stats (divergences), and
+per-observation log-likelihood.  <code class="docutils literal notranslate"><span class="pre">y</span></code> / <code class="docutils literal notranslate"><span class="pre">**data</span></code> are ignored
+(already baked into the completed MCMC run).</p></li>
+<li><p><strong>VI</strong> — draws from the fitted guide, computes per-observation
+log-likelihood with <code class="docutils literal notranslate"><span class="pre">numpyro.infer.log_likelihood</span></code>, and assembles
+an <code class="docutils literal notranslate"><span class="pre">InferenceData</span></code> via <code class="docutils literal notranslate"><span class="pre">arviz.from_dict</span></code>.  The observed <code class="docutils literal notranslate"><span class="pre">y</span></code>
+(and any model inputs) are required so the <code class="docutils literal notranslate"><span class="pre">log_likelihood</span></code> and
+<code class="docutils literal notranslate"><span class="pre">observed_data</span></code> groups can be built.</p></li>
+</ul>
+<p>The result plugs straight into <code class="docutils literal notranslate"><span class="pre">arviz.summary</span></code> (R-hat / ESS),
+<code class="docutils literal notranslate"><span class="pre">arviz.waic</span></code>, <code class="docutils literal notranslate"><span class="pre">arviz.loo</span></code>, and the ArviZ plotting suite — so model
+comparison is <code class="docutils literal notranslate"><span class="pre">az.compare({&quot;a&quot;:</span> <span class="pre">fit_a.to_arviz(...),</span> <span class="pre">...})</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_fn</strong> (<em>Callable</em>)</p></li>
-<li><p><strong>method</strong> (<em>str</em>)</p></li>
-<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>guide</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>losses</strong> (<em>Array</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>posterior_samples</strong> (<em>dict</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>num_particles</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>y</strong> (<em>jax.Array</em><em>, </em><em>optional</em>) – Observed target.  Required for VI (to build the <code class="docutils literal notranslate"><span class="pre">log_likelihood</span></code>
+and <code class="docutils literal notranslate"><span class="pre">observed_data</span></code> groups); ignored for MCMC.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Posterior draws to take from the guide (VI only).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed for guide sampling (VI only).</p></li>
+<li><p><strong>**data</strong> – Model inputs (e.g. <code class="docutils literal notranslate"><span class="pre">x</span></code>) needed to evaluate the model.  Ignored
+for MCMC.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dd class="field-even"><p>arviz.InferenceData</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>SVGD is not supported: its handful of Stein particles do not form a
+meaningful sample for WAIC/LOO, and its params do not map cleanly onto
+model sites.  Fit with <code class="docutils literal notranslate"><span class="pre">method=&quot;mcmc&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">method=&quot;vi&quot;</span></code> for
+ArviZ-based comparison.</p>
 </dd></dl>
 
 </dd></dl>
@@ -756,6 +722,42 @@ via <code class="docutils literal notranslate"><span class="pre">partial</span><
 </div>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.fit.sample_prior">
+<span class="sig-prename descclassname"><span class="pre">blayers.fit.</span></span><span class="sig-name descname"><span class="pre">sample_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/fit.html#sample_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.fit.sample_prior" title="Link to this definition">#</a></dt>
+<dd><p>Draw from a model’s prior (and prior predictive) <em>before</em> fitting.</p>
+<p>Runs the model with no observed <code class="docutils literal notranslate"><span class="pre">y</span></code>, so every latent site and the
+<code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code> site are sampled straight from the prior.  Use it to sanity-check
+that your priors imply sensible outcomes — the core of the “tweak priors as
+you wish” workflow — before committing to inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_fn</strong> (<em>Callable</em>) – A blayers / NumPyro model.  Pass inputs the same way you would to
+<a class="reference internal" href="#blayers.fit.fit" title="blayers.fit.fit"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit()</span></code></a>, but <strong>without</strong> <code class="docutils literal notranslate"><span class="pre">y</span></code> — supplying <code class="docutils literal notranslate"><span class="pre">y</span></code> would condition the
+<code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code> site and defeat the purpose.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of prior draws (default 500).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed (default 0).</p></li>
+<li><p><strong>**data</strong> – Model inputs (e.g. <code class="docutils literal notranslate"><span class="pre">x</span></code>) and any constants, used to fix the shapes of
+the sampled sites.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">{site_name:</span> <span class="pre">array</span> <span class="pre">of</span> <span class="pre">shape</span> <span class="pre">(num_samples,</span> <span class="pre">*site_shape)}</span></code>, including
+the prior-predictive <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code> site.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prior</span> <span class="o">=</span> <span class="n">sample_prior</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prior</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>        <span class="c1"># (1000, n) prior-predictive outcomes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prior</span><span class="p">[</span><span class="s2">&quot;AdaptiveLayer_mu_beta&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>   <span class="c1"># prior mean of a latent</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
 
 
@@ -809,9 +811,6 @@ via <code class="docutils literal notranslate"><span class="pre">partial</span><
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.mean"><code class="docutils literal notranslate"><span class="pre">Predictions.mean</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.std"><code class="docutils literal notranslate"><span class="pre">Predictions.std</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.samples"><code class="docutils literal notranslate"><span class="pre">Predictions.samples</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">Predictions.mean</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">Predictions.std</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">Predictions.samples</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.Predictions.__init__"><code class="docutils literal notranslate"><span class="pre">Predictions.__init__()</span></code></a></li>
 </ul>
 </li>
@@ -822,19 +821,16 @@ via <code class="docutils literal notranslate"><span class="pre">partial</span><
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.guide"><code class="docutils literal notranslate"><span class="pre">FittedModel.guide</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.losses"><code class="docutils literal notranslate"><span class="pre">FittedModel.losses</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.posterior_samples"><code class="docutils literal notranslate"><span class="pre">FittedModel.posterior_samples</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">FittedModel.model_fn</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">FittedModel.method</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">FittedModel.params</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">FittedModel.guide</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">FittedModel.losses</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">FittedModel.posterior_samples</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.__init__"><code class="docutils literal notranslate"><span class="pre">FittedModel.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.mcmc"><code class="docutils literal notranslate"><span class="pre">FittedModel.mcmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.num_particles"><code class="docutils literal notranslate"><span class="pre">FittedModel.num_particles</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.predict"><code class="docutils literal notranslate"><span class="pre">FittedModel.predict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.summary"><code class="docutils literal notranslate"><span class="pre">FittedModel.summary()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.__init__"><code class="docutils literal notranslate"><span class="pre">FittedModel.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.FittedModel.to_arviz"><code class="docutils literal notranslate"><span class="pre">FittedModel.to_arviz()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.fit"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.fit.sample_prior"><code class="docutils literal notranslate"><span class="pre">sample_prior()</span></code></a></li>
 </ul>
   </nav></div>
 

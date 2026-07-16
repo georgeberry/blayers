@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Decorators &#8212; blayers 0.2.9 documentation</title>
+    <title>Decorators &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -353,18 +353,16 @@
 <span id="decorators"></span><h1>Decorators<a class="headerlink" href="#module-blayers.decorators" title="Link to this heading">#</a></h1>
 <p>Model decorators for blayers.</p>
 <ul class="simple">
-<li><p><cite>reshape_inputs</cite>: Auto-reshape 1D arrays to (n, 1)</p></li>
-<li><p><cite>autoreparam</cite>: Auto-reparameterize LocScale distributions for MCMC</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">autoreshape</span></code>: Auto-reshape 1D arrays to (n, 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">autoreparam</span></code>: Auto-reparameterize LocScale distributions for MCMC</p></li>
 </ul>
-<p>Usage:
-<a href="#id1"><span class="problematic" id="id2">``</span></a>`
-&#64;reshape_inputs
-&#64;autoreparam
-def my_model(x, y=None):</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@autoreshape</span>
+<span class="nd">@autoreparam</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.decorators.autoreshape">
 <span class="sig-prename descclassname"><span class="pre">blayers.decorators.</span></span><span class="sig-name descname"><span class="pre">autoreshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/decorators.html#autoreshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.decorators.autoreshape" title="Link to this definition">#</a></dt>

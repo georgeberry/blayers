@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>VI Inference &#8212; blayers 0.2.9 documentation</title>
+    <title>VI Inference &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -355,19 +355,44 @@
                   
   <section id="module-blayers.vi_infer">
 <span id="vi-inference"></span><h1>VI Inference<a class="headerlink" href="#module-blayers.vi_infer" title="Link to this heading">#</a></h1>
+<p>Variational-inference utilities for blayers.</p>
+<p>Provides <a class="reference internal" href="#blayers.vi_infer.Batched_Trace_ELBO" title="blayers.vi_infer.Batched_Trace_ELBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code></a>, a drop-in <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code> replacement
+that handles minibatching without requiring the model to use <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>,
+and <a class="reference internal" href="#blayers.vi_infer.svi_run_batched" title="blayers.vi_infer.svi_run_batched"><code class="xref py py-func docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a>, an <code class="docutils literal notranslate"><span class="pre">svi.run</span></code>-style helper that drives it.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> + <code class="docutils literal notranslate"><span class="pre">svi_run_batched</span></code> for plate-free batched VI;
+fall back to standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code> if your model already uses plates.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="blayers.vi_infer.Batched_Trace_ELBO">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.vi_infer.</span></span><span class="sig-name descname"><span class="pre">Batched_Trace_ELBO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/vi_infer.html#Batched_Trace_ELBO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.vi_infer.Batched_Trace_ELBO" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ELBO</span></code></p>
+<p>ELBO estimator for minibatched VI without <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>.</p>
+<p>Behaves like <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code> but rescales the per-batch log-likelihood by
+<code class="docutils literal notranslate"><span class="pre">num_obs</span> <span class="pre">/</span> <span class="pre">batch_size</span></code> so the gradient is an unbiased estimate of the
+full-dataset ELBO.  Drive it with <a class="reference internal" href="#blayers.vi_infer.svi_run_batched" title="blayers.vi_infer.svi_run_batched"><code class="xref py py-func docutils literal notranslate"><span class="pre">svi_run_batched()</span></code></a>.</p>
+<p><strong>Assumes all latent variables are global.</strong>  The whole observed
+log-likelihood is scaled by <code class="docutils literal notranslate"><span class="pre">num_obs</span> <span class="pre">/</span> <span class="pre">batch_size</span></code> and the KL over
+latents is <em>not</em> rescaled, which is only correct when every latent is
+shared across observations (the usual case for BLayers: coefficients,
+scales, embeddings).  Models with <strong>per-observation (local) latents</strong> —
+e.g. a latent variable sampled once per row — are <strong>not supported</strong> here;
+use <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code> with the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_obs</strong> (<em>int</em>)</p></li>
-<li><p><strong>num_particles</strong> (<em>int</em>)</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>num_obs</strong> (<em>int</em>) – Total number of observations in the full training set.</p></li>
+<li><p><strong>num_particles</strong> (<em>int</em>) – Number of Monte Carlo samples per gradient step.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Minibatch size.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, inferred from the leading
+dimension of the first batched kwarg at loss-evaluation time.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Does not mix with <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>.  A <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is raised if a
+plate is detected in the model trace — the <code class="docutils literal notranslate"><span class="pre">num_obs</span> <span class="pre">/</span> <span class="pre">batch_size</span></code>
+rescaling double-counts plate-subsampled sites, so the ELBO would be
+silently wrong.  Use the standard <code class="docutils literal notranslate"><span class="pre">Trace_ELBO</span></code> with plates instead.</p>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="blayers.vi_infer.Batched_Trace_ELBO.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_particles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/vi_infer.html#Batched_Trace_ELBO.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.vi_infer.Batched_Trace_ELBO.__init__" title="Link to this definition">#</a></dt>
@@ -389,7 +414,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rng_key</strong> (<em>jax.random.PRNGKey</em>) – random number generator seed.</p></li>
+<li><p><strong>rng_key</strong> (<em>jax.random.key</em>) – random number generator seed.</p></li>
 <li><p><strong>param_map</strong> (<em>dict</em>) – dictionary of current parameter values keyed by site
 name.</p></li>
 <li><p><strong>model</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – Python callable with NumPyro primitives for the model.</p></li>
@@ -442,7 +467,7 @@ during the course of fitting).</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
 <li><p><strong>num_steps</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>num_epochs</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+<li><p><strong>data</strong> (<em>Array</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

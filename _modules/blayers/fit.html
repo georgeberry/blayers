@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.fit &#8212; blayers 0.2.9 documentation</title>
+    <title>blayers.fit &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../../_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -312,13 +312,20 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span><span class="p">,</span> <span class="n">SVI</span><span class="p">,</span> <span class="n">Predictive</span><span class="p">,</span> <span class="n">Trace_ELBO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MCMC</span><span class="p">,</span>
+    <span class="n">NUTS</span><span class="p">,</span>
+    <span class="n">SVI</span><span class="p">,</span>
+    <span class="n">Predictive</span><span class="p">,</span>
+    <span class="n">Trace_ELBO</span><span class="p">,</span>
+    <span class="n">log_likelihood</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.autoguide</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDiagonalNormal</span><span class="p">,</span> <span class="n">AutoGuide</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.vi_infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batched_Trace_ELBO</span><span class="p">,</span> <span class="n">svi_run_batched</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreparam</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.vi_infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batched_Trace_ELBO</span><span class="p">,</span> <span class="n">svi_run_batched</span>
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Helpers</span>
@@ -347,6 +354,24 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">constants</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">constants</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_datatree_to_numpy</span><span class="p">(</span><span class="n">idata</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerce every variable in an ArviZ ``DataTree`` to a NumPy array.</span>
+
+<span class="sd">    ``arviz.from_numpyro`` stores JAX-backed arrays; arviz-stats routines such</span>
+<span class="sd">    as PSIS-LOO mutate arrays in place, which raises on immutable JAX arrays.</span>
+<span class="sd">    Re-backing each variable with ``np.asarray`` sidesteps that.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_to_numpy</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ds</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">idata</span><span class="o">.</span><span class="n">map_over_datasets</span><span class="p">(</span><span class="n">_to_numpy</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_schedule</span><span class="p">(</span>
@@ -382,21 +407,16 @@
 <a class="viewcode-back" href="../../api/fit.html#blayers.fit.Predictions">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Predictions</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Posterior predictive output from :meth:`FittedModel.predict`.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    mean : jax.Array</span>
-<span class="sd">        Point predictions averaged over posterior samples.  Shape ``(n,)``.</span>
-<span class="sd">    std : jax.Array</span>
-<span class="sd">        Predictive standard deviation over posterior samples.  Shape ``(n,)``.</span>
-<span class="sd">    samples : jax.Array</span>
-<span class="sd">        Raw posterior predictive draws.  Shape ``(num_samples, n, ...)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Posterior predictive output from :meth:`FittedModel.predict`.&quot;&quot;&quot;</span>
 
     <span class="n">mean</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Point predictions averaged over posterior samples.  Shape ``(n,)``.&quot;&quot;&quot;</span>
+
     <span class="n">std</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="n">samples</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Predictive standard deviation over posterior samples.  Shape ``(n,)``.&quot;&quot;&quot;</span>
+
+    <span class="n">samples</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw posterior predictive draws.  Shape ``(num_samples, n, ...)``.&quot;&quot;&quot;</span></div>
 
 
 
@@ -408,33 +428,36 @@
 
 <span class="sd">    Created by :func:`fit`.  Provides :meth:`predict` for posterior predictive</span>
 <span class="sd">    inference and :meth:`summary` for inspecting latent variable posteriors.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    model_fn : Callable</span>
-<span class="sd">        The model function with any constants already bound.</span>
-<span class="sd">    method : str</span>
-<span class="sd">        ``&quot;vi&quot;`` or ``&quot;mcmc&quot;``.</span>
-<span class="sd">    params : dict or None</span>
-<span class="sd">        SVI parameters (VI only).</span>
-<span class="sd">    guide : AutoGuide or None</span>
-<span class="sd">        Fitted variational guide (VI only).</span>
-<span class="sd">    losses : jax.Array or None</span>
-<span class="sd">        Per-step ELBO loss curve (VI only).</span>
-<span class="sd">    posterior_samples : dict or None</span>
-<span class="sd">        MCMC posterior samples (MCMC only).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The model function with any constants already bound.&quot;&quot;&quot;</span>
+
     <span class="n">method</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One of ``&quot;vi&quot;``, ``&quot;mcmc&quot;``, or ``&quot;svgd&quot;``.&quot;&quot;&quot;</span>
+
     <span class="c1"># VI / SVGD</span>
-    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SVI / SVGD parameters.&quot;&quot;&quot;</span>
+
     <span class="n">guide</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fitted variational / Stein guide.&quot;&quot;&quot;</span>
+
     <span class="n">losses</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-step loss curve (VI / SVGD).&quot;&quot;&quot;</span>
+
     <span class="c1"># MCMC</span>
-    <span class="n">posterior_samples</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">posterior_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MCMC posterior samples (MCMC only).&quot;&quot;&quot;</span>
+
+    <span class="n">mcmc</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fitted ``numpyro.infer.MCMC`` object (MCMC only).  Retained so</span>
+<span class="sd">    :meth:`to_arviz` can hand it straight to ``arviz.from_numpyro`` for</span>
+<span class="sd">    divergences, R-hat, ESS, and log-likelihood.&quot;&quot;&quot;</span>
+
     <span class="c1"># SVGD</span>
     <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of Stein particles (SVGD only).&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="FittedModel.predict">
 <a class="viewcode-back" href="../../api/fit.html#blayers.fit.FittedModel.predict">[docs]</a>
@@ -453,7 +476,9 @@
 <span class="sd">            Number of posterior samples to draw.  For VI this controls the</span>
 <span class="sd">            guide; for MCMC all posterior samples are used regardless.</span>
 <span class="sd">        seed : int</span>
-<span class="sd">            Random seed for the predictive distribution.</span>
+<span class="sd">            Random seed for the predictive distribution.  Fixed by default, so</span>
+<span class="sd">            repeated calls return identical draws — vary it to see Monte Carlo</span>
+<span class="sd">            variability (identical reruns are not method determinism).</span>
 <span class="sd">        **data</span>
 <span class="sd">            Model inputs **excluding** ``y``.  Constants that were auto-bound</span>
 <span class="sd">            during :func:`fit` should *not* be passed again.</span>
@@ -461,6 +486,14 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Predictions</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        ``.mean`` / ``.std`` assume a continuous outcome.  For the</span>
+<span class="sd">        classification / discrete links (``logit_link``, ``categorical_link``,</span>
+<span class="sd">        ``ordinal_link``, count links) the label mean is not meaningful — work</span>
+<span class="sd">        from ``.samples`` instead (e.g. per-observation modal class, or class</span>
+<span class="sd">        probabilities via ``(samples == k).mean(axis=0)``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
 
@@ -518,7 +551,8 @@
 <span class="sd">        num_samples : int</span>
 <span class="sd">            Samples to draw from the guide (VI only; ignored for MCMC).</span>
 <span class="sd">        seed : int</span>
-<span class="sd">            Random seed.</span>
+<span class="sd">            Random seed.  Fixed by default, so repeated calls return identical</span>
+<span class="sd">            draws — vary it to see Monte Carlo variability.</span>
 <span class="sd">        **data</span>
 <span class="sd">            Model inputs (excluding ``y``) needed so the guide can determine</span>
 <span class="sd">            parameter shapes.  Required for VI; ignored for MCMC.</span>
@@ -565,6 +599,120 @@
                 <span class="s2">&quot;shape&quot;</span><span class="p">:</span> <span class="n">vals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
             <span class="p">}</span>
         <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="FittedModel.to_arviz">
+<a class="viewcode-back" href="../../api/fit.html#blayers.fit.FittedModel.to_arviz">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_arviz</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the fit to an ArviZ ``InferenceData``.</span>
+
+<span class="sd">        Reuses NumPyro&#39;s own ArviZ bridge rather than reimplementing</span>
+<span class="sd">        diagnostics:</span>
+
+<span class="sd">        * **MCMC** — delegates to ``arviz.from_numpyro(mcmc)``, which carries</span>
+<span class="sd">          over posterior draws, sample stats (divergences), and</span>
+<span class="sd">          per-observation log-likelihood.  ``y`` / ``**data`` are ignored</span>
+<span class="sd">          (already baked into the completed MCMC run).</span>
+<span class="sd">        * **VI** — draws from the fitted guide, computes per-observation</span>
+<span class="sd">          log-likelihood with ``numpyro.infer.log_likelihood``, and assembles</span>
+<span class="sd">          an ``InferenceData`` via ``arviz.from_dict``.  The observed ``y``</span>
+<span class="sd">          (and any model inputs) are required so the ``log_likelihood`` and</span>
+<span class="sd">          ``observed_data`` groups can be built.</span>
+
+<span class="sd">        The result plugs straight into ``arviz.summary`` (R-hat / ESS),</span>
+<span class="sd">        ``arviz.waic``, ``arviz.loo``, and the ArviZ plotting suite — so model</span>
+<span class="sd">        comparison is ``az.compare({&quot;a&quot;: fit_a.to_arviz(...), ...})``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y : jax.Array, optional</span>
+<span class="sd">            Observed target.  Required for VI (to build the ``log_likelihood``</span>
+<span class="sd">            and ``observed_data`` groups); ignored for MCMC.</span>
+<span class="sd">        num_samples : int</span>
+<span class="sd">            Posterior draws to take from the guide (VI only).</span>
+<span class="sd">        seed : int</span>
+<span class="sd">            Random seed for guide sampling (VI only).</span>
+<span class="sd">        **data</span>
+<span class="sd">            Model inputs (e.g. ``x``) needed to evaluate the model.  Ignored</span>
+<span class="sd">            for MCMC.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        arviz.InferenceData</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        SVGD is not supported: its handful of Stein particles do not form a</span>
+<span class="sd">        meaningful sample for WAIC/LOO, and its params do not map cleanly onto</span>
+<span class="sd">        model sites.  Fit with ``method=&quot;mcmc&quot;`` or ``method=&quot;vi&quot;`` for</span>
+<span class="sd">        ArviZ-based comparison.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;to_arviz() requires arviz. Install it with &quot;</span>
+                <span class="s2">&quot;`pip install arviz` or `pip install blayers[arviz]`.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;mcmc&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcmc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;MCMC results missing the mcmc object&quot;</span><span class="p">)</span>
+            <span class="c1"># log_likelihood defaults to False in arviz &gt;= 1.0; request it so</span>
+            <span class="c1"># az.loo / az.compare work.  R-hat needs &gt;= 2 chains (num_chains).</span>
+            <span class="n">idata</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">from_numpyro</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mcmc</span><span class="p">,</span> <span class="n">log_likelihood</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># from_numpyro stores JAX-backed arrays; arviz-stats (PSIS-LOO)</span>
+            <span class="c1"># does in-place assignment, which fails on immutable JAX arrays.</span>
+            <span class="k">return</span> <span class="n">_datatree_to_numpy</span><span class="p">(</span><span class="n">idata</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;svgd&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;to_arviz() does not support SVGD; refit with method=&#39;mcmc&#39; &quot;</span>
+                <span class="s2">&quot;or method=&#39;vi&#39; for ArviZ diagnostics and model comparison.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;vi&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown method </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># VI: build InferenceData from guide draws + per-obs log-likelihood.</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;to_arviz() needs the observed `y` for VI to build the &quot;</span>
+                <span class="s2">&quot;log_likelihood and observed_data groups.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">guide</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;VI results missing guide or params&quot;</span><span class="p">)</span>
+
+        <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">latent</span> <span class="o">=</span> <span class="n">Predictive</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">guide</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span>
+        <span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="c1"># Keep only latent sample sites (a guide should not emit &quot;obs&quot;, but be</span>
+        <span class="c1"># defensive in case a custom guide does).</span>
+        <span class="n">latent</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">latent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;obs&quot;</span><span class="p">}</span>
+
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">latent</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># ArviZ expects (chain, draw, *shape); treat the draws as one chain.</span>
+        <span class="c1"># Cast to NumPy: arviz-stats (PSIS-LOO) does in-place assignment, which</span>
+        <span class="c1"># fails on immutable JAX arrays.</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">latent</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">log_lik</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ll</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">return</span> <span class="n">az</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;posterior&quot;</span><span class="p">:</span> <span class="n">posterior</span><span class="p">,</span>
+                <span class="s2">&quot;log_likelihood&quot;</span><span class="p">:</span> <span class="n">log_lik</span><span class="p">,</span>
+                <span class="s2">&quot;observed_data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;obs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)},</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -577,7 +725,7 @@
 <div class="viewcode-block" id="fit">
 <a class="viewcode-back" href="../../api/fit.html#blayers.fit.fit">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
-    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;vi&quot;</span><span class="p">,</span> <span class="s2">&quot;mcmc&quot;</span><span class="p">,</span> <span class="s2">&quot;svgd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;vi&quot;</span><span class="p">,</span>
@@ -693,7 +841,11 @@
     <span class="c1"># ------------------------------------------------------------------ #</span>
     <span class="n">data</span><span class="p">,</span> <span class="n">constants</span> <span class="o">=</span> <span class="n">_split_data_and_constants</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="n">bound_model</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">constants</span><span class="p">)</span> <span class="k">if</span> <span class="n">constants</span> <span class="k">else</span> <span class="n">model_fn</span>
+    <span class="n">bound_model</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">constants</span><span class="p">:</span>
+        <span class="n">bound_model</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">constants</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bound_model</span> <span class="o">=</span> <span class="n">model_fn</span>
 
     <span class="n">data</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
     <span class="n">n_obs</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -731,6 +883,7 @@
                 <span class="s2">&quot;Provide exactly one of num_epochs or num_steps, not both (or neither).&quot;</span>
             <span class="p">)</span>
         <span class="n">total_steps</span> <span class="o">=</span> <span class="n">num_epochs</span> <span class="k">if</span> <span class="n">num_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">num_steps</span>
+        <span class="k">assert</span> <span class="n">total_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># guaranteed by check above</span>
 
         <span class="k">return</span> <span class="n">_fit_svgd</span><span class="p">(</span>
             <span class="n">bound_model</span><span class="p">,</span>
@@ -748,13 +901,67 @@
 
 
 
+<div class="viewcode-block" id="sample_prior">
+<a class="viewcode-back" href="../../api/fit.html#blayers.fit.sample_prior">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_prior</span><span class="p">(</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw from a model&#39;s prior (and prior predictive) *before* fitting.</span>
+
+<span class="sd">    Runs the model with no observed ``y``, so every latent site and the</span>
+<span class="sd">    ``&quot;obs&quot;`` site are sampled straight from the prior.  Use it to sanity-check</span>
+<span class="sd">    that your priors imply sensible outcomes — the core of the &quot;tweak priors as</span>
+<span class="sd">    you wish&quot; workflow — before committing to inference.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model_fn : Callable</span>
+<span class="sd">        A blayers / NumPyro model.  Pass inputs the same way you would to</span>
+<span class="sd">        :func:`fit`, but **without** ``y`` — supplying ``y`` would condition the</span>
+<span class="sd">        ``&quot;obs&quot;`` site and defeat the purpose.</span>
+<span class="sd">    num_samples : int</span>
+<span class="sd">        Number of prior draws (default 500).</span>
+<span class="sd">    seed : int</span>
+<span class="sd">        Random seed (default 0).</span>
+<span class="sd">    **data</span>
+<span class="sd">        Model inputs (e.g. ``x``) and any constants, used to fix the shapes of</span>
+<span class="sd">        the sampled sites.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        ``{site_name: array of shape (num_samples, *site_shape)}``, including</span>
+<span class="sd">        the prior-predictive ``&quot;obs&quot;`` site.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; prior = sample_prior(model, x=x_train, num_samples=1000)</span>
+<span class="sd">    &gt;&gt;&gt; prior[&quot;obs&quot;].shape        # (1000, n) prior-predictive outcomes</span>
+<span class="sd">    &gt;&gt;&gt; prior[&quot;AdaptiveLayer_mu_beta&quot;].mean(axis=0)   # prior mean of a latent</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;sample_prior() draws from the prior predictive; do not pass `y` &quot;</span>
+            <span class="s2">&quot;(it would condition the obs site). Pass only model inputs.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">predictive</span> <span class="o">=</span> <span class="n">Predictive</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictive</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">samples</span></div>
+
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># VI</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fit_vi</span><span class="p">(</span>
-    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
     <span class="n">n_obs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -775,17 +982,18 @@
         <span class="p">)</span>
 
     <span class="c1"># ---- Compute total gradient steps (needed for LR schedule) ----</span>
-    <span class="n">batched</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-
-    <span class="k">if</span> <span class="n">batched</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">steps_per_epoch</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_obs</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">batch_size</span>
         <span class="n">total_steps</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">steps_per_epoch</span> <span class="o">*</span> <span class="n">num_epochs</span> <span class="k">if</span> <span class="n">num_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">num_steps</span>
+            <span class="n">steps_per_epoch</span> <span class="o">*</span> <span class="n">num_epochs</span>
+            <span class="k">if</span> <span class="n">num_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">num_steps</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Without batching each gradient step sees the full dataset,</span>
         <span class="c1"># so one step ≡ one epoch.</span>
         <span class="n">total_steps</span> <span class="o">=</span> <span class="n">num_epochs</span> <span class="k">if</span> <span class="n">num_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">num_steps</span>
+    <span class="k">assert</span> <span class="n">total_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># guaranteed by the epoch/steps check above</span>
 
     <span class="c1"># ---- Guide ----</span>
     <span class="k">if</span> <span class="n">guide</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -804,7 +1012,8 @@
         <span class="n">opt</span> <span class="o">=</span> <span class="n">optimizer</span>
 
     <span class="c1"># ---- Loss ----</span>
-    <span class="k">if</span> <span class="n">batched</span><span class="p">:</span>
+    <span class="n">loss</span><span class="p">:</span> <span class="n">Batched_Trace_ELBO</span> <span class="o">|</span> <span class="n">Trace_ELBO</span>
+    <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="n">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">num_obs</span><span class="o">=</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="n">Trace_ELBO</span><span class="p">()</span>
@@ -812,7 +1021,7 @@
     <span class="c1"># ---- Run SVI ----</span>
     <span class="n">svi</span> <span class="o">=</span> <span class="n">SVI</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">guide_instance</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">batched</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">svi_run_batched</span><span class="p">(</span>
             <span class="n">svi</span><span class="p">,</span>
             <span class="n">rng_key</span><span class="p">,</span>
@@ -839,7 +1048,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fit_mcmc</span><span class="p">(</span>
-    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
     <span class="n">num_warmup</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -866,6 +1075,7 @@
         <span class="n">model_fn</span><span class="o">=</span><span class="n">model_fn</span><span class="p">,</span>
         <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mcmc&quot;</span><span class="p">,</span>
         <span class="n">posterior_samples</span><span class="o">=</span><span class="n">mcmc</span><span class="o">.</span><span class="n">get_samples</span><span class="p">(),</span>
+        <span class="n">mcmc</span><span class="o">=</span><span class="n">mcmc</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -875,7 +1085,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fit_svgd</span><span class="p">(</span>
-    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
     <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

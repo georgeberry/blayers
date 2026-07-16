@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Links &#8212; blayers 0.2.9 documentation</title>
+    <title>Links &#8212; blayers 0.3.2 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=1b33a64c"></script>
+    <script src="../_static/documentation_options.js?v=2f2e10e9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -126,7 +126,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.2.9 documentation</p>
+    <p class="title logo__title">blayers 0.3.2 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -340,11 +340,15 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.student_t_link"><code class="docutils literal notranslate"><span class="pre">student_t_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gamma_link"><code class="docutils literal notranslate"><span class="pre">gamma_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.exponential_link"><code class="docutils literal notranslate"><span class="pre">exponential_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.categorical_link"><code class="docutils literal notranslate"><span class="pre">categorical_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poisson_link"><code class="docutils literal notranslate"><span class="pre">poisson_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.ordinal_link"><code class="docutils literal notranslate"><span class="pre">ordinal_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zip_link"><code class="docutils literal notranslate"><span class="pre">zip_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zinb_link"><code class="docutils literal notranslate"><span class="pre">zinb_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
             </nav>
@@ -380,11 +384,15 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>          — Normal likelihood, configurable sigma prior</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>         — LogNormal likelihood, configurable sigma prior</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">student_t_link</span></code>         — StudentT likelihood for robust regression (default df=4)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code>             — Bernoulli likelihood</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma_link</span></code>             — Gamma likelihood (log link) for positive continuous data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exponential_link</span></code>       — Exponential likelihood (log link) for positive / survival data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logit_link</span></code>             — Bernoulli likelihood (binary)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categorical_link</span></code>       — Categorical / softmax likelihood (multiclass)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">poisson_link</span></code>           — Poisson likelihood</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">negative_binomial_link</span></code> — NegativeBinomial2 likelihood, learned concentration</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ordinal_link</span></code>           — Ordinal (cumulative logit / proportional odds)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">zip_link</span></code>               — Zero-inflated Poisson</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zinb_link</span></code>              — Zero-inflated NegativeBinomial2 (overdispersed counts)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta_link</span></code>              — Beta regression for proportions in (0, 1)</p></li>
 </ul>
 <dl class="py function">
@@ -399,10 +407,11 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>y_hat</strong> (<em>Array</em>) – Predicted mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
 <li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed values, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for prior predictive / inference.</p></li>
-<li><p><strong>sigma_dist</strong> – Prior distribution class for sigma. Default <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
-<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">1.0}</span></code>.</p></li>
+<li><p><strong>sigma_dist</strong> (<em>Any</em>) – Prior distribution class for sigma. Default <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
+<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">1.0}</span></code>.</p></li>
 <li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive standard deviation. Scalar or broadcastable array.</p></li>
 <li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded array transformed via <code class="docutils literal notranslate"><span class="pre">softplus</span></code> internally.</p></li>
+<li><p><strong>obs_dist</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -440,10 +449,11 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>y_hat</strong> (<em>Array</em>) – Log-scale predicted mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
 <li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed positive values, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>sigma_dist</strong> – Prior distribution class for sigma. Default <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
-<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">1.0}</span></code>.</p></li>
+<li><p><strong>sigma_dist</strong> (<em>Any</em>) – Prior distribution class for sigma. Default <code class="docutils literal notranslate"><span class="pre">Exponential</span></code>.</p></li>
+<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>. Default <code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">1.0}</span></code>.</p></li>
 <li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive standard deviation.</p></li>
 <li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded array transformed via <code class="docutils literal notranslate"><span class="pre">softplus</span></code> internally.</p></li>
+<li><p><strong>obs_dist</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -471,10 +481,62 @@ driving the fit.  Default <code class="docutils literal notranslate"><span class
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>y_hat</strong> (<em>Array</em>) – Predicted location, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
 <li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed values, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>sigma_dist</strong> – Prior for scale. Default <code class="docutils literal notranslate"><span class="pre">Exponential(rate=1.0)</span></code>.</p></li>
-<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>.</p></li>
+<li><p><strong>sigma_dist</strong> (<em>Any</em>) – Prior for scale. Default <code class="docutils literal notranslate"><span class="pre">Exponential(rate=1.0)</span></code>.</p></li>
+<li><p><strong>sigma_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">sigma_dist</span></code>.</p></li>
 <li><p><strong>scale</strong> (<em>float</em><em> | </em><em>Array</em><em> | </em><em>None</em>) – Known positive scale.</p></li>
 <li><p><strong>untransformed_scale</strong> (<em>Array</em><em> | </em><em>None</em>) – Unbounded scale transformed via softplus internally.</p></li>
+<li><p><strong>obs_dist</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.gamma_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">gamma_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#gamma_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.gamma_link" title="Link to this definition">#</a></dt>
+<dd><p>Gamma likelihood (log link) for positive continuous data.</p>
+<p>Uses a mean parameterisation with a learned shape <code class="docutils literal notranslate"><span class="pre">k</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[\mu = \exp(\hat{y}), \quad
+k \sim \mathrm{Exponential}(\text{rate}), \quad
+y \sim \mathrm{Gamma}(k,\; k / \mu)\]</div>
+<p>so <code class="docutils literal notranslate"><span class="pre">E[y]</span> <span class="pre">=</span> <span class="pre">mu</span></code> and <code class="docutils literal notranslate"><span class="pre">Var[y]</span> <span class="pre">=</span> <span class="pre">mu^2</span> <span class="pre">/</span> <span class="pre">k</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>) – Log mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed positive values, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>rate</strong> (<em>float</em>) – Rate of the <code class="docutils literal notranslate"><span class="pre">Exponential</span></code> prior on the shape <code class="docutils literal notranslate"><span class="pre">k</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.exponential_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">exponential_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#exponential_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.exponential_link" title="Link to this definition">#</a></dt>
+<dd><p>Exponential likelihood (log link) for positive continuous / survival data.</p>
+<div class="math notranslate nohighlight">
+\[\mu = \exp(\hat{y}), \quad y \sim \mathrm{Exponential}(1 / \mu)\]</div>
+<p>A single-parameter special case of <a class="reference internal" href="#blayers.links.gamma_link" title="blayers.links.gamma_link"><code class="xref py py-func docutils literal notranslate"><span class="pre">gamma_link()</span></code></a> (shape fixed at 1);
+the mean fully determines the variance (<code class="docutils literal notranslate"><span class="pre">Var[y]</span> <span class="pre">=</span> <span class="pre">mu^2</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_hat</strong> (<em>Array</em>) – Log mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Observed positive values, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -504,6 +566,43 @@ driving the fit.  Default <code class="docutils literal notranslate"><span class
 <dd class="field-odd"><p><em>Array</em></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.categorical_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">categorical_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#categorical_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.categorical_link" title="Link to this definition">#</a></dt>
+<dd><p>Categorical (softmax) likelihood for multiclass classification.</p>
+<p>The multiclass generalisation of <a class="reference internal" href="#blayers.links.logit_link" title="blayers.links.logit_link"><code class="xref py py-func docutils literal notranslate"><span class="pre">logit_link()</span></code></a>.  Produce one logit per
+class with a layer’s <code class="docutils literal notranslate"><span class="pre">units</span></code> argument (<code class="docutils literal notranslate"><span class="pre">units</span> <span class="pre">=</span> <span class="pre">num_classes</span></code>); the
+number of classes is read from the trailing dimension of <code class="docutils literal notranslate"><span class="pre">logits</span></code>.</p>
+<div class="math notranslate nohighlight">
+\[P(Y = k \mid \text{logits}) = \mathrm{softmax}(\text{logits})_k\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logits</strong> (<em>Array</em>) – Unnormalised class scores of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">num_classes)</span></code> — e.g.
+<code class="docutils literal notranslate"><span class="pre">AdaptiveLayer()(&quot;beta&quot;,</span> <span class="pre">x,</span> <span class="pre">units=K)</span></code>.  A trailing singleton
+(<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">num_classes,</span> <span class="pre">1)</span></code>) is squeezed automatically.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Integer class labels in <code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">...,</span> <span class="pre">num_classes</span> <span class="pre">-</span> <span class="pre">1}</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+for prior predictive / inference.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code> with integer values in <code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">…,</span> <span class="pre">num_classes-1}</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">categorical_link</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>   <span class="c1"># 4 classes</span>
+    <span class="k">return</span> <span class="n">categorical_link</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -549,7 +648,7 @@ driving the fit.  Default <code class="docutils literal notranslate"><span class
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.links.ordinal_link">
-<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">ordinal_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#ordinal_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.ordinal_link" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">ordinal_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#ordinal_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.ordinal_link" title="Link to this definition">#</a></dt>
 <dd><p>Cumulative logit (proportional odds) link for ordinal outcomes.</p>
 <p>Models P(Y = k | μ) via:</p>
 <div class="math notranslate nohighlight">
@@ -586,6 +685,35 @@ scalar learned from data.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mu</strong> (<em>Array</em>) – Log Poisson rate, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
 <li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Non-negative integer observations, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sample site <code class="docutils literal notranslate"><span class="pre">&quot;obs&quot;</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blayers.links.zinb_link">
+<span class="sig-prename descclassname"><span class="pre">blayers.links.</span></span><span class="sig-name descname"><span class="pre">zinb_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/links.html#zinb_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.links.zinb_link" title="Link to this definition">#</a></dt>
+<dd><p>Zero-inflated NegativeBinomial2 link for overdispersed counts with excess zeros.</p>
+<p>The overdispersed counterpart of <a class="reference internal" href="#blayers.links.zip_link" title="blayers.links.zip_link"><code class="xref py py-func docutils literal notranslate"><span class="pre">zip_link()</span></code></a>: a mixture that emits an
+exact 0 with probability π, and otherwise a NegativeBinomial2 count with
+<code class="docutils literal notranslate"><span class="pre">mean</span> <span class="pre">=</span> <span class="pre">exp(μ)</span></code> and a learned concentration (so the non-zero part can be
+more dispersed than Poisson).</p>
+<div class="math notranslate nohighlight">
+\[\text{gate} \sim \mathrm{Beta}(1, 10), \quad
+\phi \sim \mathrm{Exponential}(\text{rate}), \quad
+y \sim \mathrm{ZINB}(\exp(\mu),\; \phi,\; \text{gate})\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>Array</em>) – Log mean, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
+<li><p><strong>y</strong> (<em>Array</em><em> | </em><em>None</em>) – Non-negative integer observations, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>rate</strong> (<em>float</em>) – Rate of the <code class="docutils literal notranslate"><span class="pre">Exponential</span></code> prior on the concentration.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -674,11 +802,15 @@ y \sim Beta(\bar{\mu}\,\phi,\; (1 - \bar{\mu})\,\phi)\]</div>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gaussian_link"><code class="docutils literal notranslate"><span class="pre">gaussian_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.lognormal_link"><code class="docutils literal notranslate"><span class="pre">lognormal_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.student_t_link"><code class="docutils literal notranslate"><span class="pre">student_t_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.gamma_link"><code class="docutils literal notranslate"><span class="pre">gamma_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.exponential_link"><code class="docutils literal notranslate"><span class="pre">exponential_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.logit_link"><code class="docutils literal notranslate"><span class="pre">logit_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.categorical_link"><code class="docutils literal notranslate"><span class="pre">categorical_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.poisson_link"><code class="docutils literal notranslate"><span class="pre">poisson_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.negative_binomial_link"><code class="docutils literal notranslate"><span class="pre">negative_binomial_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.ordinal_link"><code class="docutils literal notranslate"><span class="pre">ordinal_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zip_link"><code class="docutils literal notranslate"><span class="pre">zip_link()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.zinb_link"><code class="docutils literal notranslate"><span class="pre">zinb_link()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.links.beta_link"><code class="docutils literal notranslate"><span class="pre">beta_link()</span></code></a></li>
 </ul>
   </nav></div>
