@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "blayers"
-version = "0.3.1"
+version = "0.3.2"
 description = "Bayesian layers for NumPyro and Jax"
 authors = [{ name = "George Berry", email = "george.e.berry@gmail.com" }]
 readme = "README.md"
@@ -30,6 +30,7 @@ dev = [
     "arviz>=1.0",
     "pytest",
     "pytest-check",
+    "pytest-xdist",
     "mypy",
     "black",
     "isort",

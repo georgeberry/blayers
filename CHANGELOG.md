@@ -5,6 +5,24 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
+## [0.3.2]
+
+### Added
+- **GLM likelihoods**: `gamma_link` and `exponential_link` (positive
+  continuous / survival, log link) and `zinb_link` (zero-inflated
+  NegativeBinomial2 for overdispersed, zero-heavy counts).
+- **`MixtureLayer`** — coefficients from a finite mixture-of-priors (default
+  Normal + Laplace) with a `Dirichlet` or fixed mixing weight. The component
+  indicator is marginalised via `MixtureGeneral`, so the log-density is smooth
+  and works under both VI and MCMC. For robustness / elastic-net-style priors.
+- **`HSGPLayer`** — Hilbert-space approximate Gaussian process (1-D,
+  squared-exponential; Riutort-Mayol et al. 2021), a GP smoother that learns
+  its own lengthscale. Helper `hsgp_L(x)` picks the domain boundary; reuse the
+  same `L` at fit and predict time.
+
+### Development
+- CI test suite parallelized with `pytest-xdist` (`pytest -n auto`).
+
 ## [0.3.1]
 
 ### Added

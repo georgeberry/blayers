@@ -29,6 +29,7 @@ from typing import Any, Callable
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
+import numpy as np
 from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
@@ -1369,3 +1370,245 @@ class SpikeAndSlabLayer(BLayer):
 
         # Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)
         return activation(_matmul_dot_product(x, z * beta))
+
+
+# ---- Mixture priors -------------------------------------------------------- #
+
+
+class MixtureLayer(BLayer):
+    """Coefficients from a finite mixture-of-priors (e.g. Normal + Laplace).
+
+    Each coefficient is drawn from a ``K``-component mixture
+
+    .. math::
+        \\beta_j \\sim \\sum_{k=1}^{K} w_k \\, p_k(\\cdot)
+
+    where the mixing weights ``w`` are either fixed or given a ``Dirichlet``
+    prior (shared across coefficients). The component indicator is marginalised
+    analytically by :class:`numpyro.distributions.MixtureGeneral`, so the
+    log-density is smooth and works under VI *and* MCMC — unlike a discrete
+    spike-and-slab indicator.
+
+    Useful for robustness (a heavy-tailed component absorbs a few outlier
+    coefficients while the rest stay Gaussian) and elastic-net-flavoured priors
+    (Normal + Laplace). For pure sparsity prefer :class:`HorseshoeLayer`; for
+    explicit variable selection prefer :class:`SpikeAndSlabLayer`.
+    """
+
+    def __init__(
+        self,
+        component_dists: tuple[type[distributions.Distribution], ...] = (
+            distributions.Normal,
+            distributions.Laplace,
+        ),
+        component_kwargs: tuple[dict[str, float], ...] = (
+            {"loc": 0.0, "scale": 1.0},
+            {"loc": 0.0, "scale": 1.0},
+        ),
+        weights: list[float] | None = None,
+        dirichlet_concentration: float = 1.0,
+    ):
+        """
+        Args:
+            component_dists: NumPyro distribution classes, one per mixture
+                component (>= 2). All must share the same (real) support.
+            component_kwargs: Kwargs for each component distribution.
+            weights: Fixed mixing weights (one per component, summing to 1). If
+                ``None``, a ``Dirichlet`` prior is placed on the weights.
+            dirichlet_concentration: Symmetric ``Dirichlet`` concentration used
+                when ``weights`` is ``None``.
+        """
+        if len(component_dists) != len(component_kwargs):
+            raise ValueError(
+                "component_dists and component_kwargs must have the same length"
+            )
+        if len(component_dists) < 2:
+            raise ValueError("A mixture needs at least two components")
+        if weights is not None and len(weights) != len(component_dists):
+            raise ValueError("weights must have one entry per component")
+        self.component_dists = component_dists
+        self.component_kwargs = component_kwargs
+        self.weights = weights
+        self.dirichlet_concentration = dirichlet_concentration
+        try:
+            for dst, kw in zip(component_dists, component_kwargs):
+                dst(**kw)
+        except TypeError as e:
+            raise TypeError(f"Invalid distribution kwargs: {e}") from e
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: Input of shape ``(n, d)``.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        d = x.shape[1]
+        k = len(self.component_dists)
+        cls = self.__class__.__name__
+
+        if self.weights is None:
+            w = sample(
+                f"{cls}_{name}_weights",
+                distributions.Dirichlet(
+                    jnp.full(k, self.dirichlet_concentration)
+                ),
+            )
+        else:
+            w = jnp.asarray(self.weights)
+
+        probs = jnp.broadcast_to(w, (d, units, k))
+        mixing = distributions.Categorical(probs=probs)
+        components = [
+            dst(**kw).expand([d, units])
+            for dst, kw in zip(self.component_dists, self.component_kwargs)
+        ]
+        beta = sample(
+            f"{cls}_{name}_beta",
+            distributions.MixtureGeneral(mixing, components),
+        )
+        return activation(_matmul_dot_product(x, beta))
+
+
+# ---- Gaussian processes ---------------------------------------------------- #
+
+
+def hsgp_L(x: Any, c: float = 1.5) -> float:
+    """Boundary ``L = c * max(|x|)`` for the Hilbert-space GP basis.
+
+    Compute this once on the training inputs and pass the same ``L`` to
+    :class:`HSGPLayer` at both fit and predict time — the eigenfunction basis
+    is only valid on a fixed domain ``[-L, L]``. ``c`` in ~[1.2, 2.0]; larger
+    is safer near the data edges. Center ``x`` first so it straddles 0.
+    """
+    return float(c * np.max(np.abs(np.asarray(x))))
+
+
+def _hsgp_basis(x: jax.Array, L: float, m: int) -> tuple[jax.Array, jax.Array]:
+    """Laplacian eigenfunctions/eigenvalues on ``[-L, L]`` (Cox–de Boor-free).
+
+    Returns ``(phi, sqrt_lambda)`` where ``phi`` is ``(n, m)`` and
+    ``sqrt_lambda`` is ``(m,)``.
+    """
+    x_flat = x.reshape(-1)
+    j = jnp.arange(1, m + 1)
+    sqrt_lambda = j * jnp.pi / (2.0 * L)  # (m,)
+    phi = jnp.sqrt(1.0 / L) * jnp.sin(
+        sqrt_lambda[None, :] * (x_flat[:, None] + L)
+    )
+    return phi, sqrt_lambda
+
+
+def _spd_squared_exponential(
+    alpha: jax.Array, ell: jax.Array, sqrt_lambda: jax.Array
+) -> jax.Array:
+    """Spectral density of the squared-exponential kernel at ``sqrt_lambda``."""
+    return (
+        alpha**2
+        * jnp.sqrt(2.0 * jnp.pi)
+        * ell
+        * jnp.exp(-0.5 * (ell * sqrt_lambda) ** 2)
+    )
+
+
+class HSGPLayer(BLayer):
+    """Hilbert-space approximate Gaussian process (1-D, squared-exponential).
+
+    Low-rank GP of `Riutort-Mayol et al. (2020) <https://arxiv.org/abs/2004.11408>`_:
+    a stationary GP on ``[-L, L]`` is approximated with ``m`` Laplacian
+    eigenfunctions, turning the GP into a basis-function layer
+
+    .. math::
+        f(x) \\approx \\sum_{j=1}^{m} \\phi_j(x)\\, \\sqrt{S(\\sqrt{\\lambda_j})}\\, \\beta_j,
+        \\quad \\beta_j \\sim \\mathrm{Normal}(0, 1)
+
+    where ``\\phi_j`` / ``\\lambda_j`` are the eigenfunctions / eigenvalues on
+    ``[-L, L]`` and ``S`` is the squared-exponential spectral density (a
+    function of the sampled lengthscale ``ell`` and marginal std ``alpha``).
+    Sits alongside :func:`blayers.splines.bspline_basis` and
+    :class:`RandomWalkLayer` as a smoother, but learns its own lengthscale and
+    carries a proper GP interpretation.
+
+    Center / scale ``x`` so it lies within ``[-L, L]``; pick ``L`` with
+    :func:`hsgp_L` on the training data and reuse it at predict time. ``m``
+    trades accuracy for cost (~20–50 is typical); the approximation degrades
+    for lengthscales that are very short relative to the domain.
+    """
+
+    def __init__(
+        self,
+        lengthscale_dist: distributions.Distribution = distributions.InverseGamma,
+        lengthscale_kwargs: dict[str, float] = {
+            "concentration": 5.0,
+            "rate": 5.0,
+        },
+        sigma_dist: distributions.Distribution = distributions.HalfNormal,
+        sigma_kwargs: dict[str, float] = {"scale": 1.0},
+    ):
+        """
+        Args:
+            lengthscale_dist: Prior distribution class for the GP lengthscale.
+            lengthscale_kwargs: Kwargs for the lengthscale prior.
+            sigma_dist: Prior distribution class for the GP marginal std.
+            sigma_kwargs: Kwargs for the marginal-std prior.
+        """
+        self.lengthscale_dist = lengthscale_dist
+        self.lengthscale_kwargs = lengthscale_kwargs
+        self.sigma_dist = sigma_dist
+        self.sigma_kwargs = sigma_kwargs
+        try:
+            lengthscale_dist(**lengthscale_kwargs)
+            sigma_dist(**sigma_kwargs)
+        except TypeError as e:
+            raise TypeError(f"Invalid distribution kwargs: {e}") from e
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        L: float,
+        m: int,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: 1-D input of shape ``(n,)`` or ``(n, 1)`` within ``[-L, L]``.
+            L: Domain boundary (see :func:`hsgp_L`). Fixed across fit/predict.
+            m: Number of basis functions.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        cls = self.__class__.__name__
+        phi, sqrt_lambda = _hsgp_basis(x, L, m)  # (n, m), (m,)
+        ell = sample(
+            f"{cls}_{name}_lengthscale",
+            self.lengthscale_dist(**self.lengthscale_kwargs),
+        )
+        alpha = sample(
+            f"{cls}_{name}_sigma", self.sigma_dist(**self.sigma_kwargs)
+        )
+        spd = jnp.sqrt(
+            _spd_squared_exponential(alpha, ell, sqrt_lambda)
+        )  # (m,)
+        beta = sample(
+            f"{cls}_{name}_beta",
+            distributions.Normal(0.0, 1.0).expand([m, units]),
+        )
+        f = jnp.einsum("nm,mu->nu", phi, spd[:, None] * beta)
+        return activation(f)
