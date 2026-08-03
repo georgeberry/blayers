@@ -5,6 +5,24 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
+## [Unreleased]
+
+### Added
+- **`shuffle` option for batched VI** (`fit(..., shuffle=...)` /
+  `svi_run_batched`). Default `True` keeps the per-epoch reshuffle (unbiased
+  ELBO gradient). `shuffle=False` iterates fixed contiguous slices — skipping
+  the per-epoch permutation *and* the per-row gather (the no-shuffle path now
+  slices arrays directly instead of index-gathering) — which is noticeably
+  faster; use it when rows are already in random order.
+- **`model_to_latex(model, **inputs)`** — render a model's generative form (all
+  priors + the likelihood) as LaTeX by tracing it once. Hierarchy is recovered
+  automatically (a coefficient whose scale is a sampled site prints
+  `Normal(0, λ)`, not a number); the linear predictor is denoted `η_i` since its
+  deterministic assembly isn't recoverable from a trace. Returns a `str` that
+  also renders inline in Jupyter. Special-layer overrides for Horseshoe,
+  SpikeAndSlab, Mixture, and HSGP; degrades gracefully on arbitrary NumPyro
+  models.
+
 ## [0.3.2]
 
 ### Added

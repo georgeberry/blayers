@@ -9,7 +9,11 @@ from numpyro.handlers import seed, substitute, trace
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoDiagonalNormal
 
-from blayers.vi_infer import Batched_Trace_ELBO, _raise_if_has_plate
+from blayers.vi_infer import (
+    Batched_Trace_ELBO,
+    _raise_if_has_plate,
+    svi_run_batched,
+)
 
 
 def test_builtin_vs_batched_elbo_simple() -> None:
@@ -153,6 +157,41 @@ def test_no_plate_does_not_raise() -> None:
     )
 
     _raise_if_has_plate(model_trace)  # should not raise
+
+
+@pytest.mark.parametrize("shuffle", [True, False])
+def test_svi_run_batched_shuffle_option(shuffle: bool) -> None:
+    """Both shuffle settings run and return one loss per gradient step."""
+
+    def model(x: jax.Array, y: jax.Array | None = None) -> None:
+        beta = sample("beta", dist.Normal(0.0, 1.0))
+        sample("obs", dist.Normal(x.squeeze() * beta, 1.0), obs=y)
+
+    key = jax.random.PRNGKey(0)
+    n = 40
+    x = jax.random.normal(key, (n, 1))
+    y = (x.squeeze() * 2.5 + jax.random.normal(key, (n,))).astype(x.dtype)
+
+    guide = AutoDiagonalNormal(model)
+    svi = SVI(
+        model,
+        guide,
+        numpyro.optim.Adam(0.01),
+        loss=Batched_Trace_ELBO(num_obs=n, batch_size=10),
+    )
+
+    result = svi_run_batched(
+        svi,
+        key,
+        batch_size=10,
+        num_epochs=2,
+        shuffle=shuffle,
+        x=x,
+        y=y,
+    )
+    # 2 epochs * ceil(40 / 10) = 8 gradient steps.
+    assert result.losses.shape[0] == 8
+    assert jnp.all(jnp.isfinite(result.losses))
 
 
 def test_plate_raises_through_elbo() -> None:

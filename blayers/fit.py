@@ -458,6 +458,7 @@ def fit(
     num_steps: int | None = None,
     lr: float = 0.01,
     schedule: str = "cosine",
+    shuffle: bool = True,
     guide: type | AutoGuide | None = None,
     optimizer: optax.GradientTransformation | None = None,
     # MCMC parameters
@@ -504,6 +505,13 @@ def fit(
     schedule : str
         LR schedule name: ``"cosine"`` (default), ``"warmup_cosine"``, or
         ``"constant"``.  Only used for VI.
+    shuffle : bool
+        Batched VI only.  When ``True`` (default) the data is re-shuffled every
+        epoch so minibatches are i.i.d. (an unbiased ELBO gradient).  Set
+        ``False`` to iterate fixed contiguous slices instead — this skips the
+        per-epoch permutation and per-row gather and is noticeably faster, at
+        the cost of that de-biasing.  Safe to disable when your rows are already
+        in random order.  No effect without ``batch_size``.
     guide : type or AutoGuide instance, optional
         Variational family.  Pass a **class** (instantiated on *model_fn*) or
         a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.
@@ -585,6 +593,7 @@ def fit(
             num_steps=num_steps,
             lr=lr,
             schedule=schedule,
+            shuffle=shuffle,
             guide=guide,
             optimizer=optimizer,
             rng_key=rng_key,
@@ -689,6 +698,7 @@ def _fit_vi(
     num_steps: int | None,
     lr: float,
     schedule: str,
+    shuffle: bool,
     guide: type | AutoGuide | None,
     optimizer: optax.GradientTransformation | None,
     rng_key: jax.Array,
@@ -747,6 +757,7 @@ def _fit_vi(
             batch_size=batch_size,
             num_steps=num_steps,
             num_epochs=num_epochs,
+            shuffle=shuffle,
             **data,
         )
     else:
