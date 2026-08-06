@@ -1,15 +1,18 @@
 name: Publish to PyPI
 
+# Fires when a GitHub Release is published (the deliberate "cut a release" action),
+# plus a manual trigger for backfills. This is more reliable than gating a raw tag
+# push on `github.event.base_ref`, which is empty when a tag is created via the
+# Release UI and silently skips the job.
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment: pypi
-    if: github.ref_type == 'tag' && github.event.base_ref == 'refs/heads/main'
     permissions:
       id-token: write  # required for trusted publishing
 
