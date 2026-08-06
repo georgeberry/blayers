@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Splines &#8212; blayers 0.3.3 documentation</title>
+    <title>LaTeX &#8212; blayers 0.3.3 documentation</title>
   
   
   
@@ -43,12 +43,12 @@
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/splines';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/latex';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Fit" href="fit.html" />
-    <link rel="prev" title="Links" href="links.html" />
+    <link rel="next" title="Decorators" href="decorators.html" />
+    <link rel="prev" title="Fit" href="fit.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -191,9 +191,9 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="layers.html">Layers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="links.html">Links</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Splines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="splines.html">Splines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit.html">Fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="latex.html">LaTeX</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">LaTeX</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decorators.html">Decorators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vi_infer.html">VI Inference</a></li>
 </ul>
@@ -272,7 +272,7 @@
       
       
       
-      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/splines.rst" target="_blank"
+      <li><a href="https://github.com/georgeberry/blayers/edit/main/api/latex.rst" target="_blank"
    class="btn btn-sm btn-source-edit-button dropdown-item"
    title="Suggest edit"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -302,7 +302,7 @@
       
       
       
-      <li><a href="../_sources/api/splines.rst" target="_blank"
+      <li><a href="../_sources/api/latex.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -385,7 +385,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Splines</h1>
+    <h1>LaTeX</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -395,8 +395,9 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.splines.bspline_basis"><code class="docutils literal notranslate"><span class="pre">bspline_basis()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.splines.make_knots"><code class="docutils literal notranslate"><span class="pre">make_knots()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-and-isn-t-recovered">What is and isn’t recovered</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.latex.LatexStr"><code class="docutils literal notranslate"><span class="pre">LatexStr</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.latex.model_to_latex"><code class="docutils literal notranslate"><span class="pre">model_to_latex()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -408,72 +409,78 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-blayers.splines">
-<span id="splines"></span><h1>Splines<a class="headerlink" href="#module-blayers.splines" title="Link to this heading">#</a></h1>
-<p>B-spline utilities for non-linear feature transformations.</p>
-<p>Typical usage:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.splines</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_knots</span><span class="p">,</span> <span class="n">bspline_basis</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
-
-<span class="n">knots</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+  <section id="module-blayers.latex">
+<span id="latex"></span><h1>LaTeX<a class="headerlink" href="#module-blayers.latex" title="Link to this heading">#</a></h1>
+<p>Render a blayers / NumPyro model as the LaTeX of its generative form.</p>
+<p>A blayers model is a plain NumPyro function that <em>adds</em> layers into a linear
+predictor and caps it with a link.  <a class="reference internal" href="#blayers.latex.model_to_latex" title="blayers.latex.model_to_latex"><code class="xref py py-func docutils literal notranslate"><span class="pre">model_to_latex()</span></code></a> traces the model once
+and prints the priors and likelihood as a block of sampling statements — the
+“methods section” version of the model — so you never hand-transcribe it.</p>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">InterceptLayer</span><span class="p">,</span> <span class="n">gaussian_link</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.latex</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_to_latex</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">B</span> <span class="o">=</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">knots</span><span class="p">)</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">model_to_latex</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">))</span>   <span class="c1"># raw LaTeX</span>
+<span class="n">model_to_latex</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">)</span>           <span class="c1"># renders inline in Jupyter</span>
 </pre></div>
 </div>
-<dl class="py function">
-<dt class="sig sig-object py" id="blayers.splines.bspline_basis">
-<span class="sig-prename descclassname"><span class="pre">blayers.splines.</span></span><span class="sig-name descname"><span class="pre">bspline_basis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/splines.html#bspline_basis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.splines.bspline_basis" title="Link to this definition">#</a></dt>
-<dd><p>Compute the B-spline design matrix via Cox–de Boor recursion (JAX-compatible).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Array</em>) – 1D input array of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p></li>
-<li><p><strong>knots</strong> (<em>Array</em>) – Full clamped knot vector of shape <code class="docutils literal notranslate"><span class="pre">(num_basis</span> <span class="pre">+</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1,)</span></code>.
-Use <code class="docutils literal notranslate"><span class="pre">make_knots</span></code> to construct this.</p></li>
-<li><p><strong>degree</strong> (<em>int</em>) – B-spline degree (3 = cubic).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>jax.Array of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">num_basis)</span></code> where
-<code class="docutils literal notranslate"><span class="pre">num_basis</span> <span class="pre">=</span> <span class="pre">len(knots)</span> <span class="pre">-</span> <span class="pre">degree</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Array</em></p>
-</dd>
-</dl>
+<section id="what-is-and-isn-t-recovered">
+<h2>What is and isn’t recovered<a class="headerlink" href="#what-is-and-isn-t-recovered" title="Link to this heading">#</a></h2>
+<p>A trace exposes every <code class="docutils literal notranslate"><span class="pre">sample</span></code> site, its distribution, and shape, so the
+<strong>priors and likelihood are exact</strong>.  How the layers combine into the linear
+predictor (<code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">+</span> <span class="pre">b·x</span></code>) lives in plain Python, not the trace, so the output is
+the standard generative model (a list of <code class="docutils literal notranslate"><span class="pre">\sim</span></code> statements), not a
+reconstructed regression equation.  The linear predictor is denoted
+<code class="docutils literal notranslate"><span class="pre">\eta_i</span></code>.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.latex.LatexStr">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.latex.</span></span><span class="sig-name descname"><span class="pre">LatexStr</span></span><a class="reference internal" href="../_modules/blayers/latex.html#LatexStr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.latex.LatexStr" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<p>A <code class="docutils literal notranslate"><span class="pre">str</span></code> of LaTeX that also renders inline in Jupyter.</p>
+<p><code class="docutils literal notranslate"><span class="pre">print(x)</span></code> / <code class="docutils literal notranslate"><span class="pre">str(x)</span></code> give the raw LaTeX; in a notebook the object
+displays as typeset math via <code class="docutils literal notranslate"><span class="pre">_repr_latex_</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blayers.splines.make_knots">
-<span class="sig-prename descclassname"><span class="pre">blayers.splines.</span></span><span class="sig-name descname"><span class="pre">make_knots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/splines.html#make_knots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.splines.make_knots" title="Link to this definition">#</a></dt>
-<dd><p>Compute a clamped B-spline knot vector from data.</p>
-<p>Interior knots are placed at evenly-spaced quantiles of <code class="docutils literal notranslate"><span class="pre">x</span></code>.  Call
-this once at preprocessing time (outside any JAX-traced function) and
-pass the returned array to <code class="docutils literal notranslate"><span class="pre">bspline_basis</span></code>.</p>
+<dt class="sig sig-object py" id="blayers.latex.model_to_latex">
+<span class="sig-prename descclassname"><span class="pre">blayers.latex.</span></span><span class="sig-name descname"><span class="pre">model_to_latex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'align'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/latex.html#model_to_latex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.latex.model_to_latex" title="Link to this definition">#</a></dt>
+<dd><p>Render a blayers / NumPyro model as the LaTeX of its generative form.</p>
+<p>Traces <code class="docutils literal notranslate"><span class="pre">model_fn</span></code> once (with no observed <code class="docutils literal notranslate"><span class="pre">y</span></code>) and emits a block of
+sampling statements: every latent’s prior, then the likelihood.  Hierarchy
+is recovered automatically — a coefficient whose scale is a sampled site
+prints <code class="docutils literal notranslate"><span class="pre">\sim</span> <span class="pre">\mathrm{Normal}(0,</span> <span class="pre">\lambda_{\mathrm{name}})</span></code> rather than a
+number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Any</em>) – Reference data (any shape).  Only used for quantile computation.</p></li>
-<li><p><strong>num_knots</strong> (<em>int</em>) – Number of interior knots.  The total number of basis
-functions will be <code class="docutils literal notranslate"><span class="pre">num_knots</span> <span class="pre">+</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p></li>
-<li><p><strong>degree</strong> (<em>int</em>) – B-spline degree (default 3 for cubic splines).</p></li>
+<li><p><strong>model_fn</strong> (<em>Callable</em>) – A blayers / NumPyro model.  Pass inputs the same way you would to
+<a class="reference internal" href="fit.html#module-blayers.fit" title="blayers.fit"><code class="xref py py-func docutils literal notranslate"><span class="pre">blayers.fit()</span></code></a>, but <strong>without</strong> <code class="docutils literal notranslate"><span class="pre">y</span></code> (supplying it would condition
+the <code class="docutils literal notranslate"><span class="pre">obs</span></code> site; the likelihood is rendered from its distribution
+family regardless).</p></li>
+<li><p><strong>env</strong> (<code class="docutils literal notranslate"><span class="pre">&quot;align&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;aligned&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;none&quot;</span></code>) – LaTeX environment to wrap the lines in.  <code class="docutils literal notranslate"><span class="pre">&quot;none&quot;</span></code> returns the bare
+<code class="docutils literal notranslate"><span class="pre">\\</span></code>-separated body.</p></li>
+<li><p><strong>seed_value</strong> (<em>int</em>) – PRNG seed for the trace (only affects sampled shapes, not the output).</p></li>
+<li><p><strong>**data</strong> – Model inputs (e.g. <code class="docutils literal notranslate"><span class="pre">x</span></code>) and constants, used to fix site shapes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Full clamped knot vector as a <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code> of shape
-<code class="docutils literal notranslate"><span class="pre">(num_knots</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">(degree</span> <span class="pre">+</span> <span class="pre">1),)</span></code>.</p>
+<dd class="field-even"><p>The LaTeX source (a <code class="docutils literal notranslate"><span class="pre">str</span></code> subclass that also renders inline in
+Jupyter).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Array</em></p>
+<dd class="field-odd"><p><a class="reference internal" href="#blayers.latex.LatexStr" title="blayers.latex.LatexStr">LatexStr</a></p>
 </dd>
 </dl>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">knots</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">B</span> <span class="o">=</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">knots</span><span class="p">)</span>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">model_to_latex</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">))</span>
+<span class="go">\begin{align}</span>
+<span class="go">...</span>
+<span class="go">\end{align}</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -492,20 +499,20 @@ functions will be <code class="docutils literal notranslate"><span class="pre">n
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="links.html"
+       href="fit.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Links</p>
+        <p class="prev-next-title">Fit</p>
       </div>
     </a>
     <a class="right-next"
-       href="fit.html"
+       href="decorators.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Fit</p>
+        <p class="prev-next-title">Decorators</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -527,8 +534,9 @@ functions will be <code class="docutils literal notranslate"><span class="pre">n
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.splines.bspline_basis"><code class="docutils literal notranslate"><span class="pre">bspline_basis()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.splines.make_knots"><code class="docutils literal notranslate"><span class="pre">make_knots()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-and-isn-t-recovered">What is and isn’t recovered</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.latex.LatexStr"><code class="docutils literal notranslate"><span class="pre">LatexStr</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.latex.model_to_latex"><code class="docutils literal notranslate"><span class="pre">model_to_latex()</span></code></a></li>
 </ul>
   </nav></div>
 
