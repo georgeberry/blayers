@@ -47,14 +47,14 @@ class TestMixtureLayer:
         assert samples["out"].shape == (4, 30, 3)
 
     def test_sites(self) -> None:
-        """Dirichlet weights + mixture beta are sampled by default."""
+        """Logistic-normal weight logits + mixture beta are sampled by default."""
         x = random.normal(random.PRNGKey(0), (20, 4))
 
         def model(x):
             return MixtureLayer()("coef", x)
 
         samples = _prior_samples(model, x=x)
-        assert "MixtureLayer_coef_weights" in samples
+        assert "MixtureLayer_coef_logits" in samples
         assert "MixtureLayer_coef_beta" in samples
 
     def test_fixed_weights_no_weight_site(self) -> None:
@@ -64,7 +64,7 @@ class TestMixtureLayer:
             return MixtureLayer(weights=[0.5, 0.5])("coef", x)
 
         samples = _prior_samples(model, x=x)
-        assert "MixtureLayer_coef_weights" not in samples
+        assert "MixtureLayer_coef_logits" not in samples
         assert "MixtureLayer_coef_beta" in samples
 
     def test_bad_kwargs_raise_at_construction(self) -> None:
@@ -80,6 +80,17 @@ class TestMixtureLayer:
                 component_dists=(dist.Normal, dist.Laplace),
                 component_kwargs=({"loc": 0.0, "scale": 1.0},),
             )
+
+    def test_too_few_components_raise(self) -> None:
+        with pytest.raises(ValueError, match="at least two"):
+            MixtureLayer(
+                component_dists=(dist.Normal,),
+                component_kwargs=({"loc": 0.0, "scale": 1.0},),
+            )
+
+    def test_weights_length_mismatch_raise(self) -> None:
+        with pytest.raises(ValueError, match="one entry per component"):
+            MixtureLayer(weights=[1.0])  # 2 default components, 1 weight
 
     def test_fit_learns(self) -> None:
         key = random.PRNGKey(0)
@@ -119,6 +130,29 @@ class TestMixtureLayer:
             x=x,
         )
         assert result.posterior_samples is not None
+
+    def test_fit_svgd_runs(self) -> None:
+        """Logistic-normal weights keep every latent unconstrained, so SVGD's
+        particle flattener works — a raw Dirichlet simplex site would not."""
+        key = random.PRNGKey(0)
+        x = random.normal(key, (200, 3))
+        y = x @ jnp.array([1.5, 0.0, -1.0]) + 0.3 * random.normal(
+            random.PRNGKey(1), (200,)
+        )
+
+        @autoreshape
+        def model(x, y=None):
+            return gaussian_link(MixtureLayer()("coef", x), y)
+
+        result = fit(
+            model,
+            y=y,
+            method="svgd",
+            num_steps=100,
+            num_particles=8,
+            x=x,
+        )
+        assert result.params is not None
 
 
 # --------------------------------------------------------------------------- #

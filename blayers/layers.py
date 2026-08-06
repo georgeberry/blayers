@@ -685,26 +685,26 @@ class LowRankInteractionLayer(BLayer):
 
 
 class InteractionLayer(BLayer):
-    """Bayesian full pairwise interaction layer with adaptive prior.
+    """Bayesian pairwise interaction layer with adaptive prior.
 
     Samples one coefficient per pair of features from the hierarchical model
 
     .. math::
-        \\lambda \\sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.), \\quad \\beta \\sim Normal(0., \\lambda)
 
-    .. math::
-        \\beta \\sim Normal(0., \\lambda), \\quad
-        \\beta \\in \\mathbb{R}^{d_1 d_2}
+    and computes the weighted sum of the interaction design.
 
-    and computes the weighted sum of all outer-product interactions:
+    Two modes:
 
-    .. math::
-        \\text{output} = (x \\otimes z)\\, \\beta
+    * **Within a single feature set** (``z`` omitted): the unique pairs
+      :math:`x_i x_j` for :math:`i < j` — no squares, no duplicates —
+      :math:`\\binom{d}{2}` coefficients, in lexicographic ``i < j`` order.
+    * **Between two feature sets** (``z`` given): the full flattened outer product
+      :math:`x \\otimes z` of shape :math:`(n, d_1 d_2)`.
 
-    where :math:`x \\otimes z` is the flattened outer product of shape
-    :math:`(n, d_1 d_2)`. For large inputs this scales as
-    :math:`O(d_1 d_2)` parameters; prefer :class:`LowRankInteractionLayer`
-    when :math:`d_1` or :math:`d_2` is large.
+    Scales as :math:`O(d^2)` parameters; prefer :class:`LowRankInteractionLayer`
+    when :math:`d` is large, or :class:`HorseshoeInteractionLayer` for a sparse
+    (variable-selecting) prior over the pairs.
     """
 
     def __init__(
@@ -724,33 +724,33 @@ class InteractionLayer(BLayer):
         self,
         name: str,
         x: jax.Array,
-        z: jax.Array,
+        z: jax.Array | None = None,
         units: int = 1,
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Full pairwise interaction between feature matrices X and Z.
-
-        Samples one coefficient per ``(x_i, z_j)`` pair (``d1 * d2`` total)
-        and returns the weighted sum of all outer-product interactions.
+        Pairwise interaction design times a per-pair coefficient.
 
         Args:
             name: Variable name scope.
             x: Input matrix of shape ``(n, d1)``.
-            z: Input matrix of shape ``(n, d2)``.
+            z: Optional second feature set of shape ``(n, d2)``. If omitted, the
+                interactions are the unique within-``x`` pairs ``i < j``.
             units: Number of outputs.
             activation: Activation function to apply to output.
 
         Returns:
             jax.Array: Output array of shape ``(n, u)``.
         """
-        # get shapes and reshape if necessary
         x = add_trailing_dim(x)
-        z = add_trailing_dim(z)
-        input_shape1 = x.shape[1]
-        input_shape2 = z.shape[1]
+        if z is None:
+            # within-set: unique pairs i < j (no squares, no duplicates)
+            i, j = np.triu_indices(x.shape[1], k=1)
+            x_int = x[:, i] * x[:, j]
+        else:
+            # cross-set: full d1 x d2 grid
+            x_int = pairwise_interactions(x, add_trailing_dim(z))
 
-        # sampling block
         scale = sample(
             name=f"{self.__class__.__name__}_{name}_scale1",
             fn=self.scale_dist(**self.scale_kwargs).expand([units]),
@@ -758,11 +758,10 @@ class InteractionLayer(BLayer):
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta1",
             fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
-                [input_shape1 * input_shape2, units]
+                [x_int.shape[1], units]
             ),
         )
-
-        return activation(_matmul_interaction(beta, x, z))
+        return activation(_matmul_dot_product(x_int, beta))
 
 
 class BilinearLayer(BLayer):
@@ -1355,6 +1354,62 @@ class HorseshoeLayer(BLayer):
         return activation(_matmul_dot_product(x, beta))
 
 
+class HorseshoeInteractionLayer(HorseshoeLayer):
+    """Sparse pairwise interactions under a horseshoe prior.
+
+    Builds an explicit interaction design and places a (regularized) horseshoe
+    prior on the per-pair coefficients. Local shrinkage pulls most interactions to
+    zero and leaves the few real ones standing, so this is the layer to reach for
+    to **identify sparse interactions** (as opposed to :class:`InteractionLayer`'s
+    single global scale, which cannot localize).
+
+    Two modes:
+
+    * **Within a single feature set** (``z`` omitted): the unique pairs ``x_i x_j``
+      for ``i < j`` — no squares, no duplicates — ``C(d, 2)`` columns. Column ``k``
+      is the ``k``-th pair in lexicographic ``i < j`` order (row-major upper
+      triangle), so posterior coefficients map back to feature pairs.
+    * **Between two feature sets** (``z`` given): the full ``d1 * d2`` outer product
+      ``x_i z_j`` (like :class:`InteractionLayer`); column ``k`` is
+      ``(i, j) = divmod(k, d2)``.
+
+    Costs ``O(d^2)`` coefficients — for large inputs where you only need prediction,
+    prefer :class:`LowRankInteractionLayer` or :class:`FMLayer`. Inherits its prior
+    configuration (``slab_scale``, ``slab_df``, ``coef_dist``, ``coef_kwargs``) from
+    :class:`HorseshoeLayer`.
+    """
+
+    def __call__(  # type: ignore[override]  # (x, z?) differs from HorseshoeLayer
+        self,
+        name: str,
+        x: jax.Array,
+        z: jax.Array | None = None,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: Input matrix of shape ``(n, d1)``.
+            z: Optional second feature set of shape ``(n, d2)``. If omitted, the
+                interactions are the unique within-``x`` pairs ``i < j``.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        if z is None:
+            # within-set: unique pairs i < j (no squares, no duplicates)
+            i, j = np.triu_indices(x.shape[1], k=1)
+            x_int = x[:, i] * x[:, j]
+        else:
+            # cross-set: full d1 x d2 grid, like InteractionLayer
+            x_int = pairwise_interactions(x, add_trailing_dim(z))
+        return super().__call__(name, x_int, units=units, activation=activation)
+
+
 # ---- Spike and slab -------------------------------------------------------- #
 
 
@@ -1469,7 +1524,7 @@ class MixtureLayer(BLayer):
             {"loc": 0.0, "scale": 1.0},
         ),
         weights: list[float] | None = None,
-        dirichlet_concentration: float = 1.0,
+        weight_scale: float = 1.0,
     ):
         """
         Args:
@@ -1477,9 +1532,14 @@ class MixtureLayer(BLayer):
                 component (>= 2). All must share the same (real) support.
             component_kwargs: Kwargs for each component distribution.
             weights: Fixed mixing weights (one per component, summing to 1). If
-                ``None``, a ``Dirichlet`` prior is placed on the weights.
-            dirichlet_concentration: Symmetric ``Dirichlet`` concentration used
-                when ``weights`` is ``None``.
+                ``None``, a **logistic-normal** prior is placed on the weights:
+                ``softmax`` of ``Normal(0, weight_scale)`` logits. This keeps the
+                weight latent in unconstrained space so the layer fits under VI,
+                MCMC, *and* SVGD — a raw ``Dirichlet`` simplex site breaks SVGD's
+                particle flattening (its unconstrained dimension differs from its
+                constrained one).
+            weight_scale: Prior standard deviation of the Normal logits used when
+                ``weights`` is ``None``. Larger spreads the weights more.
         """
         if len(component_dists) != len(component_kwargs):
             raise ValueError(
@@ -1492,7 +1552,7 @@ class MixtureLayer(BLayer):
         self.component_dists = component_dists
         self.component_kwargs = component_kwargs
         self.weights = weights
-        self.dirichlet_concentration = dirichlet_concentration
+        self.weight_scale = weight_scale
         try:
             for dst, kw in zip(component_dists, component_kwargs):
                 dst(**kw)
@@ -1522,12 +1582,16 @@ class MixtureLayer(BLayer):
         cls = self.__class__.__name__
 
         if self.weights is None:
-            w = sample(
-                f"{cls}_{name}_weights",
-                distributions.Dirichlet(
-                    jnp.full(k, self.dirichlet_concentration)
-                ),
+            # Logistic-normal: softmax of unconstrained Normal logits. Avoids a
+            # Dirichlet simplex site, which SVGD's particle flattener cannot
+            # handle (constrained dim k != unconstrained dim k-1).
+            logits = sample(
+                f"{cls}_{name}_logits",
+                distributions.Normal(0.0, self.weight_scale)
+                .expand([k])
+                .to_event(1),
             )
+            w = jnn.softmax(logits)
         else:
             w = jnp.asarray(self.weights)
 

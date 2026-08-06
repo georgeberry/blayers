@@ -202,8 +202,19 @@ def svi_run_batched(
     batch_size: int,
     num_steps: int | None = None,
     num_epochs: int | None = None,
+    shuffle: bool = True,
     **data: jax.Array,
 ) -> SVIRunResult:
+    """Drive batched VI.
+
+    Args:
+        shuffle: When ``True`` (default) the row order is re-permuted every
+            epoch — the unbiased-gradient behaviour.  When ``False`` batches are
+            contiguous slices in a fixed order, which skips the per-epoch
+            permutation and per-row gather and is noticeably faster; use it when
+            your rows are already in random order (or the bias is acceptable).
+    """
+
     @jax.jit
     def update(svi_state: SVIState, **kwargs: Any) -> SVIState:
         return svi.update(svi_state, **kwargs)
@@ -224,7 +235,7 @@ def svi_run_batched(
             batch_size,
             total_steps_to_run,
             steps_per_epoch,
-            rng_key=batch_key,
+            rng_key=batch_key if shuffle else None,
         ),
         total=total_steps_to_run,
     ):

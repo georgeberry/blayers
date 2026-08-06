@@ -44,25 +44,34 @@ def yield_batches(
     Each epoch, the row order is re-permuted when ``rng_key`` is supplied so
     that minibatch VI sees i.i.d. batches rather than the same fixed slices in
     the same order every pass (which biases the ELBO gradient, especially on
-    sorted data).  Pass ``rng_key=None`` for the legacy contiguous ordering.
+    sorted data).  Pass ``rng_key=None`` for the legacy contiguous ordering,
+    which slices the arrays directly (no per-row gather) and is noticeably
+    faster — trading the gradient de-biasing for speed.
     """
     dataset_size = get_dataset_size(data)
 
     def epoch_batches(
-        perm: jax.Array,
+        perm: jax.Array | None,
     ) -> Generator[dict[str, jax.Array], None, None]:
         for i in range(steps_per_epoch):
-            idx = perm[i * batch_size : (i + 1) * batch_size]
-            yield {k: v[idx] for k, v in data.items()}
+            start, stop = i * batch_size, (i + 1) * batch_size
+            if perm is None:
+                # Contiguous slice — a cheap view, no fancy-index gather.
+                yield {k: v[start:stop] for k, v in data.items()}
+            else:
+                idx = perm[start:stop]
+                yield {k: v[idx] for k, v in data.items()}
 
     key = rng_key
     emitted = 0
     while emitted < num_batches:
         if key is not None:
             key, subkey = jax.random.split(key)
-            perm = jax.random.permutation(subkey, dataset_size)
+            perm: jax.Array | None = jax.random.permutation(
+                subkey, dataset_size
+            )
         else:
-            perm = jnp.arange(dataset_size)
+            perm = None
         for batch in epoch_batches(perm):
             if emitted >= num_batches:
                 break

@@ -165,12 +165,13 @@ The full set of layers included with BLayers:
 - `FM3Layer` — Factorization Machine (order 3).
 - `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
 - `InteractionLayer` — All pairwise interactions between two feature sets.
+- `HorseshoeInteractionLayer` — Pairwise interactions with a per-pair horseshoe prior; the layer to reach for to *identify* sparse interactions (most pairs shrink to zero, the real ones stand out). Omit `z` for unique within-feature pairs `i<j`; pass `z` for the full cross-set grid.
 - `BilinearLayer` — Bilinear interaction: `x^T W z`.
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
 - `SpikeAndSlabLayer` — Spike-and-slab prior; `z ~ Beta(0.5, 0.5)` inclusion weights times a configurable slab.
-- `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a `Dirichlet` (or fixed) weight; the component indicator is marginalised so it works under VI *and* MCMC. Good for robustness / elastic-net-style priors.
+- `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, *and* SVGD. Good for robustness / elastic-net-style priors.
 - `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
@@ -278,14 +279,14 @@ Like splines, HSGP terms add for a GAM-style additive model (`f1(x1) + f2(x2) + 
 
 ## Mixture priors
 
-`MixtureLayer` draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a `Dirichlet` prior by default, or pass fixed `weights=`. The component indicator is marginalised internally, so it works under **both VI and MCMC**.
+`MixtureLayer` draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a logistic-normal prior by default (softmax of `Normal(0, weight_scale)` logits — an unconstrained parameterisation that fits under VI, MCMC, *and* SVGD), or pass fixed `weights=`. The component indicator is marginalised internally, so it works under **VI, MCMC, and SVGD**.
 
 ```python
 from blayers.layers import MixtureLayer
 from blayers.links import gaussian_link
 
 def model(x, y=None):
-    mu = MixtureLayer()("beta", x)                 # Normal + Laplace, Dirichlet weights
+    mu = MixtureLayer()("beta", x)                 # Normal + Laplace, logistic-normal weights
     return gaussian_link(mu, y)
 ```
 
@@ -350,6 +351,48 @@ az.compare({"mcmc": idata, "vi": idata_vi})
 
 SVGD is not supported by `to_arviz()` (too few particles to be a meaningful
 sample for LOO); fit with `method="mcmc"` or `method="vi"` for comparison.
+
+## Model to LaTeX
+
+`model_to_latex()` traces a model once and prints its generative form — every
+prior plus the likelihood — as a block of sampling statements, the "methods
+section" version you'd otherwise hand-transcribe. Pass the model and its inputs
+the same way you would to `fit()`, but **without** `y`.
+
+```python
+from blayers import AdaptiveLayer, InterceptLayer, RandomEffectsLayer, gaussian_link
+from blayers.latex import model_to_latex
+
+def model(x, g, y=None):
+    mu = (
+        InterceptLayer()("intercept")
+        + AdaptiveLayer()("mu", x)
+        + RandomEffectsLayer()("grp", g, num_categories=n_groups)
+    )
+    return gaussian_link(mu, y)
+
+print(model_to_latex(model, x=X, g=G))   # raw LaTeX
+model_to_latex(model, x=X, g=G)           # renders inline in a notebook
+```
+
+```latex
+\begin{align}
+\beta_{\mathrm{intercept}} &\sim \mathrm{Normal}(0, 1) \\
+\lambda_{\mathrm{mu}} &\sim \mathrm{HalfNormal}(1) \\
+\beta_{\mathrm{mu}} &\sim \mathrm{Normal}(0, \lambda_{\mathrm{mu}}) \\
+\lambda_{\mathrm{grp}} &\sim \mathrm{HalfNormal}(1) \\
+\theta_{\mathrm{grp}} &\sim \mathrm{Normal}(0, \lambda_{\mathrm{grp}}) \\
+\sigma &\sim \mathrm{Exponential}(1) \\
+y_i &\sim \mathrm{Normal}(\eta_i,\; \sigma),\quad i = 1, \dots, n
+\end{align}
+```
+
+The hierarchy is recovered automatically: a coefficient whose scale is a sampled
+site prints `Normal(0, λ)`, not a number. Priors and the likelihood are exact
+(read straight from the trace); how the layers *combine* into the linear
+predictor lives in plain Python, so it's denoted `η_i` rather than reconstructed.
+The return value is a `str` (so `print()` gives raw LaTeX) that also renders as
+typeset math in Jupyter.
 
 ## Batched loss
 

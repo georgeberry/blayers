@@ -18,5 +18,6 @@ Detailed API
    api/links
    api/splines
    api/fit
+   api/latex
    api/decorators
    api/vi_infer

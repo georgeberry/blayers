@@ -2,6 +2,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 from blayers.decorators import autoreparam, autoreshape
 from blayers.fit import FittedModel, Predictions, fit, sample_prior
+from blayers.latex import model_to_latex
 from blayers.layers import (
     AdaptiveLayer,
     BilinearLayer,
@@ -10,6 +11,7 @@ from blayers.layers import (
     FixedPriorLayer,
     FM3Layer,
     FMLayer,
+    HorseshoeInteractionLayer,
     HorseshoeLayer,
     HSGPLayer,
     InteractionLayer,
@@ -54,6 +56,7 @@ __all__ = [
     "FixedPriorLayer",
     "FMLayer",
     "FM3Layer",
+    "HorseshoeInteractionLayer",
     "HorseshoeLayer",
     "HSGPLayer",
     "InteractionLayer",
@@ -86,6 +89,7 @@ __all__ = [
     # Fit
     "fit",
     "sample_prior",
+    "model_to_latex",
     "FittedModel",
     "Predictions",
 ]
