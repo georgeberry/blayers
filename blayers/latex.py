@@ -308,6 +308,7 @@ _OVERRIDES: dict[
     str, Callable[[str, dict[str, Any], dict[int, str]], list[str]]
 ] = {
     "HorseshoeLayer": _render_horseshoe,
+    "HorseshoeInteractionLayer": _render_horseshoe,
     "SpikeAndSlabLayer": _render_spike_slab,
     "MixtureLayer": _render_mixture,
     "HSGPLayer": _render_hsgp,

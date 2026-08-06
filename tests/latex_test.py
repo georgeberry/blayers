@@ -9,6 +9,7 @@ from blayers.latex import LatexStr, model_to_latex
 from blayers.layers import (
     AdaptiveLayer,
     FixedEffectsLayer,
+    HorseshoeInteractionLayer,
     HorseshoeLayer,
     HSGPLayer,
     InterceptLayer,
@@ -196,6 +197,16 @@ def test_regularized_horseshoe_has_slab_line():
     tex = model_to_latex(model, x=X)
     assert r"c^2_{\mathrm{hs}}" in tex
     assert r"\tilde{\lambda}_j" in tex
+
+
+def test_horseshoe_interaction_override():
+    def model(x, z, y=None):
+        return gaussian_link(HorseshoeInteractionLayer()("int", x, z), y)
+
+    tex = model_to_latex(model, x=X, z=X)
+    assert r"\tau_{\mathrm{int}} &\sim \mathrm{HalfCauchy}(1)" in tex
+    assert r"\lambda_{\mathrm{int},j} &\sim \mathrm{HalfCauchy}(1)" in tex
+    assert not _has_double_subscript(tex)
 
 
 def test_spike_slab_override():

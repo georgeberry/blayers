@@ -1355,6 +1355,51 @@ class HorseshoeLayer(BLayer):
         return activation(_matmul_dot_product(x, beta))
 
 
+class HorseshoeInteractionLayer(HorseshoeLayer):
+    """Sparse pairwise interactions between two feature sets under a horseshoe.
+
+    Builds the same design as :class:`InteractionLayer` — the flattened outer
+    product of ``x`` and ``z``, one column per ``(x_i, z_j)`` pair — then places a
+    (regularized) horseshoe prior on the per-pair coefficients. Local shrinkage
+    pulls most interactions to zero and leaves the few real ones standing, so this
+    is the layer to reach for to **identify sparse interactions** (as opposed to
+    :class:`InteractionLayer`'s single global scale, which cannot localize).
+
+    Uses ``x`` and ``z`` for a cross-set interaction; pass the same array twice for
+    all within-set pairs (``(x, x)``). Costs ``O(d1 * d2)`` coefficients — for large
+    inputs where you only need prediction, prefer :class:`LowRankInteractionLayer`
+    or :class:`FMLayer`. Column ``k`` of the design is the pair
+    ``(i, j) = divmod(k, d2)``, so posterior coefficients map back to feature pairs.
+
+    Inherits its prior configuration (``slab_scale``, ``slab_df``, ``coef_dist``,
+    ``coef_kwargs``) from :class:`HorseshoeLayer`.
+    """
+
+    def __call__(  # type: ignore[override]  # takes (x, z), unlike HorseshoeLayer
+        self,
+        name: str,
+        x: jax.Array,
+        z: jax.Array,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """
+        Args:
+            name: Variable name scope.
+            x: Input matrix of shape ``(n, d1)``.
+            z: Input matrix of shape ``(n, d2)``.
+            units: Number of output dimensions.
+            activation: Activation function.
+
+        Returns:
+            jax.Array of shape ``(n, units)``.
+        """
+        x = add_trailing_dim(x)
+        z = add_trailing_dim(z)
+        x_int = pairwise_interactions(x, z)
+        return super().__call__(name, x_int, units=units, activation=activation)
+
+
 # ---- Spike and slab -------------------------------------------------------- #
 
 

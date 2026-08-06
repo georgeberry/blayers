@@ -165,6 +165,7 @@ The full set of layers included with BLayers:
 - `FM3Layer` — Factorization Machine (order 3).
 - `LowRankInteractionLayer` — Low-rank interaction between two feature sets.
 - `InteractionLayer` — All pairwise interactions between two feature sets.
+- `HorseshoeInteractionLayer` — All pairwise interactions between two feature sets with a per-pair horseshoe prior; the layer to reach for to *identify* sparse interactions (most pairs shrink to zero, the real ones stand out).
 - `BilinearLayer` — Bilinear interaction: `x^T W z`.
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).

@@ -29,6 +29,7 @@ from blayers.layers import (
     FixedPriorLayer,
     FM3Layer,
     FMLayer,
+    HorseshoeInteractionLayer,
     InteractionLayer,
     InterceptLayer,
     LowRankBilinearLayer,
@@ -984,3 +985,104 @@ def test_fixed_effects_fit_learns() -> None:
     )
     preds = result.predict(x=idx, num_categories=c, num_samples=100)
     assert float(rmse(preds.mean, y)) < float(rmse(jnp.zeros_like(y), y)) * 0.5
+
+
+# --------------------------------------------------------------------------- #
+# HorseshoeInteractionLayer
+# --------------------------------------------------------------------------- #
+
+
+def test_horseshoe_interaction_output_shape() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        return deterministic("out", HorseshoeInteractionLayer()("int", x, z))
+
+    samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 1)
+
+
+def test_horseshoe_interaction_units() -> None:
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def model(x, z):
+        return deterministic(
+            "out", HorseshoeInteractionLayer()("int", x, z, units=2)
+        )
+
+    samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x, z=z)
+    assert samples["out"].shape == (4, 20, 2)
+
+
+def test_horseshoe_interaction_sites() -> None:
+    """Sites carry the subclass name; slab adds the c2 site."""
+    x = random.normal(random.PRNGKey(0), (20, 3))
+    z = random.normal(random.PRNGKey(1), (20, 4))
+
+    def plain(x, z):
+        return HorseshoeInteractionLayer()("int", x, z)
+
+    def slab(x, z):
+        return HorseshoeInteractionLayer(slab_scale=2.0)("int", x, z)
+
+    s_plain = Predictive(plain, num_samples=2)(random.PRNGKey(2), x=x, z=z)
+    for suffix in ("tau", "scale", "beta"):
+        assert f"HorseshoeInteractionLayer_int_{suffix}" in s_plain
+    assert "HorseshoeInteractionLayer_int_c2" not in s_plain
+    # beta has one coefficient per (x_i, z_j) pair
+    assert s_plain["HorseshoeInteractionLayer_int_beta"].shape[1:] == (3 * 4, 1)
+
+    s_slab = Predictive(slab, num_samples=2)(random.PRNGKey(2), x=x, z=z)
+    assert "HorseshoeInteractionLayer_int_c2" in s_slab
+
+
+def test_horseshoe_interaction_recovers_sparse_pair() -> None:
+    """One planted x_a*z_b interaction: its coefficient dominates, the rest shrink."""
+    key = random.PRNGKey(0)
+    n, d1, d2 = 800, 4, 5
+    x = random.normal(key, (n, d1))
+    z = random.normal(random.PRNGKey(1), (n, d2))
+    a, b = 1, 3
+    y = 2.0 * x[:, a] * z[:, b] + 0.3 * random.normal(random.PRNGKey(2), (n,))
+
+    def model(x, z, y=None):
+        mu = InterceptLayer()("b0") + HorseshoeInteractionLayer(slab_scale=2.0)(
+            "int", x, z
+        )
+        return gaussian_link(mu, y)
+
+    result = fit(
+        model, y=y.reshape(-1, 1), x=x, z=z, num_steps=6000, lr=0.01, seed=0
+    )
+    beta = jnp.asarray(
+        result.summary(x=x, z=z)["HorseshoeInteractionLayer_int_beta"]["mean"]
+    ).reshape(-1)
+    top = int(jnp.argmax(jnp.abs(beta)))
+    assert divmod(top, d2) == (a, b)  # column k -> pair (i, j)
+    order = jnp.sort(jnp.abs(beta))
+    assert float(order[-2]) < 0.25 * float(
+        order[-1]
+    )  # runner-up is shrunk away
+
+
+def test_horseshoe_interaction_mcmc_runs() -> None:
+    key = random.PRNGKey(0)
+    x = random.normal(key, (150, 3))
+    z = random.normal(random.PRNGKey(1), (150, 3))
+    y = 1.5 * x[:, 0] * z[:, 2] + 0.3 * random.normal(random.PRNGKey(2), (150,))
+
+    def model(x, z, y=None):
+        return gaussian_link(HorseshoeInteractionLayer()("int", x, z), y)
+
+    result = fit(
+        model,
+        y=y,
+        method="mcmc",
+        num_warmup=100,
+        num_mcmc_samples=100,
+        x=x,
+        z=z,
+    )
+    assert result.posterior_samples is not None
