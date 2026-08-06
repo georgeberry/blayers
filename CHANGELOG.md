@@ -5,7 +5,7 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
-## [Unreleased]
+## [0.3.3]
 
 ### Changed
 - **`MixtureLayer` learned weights are now logistic-normal, not `Dirichlet`.**
@@ -16,6 +16,10 @@ may carry breaking changes).
   particle flattener (its constrained dimension `k` differs from its unconstrained
   `k-1`). The sampled site is renamed `MixtureLayer_<name>_weights` →
   `MixtureLayer_<name>_logits`; `model_to_latex` renders the softmax accordingly.
+- **`InteractionLayer` now takes an optional `z`.** Called with one feature set
+  (`("beta", x)`) it builds the unique within-`x` pairs `x_i x_j`, `i < j` (no squares,
+  no duplicates); called with two (`("beta", x, z)`) it builds the full `d1*d2` cross
+  set as before. Existing two-argument calls are unchanged.
 
 ### Added
 - **`HorseshoeInteractionLayer`** — explicit pairwise interactions with a per-pair
