@@ -5,16 +5,46 @@ import numpyro.distributions as dist
 from jax import random
 from numpyro.handlers import seed, trace
 
-from blayers.links import gaussian_link, logit_link, lognormal_link, negative_binomial_link, student_t_link
+from blayers.links import (
+    categorical_link,
+    gaussian_link,
+    logit_link,
+    lognormal_link,
+    negative_binomial_link,
+    student_t_link,
+)
+
+
+def test_categorical_link_sample_shape():
+    key = random.PRNGKey(0)
+    logits = jnp.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])  # (2, 3 classes)
+
+    def model():
+        return categorical_link(logits)
+
+    tr = trace(seed(model, key)).get_trace()
+    assert tr["obs"]["value"].shape == (2,)
+    assert tr["obs"]["fn"].probs.shape == (2, 3)
+
+
+def test_categorical_link_squeezes_trailing_singleton():
+    """(n, num_classes, 1) logits are squeezed to (n, num_classes)."""
+    key = random.PRNGKey(1)
+    logits = jnp.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])[..., None]  # (2,3,1)
+
+    def model():
+        return categorical_link(logits)
+
+    tr = trace(seed(model, key)).get_trace()
+    assert tr["obs"]["value"].shape == (2,)
+    assert tr["obs"]["fn"].probs.shape == (2, 3)
 
 
 def test_negative_binomial_link_sample_shape():
     key = random.PRNGKey(0)
 
     def model():
-        return negative_binomial_link(
-            y_hat=jnp.array([5.0, 10.0])
-        )
+        return negative_binomial_link(y_hat=jnp.array([5.0, 10.0]))
 
     tr = trace(seed(model, key)).get_trace()
     obs_site = tr["obs"]
@@ -29,9 +59,7 @@ def test_negative_binomial_link_with_obs():
     y_obs = jnp.array([3.0, 4.0])
 
     def model():
-        return negative_binomial_link(
-            y_hat=jnp.array([5.0, 10.0]), y=y_obs
-        )
+        return negative_binomial_link(y_hat=jnp.array([5.0, 10.0]), y=y_obs)
 
     tr = trace(seed(model, key)).get_trace()
 
@@ -44,9 +72,7 @@ def test_negative_binomial_link_independent():
     key = random.PRNGKey(2)
 
     def model():
-        return negative_binomial_link(
-            y_hat=jnp.array([5.0, 10.0])
-        )
+        return negative_binomial_link(y_hat=jnp.array([5.0, 10.0]))
 
     tr = trace(seed(model, key)).get_trace()
     obs_site = tr["obs"]
@@ -72,9 +98,7 @@ def test_logit_link_with_obs():
     y_obs = jnp.array([0.0, 1.0])
 
     def model():
-        return logit_link(
-            y_hat=jnp.array([0.2, 0.8]), y=y_obs
-        )
+        return logit_link(y_hat=jnp.array([0.2, 0.8]), y=y_obs)
 
     tr = trace(seed(model, key)).get_trace()
 
@@ -144,7 +168,9 @@ def test_gaussian_link_halfnormal_sigma():
     """sigma_dist can be swapped to HalfNormal via partial or direct kwarg."""
     key = random.PRNGKey(3)
 
-    hn_link = partial(gaussian_link, sigma_dist=dist.HalfNormal, sigma_kwargs={"scale": 1.0})
+    hn_link = partial(
+        gaussian_link, sigma_dist=dist.HalfNormal, sigma_kwargs={"scale": 1.0}
+    )
 
     def model():
         return hn_link(y_hat=jnp.array([1.0, -1.0]))
@@ -186,7 +212,9 @@ def test_lognormal_link_sample_shape():
 def test_lognormal_link_halfnormal_sigma():
     key = random.PRNGKey(1)
 
-    hn_lognormal = partial(lognormal_link, sigma_dist=dist.HalfNormal, sigma_kwargs={"scale": 1.0})
+    hn_lognormal = partial(
+        lognormal_link, sigma_dist=dist.HalfNormal, sigma_kwargs={"scale": 1.0}
+    )
 
     def model():
         return hn_lognormal(y_hat=jnp.array([1.0, 2.0]))
@@ -213,7 +241,9 @@ def test_student_t_link_sample_shape():
 
 def test_student_t_link_custom_df():
     key = random.PRNGKey(1)
-    cauchy_link = partial(student_t_link, obs_dist=partial(dist.StudentT, df=1.0))
+    cauchy_link = partial(
+        student_t_link, obs_dist=partial(dist.StudentT, df=1.0)
+    )
 
     def model():
         return cauchy_link(y_hat=jnp.array([1.0, -1.0]))

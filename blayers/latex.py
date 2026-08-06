@@ -272,11 +272,6 @@ def _render_mixture(
             rf"{g} &\sim {_dist_latex(sites['logits']['fn'], value_symbols)}"
         )
         lines.append(rf"{w} &= \mathrm{{softmax}}({g})_k")
-    elif "weights" in sites:
-        w = _sub(r"w", layer_name)
-        lines.append(
-            rf"{w} &\sim {_dist_latex(sites['weights']['fn'], value_symbols)}"
-        )
     beta = _sub(r"\beta", layer_name, "j")
     comps = _unwrap(sites["beta"]["fn"]).component_distributions
     parts = [

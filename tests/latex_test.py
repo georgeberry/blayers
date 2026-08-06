@@ -24,6 +24,7 @@ from blayers.links import (
     gamma_link,
     gaussian_link,
     logit_link,
+    lognormal_link,
     negative_binomial_link,
     ordinal_link,
     poisson_link,
@@ -144,6 +145,7 @@ def test_passing_y_raises():
         (poisson_link, r"\mathrm{Poisson}(e^{\eta_i})"),
         (exponential_link, r"\mathrm{Exponential}(e^{-\eta_i})"),
         (gamma_link, r"\mathrm{Gamma}(k,\; k\,e^{-\eta_i})"),
+        (lognormal_link, r"\mathrm{LogNormal}(\eta_i,\; \sigma)"),
     ],
 )
 def test_likelihood_families(link, expect):
@@ -272,6 +274,19 @@ def test_plain_numpyro_model_degrades_gracefully():
     tex = model_to_latex(model, x=X)
     assert r"\mathrm{alpha} &\sim \mathrm{Normal}(0, 1)" in tex
     assert r"\mathrm{beta\_coef}" in tex
+
+
+def test_off_table_distributions_use_generic_form():
+    """Priors / likelihoods not in the symbol tables degrade to a generic form."""
+
+    def model(x, y=None):
+        w = sample("weird", d.Gumbel(0.0, 1.0))  # off-table prior
+        mu = w + x[:, 0]
+        return sample("obs", d.Gumbel(mu, 1.0), obs=y)  # off-table likelihood
+
+    tex = model_to_latex(model, x=X)
+    assert r"\mathrm{Gumbel}(\dots)" in tex  # generic prior fallback
+    assert r"\mathrm{Gumbel}(\eta_i)" in tex  # generic likelihood fallback
 
 
 @pytest.mark.parametrize(

@@ -11,6 +11,7 @@ from blayers.layers import (
     FixedPriorLayer,
     FM3Layer,
     FMLayer,
+    HorseshoeLayer,
     InteractionLayer,
     InterceptLayer,
     LowRankBilinearLayer,
@@ -18,6 +19,17 @@ from blayers.layers import (
     RandomEffectsLayer,
     RandomWalkLayer,
 )
+
+
+class TestHorseshoeLayerValidation:
+    def test_valid_defaults(self):
+        HorseshoeLayer()  # plain
+        HorseshoeLayer(slab_scale=2.0)  # regularized
+
+    def test_bad_coef_kwargs(self):
+        with pytest.raises(TypeError, match="Invalid coef_dist kwargs"):
+            HorseshoeLayer(coef_kwargs={"loc": 0.0, "bad_arg": 1.0})
+
 
 # --------------------------------------------------------------------------- #
 # Adaptive-prior layers (lmbda + coef)

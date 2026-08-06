@@ -81,6 +81,17 @@ class TestMixtureLayer:
                 component_kwargs=({"loc": 0.0, "scale": 1.0},),
             )
 
+    def test_too_few_components_raise(self) -> None:
+        with pytest.raises(ValueError, match="at least two"):
+            MixtureLayer(
+                component_dists=(dist.Normal,),
+                component_kwargs=({"loc": 0.0, "scale": 1.0},),
+            )
+
+    def test_weights_length_mismatch_raise(self) -> None:
+        with pytest.raises(ValueError, match="one entry per component"):
+            MixtureLayer(weights=[1.0])  # 2 default components, 1 weight
+
     def test_fit_learns(self) -> None:
         key = random.PRNGKey(0)
         x = random.normal(key, (NUM_OBS, 4))
