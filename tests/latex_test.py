@@ -200,10 +200,10 @@ def test_regularized_horseshoe_has_slab_line():
 
 
 def test_horseshoe_interaction_override():
-    def model(x, z, y=None):
-        return gaussian_link(HorseshoeInteractionLayer()("int", x, z), y)
+    def model(x, y=None):
+        return gaussian_link(HorseshoeInteractionLayer()("int", x), y)
 
-    tex = model_to_latex(model, x=X, z=X)
+    tex = model_to_latex(model, x=X)
     assert r"\tau_{\mathrm{int}} &\sim \mathrm{HalfCauchy}(1)" in tex
     assert r"\lambda_{\mathrm{int},j} &\sim \mathrm{HalfCauchy}(1)" in tex
     assert not _has_double_subscript(tex)

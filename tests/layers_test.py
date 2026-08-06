@@ -992,18 +992,23 @@ def test_fixed_effects_fit_learns() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_horseshoe_interaction_output_shape() -> None:
-    x = random.normal(random.PRNGKey(0), (20, 3))
-    z = random.normal(random.PRNGKey(1), (20, 4))
+def test_horseshoe_interaction_within_set_unique_pairs() -> None:
+    """z omitted -> unique within-x pairs i < j (C(d,2) columns, no squares)."""
+    import math
 
-    def model(x, z):
-        return deterministic("out", HorseshoeInteractionLayer()("int", x, z))
+    x = random.normal(random.PRNGKey(0), (20, 5))
 
-    samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x, z=z)
+    def model(x):
+        return deterministic("out", HorseshoeInteractionLayer()("int", x))
+
+    samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x)
     assert samples["out"].shape == (4, 20, 1)
+    beta = samples["HorseshoeInteractionLayer_int_beta"]
+    assert beta.shape[1:] == (math.comb(5, 2), 1)  # 10 unique pairs, not 25
 
 
-def test_horseshoe_interaction_units() -> None:
+def test_horseshoe_interaction_cross_set_full_grid() -> None:
+    """z given -> full d1 x d2 outer product, like InteractionLayer."""
     x = random.normal(random.PRNGKey(0), (20, 3))
     z = random.normal(random.PRNGKey(1), (20, 4))
 
@@ -1014,53 +1019,53 @@ def test_horseshoe_interaction_units() -> None:
 
     samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x, z=z)
     assert samples["out"].shape == (4, 20, 2)
+    assert samples["HorseshoeInteractionLayer_int_beta"].shape[1:] == (3 * 4, 2)
 
 
 def test_horseshoe_interaction_sites() -> None:
     """Sites carry the subclass name; slab adds the c2 site."""
-    x = random.normal(random.PRNGKey(0), (20, 3))
-    z = random.normal(random.PRNGKey(1), (20, 4))
+    x = random.normal(random.PRNGKey(0), (20, 4))
 
-    def plain(x, z):
-        return HorseshoeInteractionLayer()("int", x, z)
+    def plain(x):
+        return HorseshoeInteractionLayer()("int", x)
 
-    def slab(x, z):
-        return HorseshoeInteractionLayer(slab_scale=2.0)("int", x, z)
+    def slab(x):
+        return HorseshoeInteractionLayer(slab_scale=2.0)("int", x)
 
-    s_plain = Predictive(plain, num_samples=2)(random.PRNGKey(2), x=x, z=z)
+    s_plain = Predictive(plain, num_samples=2)(random.PRNGKey(2), x=x)
     for suffix in ("tau", "scale", "beta"):
         assert f"HorseshoeInteractionLayer_int_{suffix}" in s_plain
     assert "HorseshoeInteractionLayer_int_c2" not in s_plain
-    # beta has one coefficient per (x_i, z_j) pair
-    assert s_plain["HorseshoeInteractionLayer_int_beta"].shape[1:] == (3 * 4, 1)
 
-    s_slab = Predictive(slab, num_samples=2)(random.PRNGKey(2), x=x, z=z)
+    s_slab = Predictive(slab, num_samples=2)(random.PRNGKey(2), x=x)
     assert "HorseshoeInteractionLayer_int_c2" in s_slab
 
 
 def test_horseshoe_interaction_recovers_sparse_pair() -> None:
-    """One planted x_a*z_b interaction: its coefficient dominates, the rest shrink."""
-    key = random.PRNGKey(0)
-    n, d1, d2 = 800, 4, 5
-    x = random.normal(key, (n, d1))
-    z = random.normal(random.PRNGKey(1), (n, d2))
-    a, b = 1, 3
-    y = 2.0 * x[:, a] * z[:, b] + 0.3 * random.normal(random.PRNGKey(2), (n,))
+    """One planted within-x interaction x_a*x_b: its coefficient dominates."""
+    import itertools
 
-    def model(x, z, y=None):
+    key = random.PRNGKey(0)
+    n, d = 800, 6
+    x = random.normal(key, (n, d))
+    a, b = 1, 4  # a < b
+    y = 2.0 * x[:, a] * x[:, b] + 0.3 * random.normal(random.PRNGKey(2), (n,))
+
+    def model(x, y=None):
         mu = InterceptLayer()("b0") + HorseshoeInteractionLayer(slab_scale=2.0)(
-            "int", x, z
+            "int", x
         )
         return gaussian_link(mu, y)
 
     result = fit(
-        model, y=y.reshape(-1, 1), x=x, z=z, num_steps=6000, lr=0.01, seed=0
+        model, y=y.reshape(-1, 1), x=x, num_steps=6000, lr=0.01, seed=0
     )
     beta = jnp.asarray(
-        result.summary(x=x, z=z)["HorseshoeInteractionLayer_int_beta"]["mean"]
+        result.summary(x=x)["HorseshoeInteractionLayer_int_beta"]["mean"]
     ).reshape(-1)
+    pairs = list(itertools.combinations(range(d), 2))
     top = int(jnp.argmax(jnp.abs(beta)))
-    assert divmod(top, d2) == (a, b)  # column k -> pair (i, j)
+    assert pairs[top] == (a, b)  # column k -> k-th i<j pair
     order = jnp.sort(jnp.abs(beta))
     assert float(order[-2]) < 0.25 * float(
         order[-1]
@@ -1069,12 +1074,11 @@ def test_horseshoe_interaction_recovers_sparse_pair() -> None:
 
 def test_horseshoe_interaction_mcmc_runs() -> None:
     key = random.PRNGKey(0)
-    x = random.normal(key, (150, 3))
-    z = random.normal(random.PRNGKey(1), (150, 3))
-    y = 1.5 * x[:, 0] * z[:, 2] + 0.3 * random.normal(random.PRNGKey(2), (150,))
+    x = random.normal(key, (150, 4))
+    y = 1.5 * x[:, 0] * x[:, 2] + 0.3 * random.normal(random.PRNGKey(2), (150,))
 
-    def model(x, z, y=None):
-        return gaussian_link(HorseshoeInteractionLayer()("int", x, z), y)
+    def model(x, y=None):
+        return gaussian_link(HorseshoeInteractionLayer()("int", x), y)
 
     result = fit(
         model,
@@ -1083,6 +1087,23 @@ def test_horseshoe_interaction_mcmc_runs() -> None:
         num_warmup=100,
         num_mcmc_samples=100,
         x=x,
-        z=z,
     )
     assert result.posterior_samples is not None
+
+
+def test_interaction_layer_within_set_unique_pairs() -> None:
+    """InteractionLayer with z omitted uses unique within-x pairs i < j."""
+    import math
+
+    x = random.normal(random.PRNGKey(0), (20, 5))
+
+    def model(x):
+        return deterministic("out", InteractionLayer()("beta", x))
+
+    samples = Predictive(model, num_samples=4)(random.PRNGKey(2), x=x)
+    assert samples["out"].shape == (4, 20, 1)
+    # C(5, 2) = 10 unique pairs, not 25 (the full grid)
+    assert samples["InteractionLayer_beta_beta1"].shape[1:] == (
+        math.comb(5, 2),
+        1,
+    )

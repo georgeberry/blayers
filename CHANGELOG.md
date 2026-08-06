@@ -18,13 +18,13 @@ may carry breaking changes).
   `MixtureLayer_<name>_logits`; `model_to_latex` renders the softmax accordingly.
 
 ### Added
-- **`HorseshoeInteractionLayer`** — all pairwise interactions between two feature
-  sets (the `InteractionLayer` design, `x_i * z_j`) with a per-pair **horseshoe**
-  prior instead of a single global scale, so most interaction coefficients shrink to
-  zero and the few real ones stand out. The layer to reach for to *identify* sparse
-  interactions; pass the same array twice (`("int", x, x)`) for within-set pairs.
-  Costs `O(d1*d2)` coefficients — use `LowRankInteractionLayer` / `FMLayer` when you
-  only need prediction at large `d`.
+- **`HorseshoeInteractionLayer`** — explicit pairwise interactions with a per-pair
+  **horseshoe** prior instead of a single global scale, so most interaction
+  coefficients shrink to zero and the few real ones stand out. The layer to reach for
+  to *identify* sparse interactions. Omit `z` (`("int", x)`) for the unique within-`x`
+  pairs `x_i x_j`, `i < j` — the sparse-interaction case; pass `z` (`("int", x, z)`)
+  for the full `d1*d2` cross-set grid, like `InteractionLayer`. Use
+  `LowRankInteractionLayer` / `FMLayer` when you only need prediction at large `d`.
 - **`shuffle` option for batched VI** (`fit(..., shuffle=...)` /
   `svi_run_batched`). Default `True` keeps the per-epoch reshuffle (unbiased
   ELBO gradient). `shuffle=False` iterates fixed contiguous slices — skipping

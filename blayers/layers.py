@@ -685,26 +685,26 @@ class LowRankInteractionLayer(BLayer):
 
 
 class InteractionLayer(BLayer):
-    """Bayesian full pairwise interaction layer with adaptive prior.
+    """Bayesian pairwise interaction layer with adaptive prior.
 
     Samples one coefficient per pair of features from the hierarchical model
 
     .. math::
-        \\lambda \\sim HalfNormal(1.)
+        \\lambda \\sim HalfNormal(1.), \\quad \\beta \\sim Normal(0., \\lambda)
 
-    .. math::
-        \\beta \\sim Normal(0., \\lambda), \\quad
-        \\beta \\in \\mathbb{R}^{d_1 d_2}
+    and computes the weighted sum of the interaction design.
 
-    and computes the weighted sum of all outer-product interactions:
+    Two modes:
 
-    .. math::
-        \\text{output} = (x \\otimes z)\\, \\beta
+    * **Within a single feature set** (``z`` omitted): the unique pairs
+      :math:`x_i x_j` for :math:`i < j` — no squares, no duplicates —
+      :math:`\\binom{d}{2}` coefficients, in lexicographic ``i < j`` order.
+    * **Between two feature sets** (``z`` given): the full flattened outer product
+      :math:`x \\otimes z` of shape :math:`(n, d_1 d_2)`.
 
-    where :math:`x \\otimes z` is the flattened outer product of shape
-    :math:`(n, d_1 d_2)`. For large inputs this scales as
-    :math:`O(d_1 d_2)` parameters; prefer :class:`LowRankInteractionLayer`
-    when :math:`d_1` or :math:`d_2` is large.
+    Scales as :math:`O(d^2)` parameters; prefer :class:`LowRankInteractionLayer`
+    when :math:`d` is large, or :class:`HorseshoeInteractionLayer` for a sparse
+    (variable-selecting) prior over the pairs.
     """
 
     def __init__(
@@ -724,33 +724,33 @@ class InteractionLayer(BLayer):
         self,
         name: str,
         x: jax.Array,
-        z: jax.Array,
+        z: jax.Array | None = None,
         units: int = 1,
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
         """
-        Full pairwise interaction between feature matrices X and Z.
-
-        Samples one coefficient per ``(x_i, z_j)`` pair (``d1 * d2`` total)
-        and returns the weighted sum of all outer-product interactions.
+        Pairwise interaction design times a per-pair coefficient.
 
         Args:
             name: Variable name scope.
             x: Input matrix of shape ``(n, d1)``.
-            z: Input matrix of shape ``(n, d2)``.
+            z: Optional second feature set of shape ``(n, d2)``. If omitted, the
+                interactions are the unique within-``x`` pairs ``i < j``.
             units: Number of outputs.
             activation: Activation function to apply to output.
 
         Returns:
             jax.Array: Output array of shape ``(n, u)``.
         """
-        # get shapes and reshape if necessary
         x = add_trailing_dim(x)
-        z = add_trailing_dim(z)
-        input_shape1 = x.shape[1]
-        input_shape2 = z.shape[1]
+        if z is None:
+            # within-set: unique pairs i < j (no squares, no duplicates)
+            i, j = np.triu_indices(x.shape[1], k=1)
+            x_int = x[:, i] * x[:, j]
+        else:
+            # cross-set: full d1 x d2 grid
+            x_int = pairwise_interactions(x, add_trailing_dim(z))
 
-        # sampling block
         scale = sample(
             name=f"{self.__class__.__name__}_{name}_scale1",
             fn=self.scale_dist(**self.scale_kwargs).expand([units]),
@@ -758,11 +758,10 @@ class InteractionLayer(BLayer):
         beta = sample(
             name=f"{self.__class__.__name__}_{name}_beta1",
             fn=self.coef_dist(scale=scale, **self.coef_kwargs).expand(
-                [input_shape1 * input_shape2, units]
+                [x_int.shape[1], units]
             ),
         )
-
-        return activation(_matmul_interaction(beta, x, z))
+        return activation(_matmul_dot_product(x_int, beta))
 
 
 class BilinearLayer(BLayer):
@@ -1356,30 +1355,35 @@ class HorseshoeLayer(BLayer):
 
 
 class HorseshoeInteractionLayer(HorseshoeLayer):
-    """Sparse pairwise interactions between two feature sets under a horseshoe.
+    """Sparse pairwise interactions under a horseshoe prior.
 
-    Builds the same design as :class:`InteractionLayer` — the flattened outer
-    product of ``x`` and ``z``, one column per ``(x_i, z_j)`` pair — then places a
-    (regularized) horseshoe prior on the per-pair coefficients. Local shrinkage
-    pulls most interactions to zero and leaves the few real ones standing, so this
-    is the layer to reach for to **identify sparse interactions** (as opposed to
-    :class:`InteractionLayer`'s single global scale, which cannot localize).
+    Builds an explicit interaction design and places a (regularized) horseshoe
+    prior on the per-pair coefficients. Local shrinkage pulls most interactions to
+    zero and leaves the few real ones standing, so this is the layer to reach for
+    to **identify sparse interactions** (as opposed to :class:`InteractionLayer`'s
+    single global scale, which cannot localize).
 
-    Uses ``x`` and ``z`` for a cross-set interaction; pass the same array twice for
-    all within-set pairs (``(x, x)``). Costs ``O(d1 * d2)`` coefficients — for large
-    inputs where you only need prediction, prefer :class:`LowRankInteractionLayer`
-    or :class:`FMLayer`. Column ``k`` of the design is the pair
-    ``(i, j) = divmod(k, d2)``, so posterior coefficients map back to feature pairs.
+    Two modes:
 
-    Inherits its prior configuration (``slab_scale``, ``slab_df``, ``coef_dist``,
-    ``coef_kwargs``) from :class:`HorseshoeLayer`.
+    * **Within a single feature set** (``z`` omitted): the unique pairs ``x_i x_j``
+      for ``i < j`` — no squares, no duplicates — ``C(d, 2)`` columns. Column ``k``
+      is the ``k``-th pair in lexicographic ``i < j`` order (row-major upper
+      triangle), so posterior coefficients map back to feature pairs.
+    * **Between two feature sets** (``z`` given): the full ``d1 * d2`` outer product
+      ``x_i z_j`` (like :class:`InteractionLayer`); column ``k`` is
+      ``(i, j) = divmod(k, d2)``.
+
+    Costs ``O(d^2)`` coefficients — for large inputs where you only need prediction,
+    prefer :class:`LowRankInteractionLayer` or :class:`FMLayer`. Inherits its prior
+    configuration (``slab_scale``, ``slab_df``, ``coef_dist``, ``coef_kwargs``) from
+    :class:`HorseshoeLayer`.
     """
 
-    def __call__(  # type: ignore[override]  # takes (x, z), unlike HorseshoeLayer
+    def __call__(  # type: ignore[override]  # (x, z?) differs from HorseshoeLayer
         self,
         name: str,
         x: jax.Array,
-        z: jax.Array,
+        z: jax.Array | None = None,
         units: int = 1,
         activation: Callable[[jax.Array], jax.Array] = jnn.identity,
     ) -> jax.Array:
@@ -1387,7 +1391,8 @@ class HorseshoeInteractionLayer(HorseshoeLayer):
         Args:
             name: Variable name scope.
             x: Input matrix of shape ``(n, d1)``.
-            z: Input matrix of shape ``(n, d2)``.
+            z: Optional second feature set of shape ``(n, d2)``. If omitted, the
+                interactions are the unique within-``x`` pairs ``i < j``.
             units: Number of output dimensions.
             activation: Activation function.
 
@@ -1395,8 +1400,13 @@ class HorseshoeInteractionLayer(HorseshoeLayer):
             jax.Array of shape ``(n, units)``.
         """
         x = add_trailing_dim(x)
-        z = add_trailing_dim(z)
-        x_int = pairwise_interactions(x, z)
+        if z is None:
+            # within-set: unique pairs i < j (no squares, no duplicates)
+            i, j = np.triu_indices(x.shape[1], k=1)
+            x_int = x[:, i] * x[:, j]
+        else:
+            # cross-set: full d1 x d2 grid, like InteractionLayer
+            x_int = pairwise_interactions(x, add_trailing_dim(z))
         return super().__call__(name, x_int, units=units, activation=activation)
 
 
