@@ -170,7 +170,7 @@ The full set of layers included with BLayers:
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
 - `SpikeAndSlabLayer` — Spike-and-slab prior; `z ~ Beta(0.5, 0.5)` inclusion weights times a configurable slab.
-- `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a `Dirichlet` (or fixed) weight; the component indicator is marginalised so it works under VI *and* MCMC. Good for robustness / elastic-net-style priors.
+- `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, *and* SVGD. Good for robustness / elastic-net-style priors.
 - `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
@@ -278,14 +278,14 @@ Like splines, HSGP terms add for a GAM-style additive model (`f1(x1) + f2(x2) + 
 
 ## Mixture priors
 
-`MixtureLayer` draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a `Dirichlet` prior by default, or pass fixed `weights=`. The component indicator is marginalised internally, so it works under **both VI and MCMC**.
+`MixtureLayer` draws each coefficient from a finite mixture of priors (default Normal + Laplace) — useful for robustness (a heavy-tailed component absorbs outlier coefficients) or elastic-net-flavoured priors. The mixing weights get a logistic-normal prior by default (softmax of `Normal(0, weight_scale)` logits — an unconstrained parameterisation that fits under VI, MCMC, *and* SVGD), or pass fixed `weights=`. The component indicator is marginalised internally, so it works under **VI, MCMC, and SVGD**.
 
 ```python
 from blayers.layers import MixtureLayer
 from blayers.links import gaussian_link
 
 def model(x, y=None):
-    mu = MixtureLayer()("beta", x)                 # Normal + Laplace, Dirichlet weights
+    mu = MixtureLayer()("beta", x)                 # Normal + Laplace, logistic-normal weights
     return gaussian_link(mu, y)
 ```
 

@@ -67,6 +67,7 @@ _SUFFIX_SYMBOLS: dict[str, str] = {
     "A": r"A",
     "B": r"B",
     "weights": r"w",
+    "logits": r"\gamma",
     "lengthscale": r"\ell",
     "sigma": r"\alpha",  # HSGP marginal std (namespaced under the layer)
 }
@@ -264,7 +265,14 @@ def _render_mixture(
     layer_name: str, sites: dict[str, Any], value_symbols: dict[int, str]
 ) -> list[str]:
     lines = []
-    if "weights" in sites:
+    if "logits" in sites:
+        g = _sub(r"\gamma", layer_name, "k")
+        w = _sub(r"w", layer_name, "k")
+        lines.append(
+            rf"{g} &\sim {_dist_latex(sites['logits']['fn'], value_symbols)}"
+        )
+        lines.append(rf"{w} &= \mathrm{{softmax}}({g})_k")
+    elif "weights" in sites:
         w = _sub(r"w", layer_name)
         lines.append(
             rf"{w} &\sim {_dist_latex(sites['weights']['fn'], value_symbols)}"

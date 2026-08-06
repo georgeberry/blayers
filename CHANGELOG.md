@@ -7,6 +7,16 @@ may carry breaking changes).
 
 ## [Unreleased]
 
+### Changed
+- **`MixtureLayer` learned weights are now logistic-normal, not `Dirichlet`.**
+  When `weights=None` the mixing weights are `softmax` of `Normal(0, weight_scale)`
+  logits (new `weight_scale` arg, default `1.0`, replacing `dirichlet_concentration`).
+  This keeps every latent in unconstrained space, so `MixtureLayer` now fits under
+  **SVGD** as well as VI and MCMC — a raw `Dirichlet` simplex site broke SVGD's
+  particle flattener (its constrained dimension `k` differs from its unconstrained
+  `k-1`). The sampled site is renamed `MixtureLayer_<name>_weights` →
+  `MixtureLayer_<name>_logits`; `model_to_latex` renders the softmax accordingly.
+
 ### Added
 - **`shuffle` option for batched VI** (`fit(..., shuffle=...)` /
   `svi_run_batched`). Default `True` keeps the per-epoch reshuffle (unbiased

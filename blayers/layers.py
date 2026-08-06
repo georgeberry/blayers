@@ -1469,7 +1469,7 @@ class MixtureLayer(BLayer):
             {"loc": 0.0, "scale": 1.0},
         ),
         weights: list[float] | None = None,
-        dirichlet_concentration: float = 1.0,
+        weight_scale: float = 1.0,
     ):
         """
         Args:
@@ -1477,9 +1477,14 @@ class MixtureLayer(BLayer):
                 component (>= 2). All must share the same (real) support.
             component_kwargs: Kwargs for each component distribution.
             weights: Fixed mixing weights (one per component, summing to 1). If
-                ``None``, a ``Dirichlet`` prior is placed on the weights.
-            dirichlet_concentration: Symmetric ``Dirichlet`` concentration used
-                when ``weights`` is ``None``.
+                ``None``, a **logistic-normal** prior is placed on the weights:
+                ``softmax`` of ``Normal(0, weight_scale)`` logits. This keeps the
+                weight latent in unconstrained space so the layer fits under VI,
+                MCMC, *and* SVGD — a raw ``Dirichlet`` simplex site breaks SVGD's
+                particle flattening (its unconstrained dimension differs from its
+                constrained one).
+            weight_scale: Prior standard deviation of the Normal logits used when
+                ``weights`` is ``None``. Larger spreads the weights more.
         """
         if len(component_dists) != len(component_kwargs):
             raise ValueError(
@@ -1492,7 +1497,7 @@ class MixtureLayer(BLayer):
         self.component_dists = component_dists
         self.component_kwargs = component_kwargs
         self.weights = weights
-        self.dirichlet_concentration = dirichlet_concentration
+        self.weight_scale = weight_scale
         try:
             for dst, kw in zip(component_dists, component_kwargs):
                 dst(**kw)
@@ -1522,12 +1527,16 @@ class MixtureLayer(BLayer):
         cls = self.__class__.__name__
 
         if self.weights is None:
-            w = sample(
-                f"{cls}_{name}_weights",
-                distributions.Dirichlet(
-                    jnp.full(k, self.dirichlet_concentration)
-                ),
+            # Logistic-normal: softmax of unconstrained Normal logits. Avoids a
+            # Dirichlet simplex site, which SVGD's particle flattener cannot
+            # handle (constrained dim k != unconstrained dim k-1).
+            logits = sample(
+                f"{cls}_{name}_logits",
+                distributions.Normal(0.0, self.weight_scale)
+                .expand([k])
+                .to_event(1),
             )
+            w = jnn.softmax(logits)
         else:
             w = jnp.asarray(self.weights)
 

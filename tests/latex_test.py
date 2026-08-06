@@ -212,7 +212,8 @@ def test_mixture_override():
         return gaussian_link(MixtureLayer()("mx", x), y)
 
     tex = model_to_latex(model, x=X)
-    assert r"w_{\mathrm{mx}} &\sim \mathrm{Dirichlet}" in tex
+    assert r"\gamma_{\mathrm{mx},k} &\sim \mathrm{Normal}" in tex
+    assert r"w_{\mathrm{mx},k} &= \mathrm{softmax}" in tex
     assert r"w_1\,\mathrm{Normal}(0, 1) + w_2\,\mathrm{Laplace}(0, 1)" in tex
 
 
