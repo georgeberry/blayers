@@ -30,7 +30,7 @@ import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
-from numpyro import deterministic, distributions, sample
+from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
 
@@ -1359,32 +1359,16 @@ class HorseshoeLayer(BLayer):
         else:
             scale = tau * scale  # (d, units)
 
-        # NON-CENTERED when the coefficient prior is Normal: sample a standard
-        # normal and multiply by the shrinkage scale, rather than sampling beta
-        # directly at that scale.
-        #
-        # The centered form is Neal's funnel — beta and tau are tightly coupled,
-        # and a mean-field guide assumes they are independent, so it cannot
-        # represent the geometry. In practice tau simply drifts: measured at
-        # p ~ 800 with tau0 = 1.0 the posterior tau came back ~19, and tightening
-        # tau0 twentyfold to 0.05 moved it to ~19 still. The prior was not being
-        # felt at all and the layer selected nothing. Non-centering makes tau
-        # identified and is the standard fix (Betancourt & Girolami 2015).
-        #
-        # `beta` stays a site of the same name and shape, so nothing downstream
-        # changes. Only Normal factorizes this way; any other coef_dist keeps the
-        # centered form.
-        if self.coef_dist is distributions.Normal:
-            z = sample(
-                f"{cls}_{name}_z",
-                distributions.Normal(0.0, 1.0).expand([d, units]).to_event(2),
-            )
-            beta = deterministic(f"{cls}_{name}_beta", z * scale)
-        else:
-            beta = sample(
-                f"{cls}_{name}_beta",
-                self.coef_dist(scale=scale, **self.coef_kwargs),
-            )
+        # Centered coefficient: beta ~ coef_dist(0, scale).  This is Neal's
+        # funnel (beta tightly coupled to the global tau).  NUTS handles it, so
+        # MCMC identifies tau fine; mean-field VI fits the funnel poorly, so
+        # prefer MCMC for horseshoe selection.  A manual non-centering here was
+        # tried and reverted — it destabilised mean-field VI on high-dimensional
+        # interaction bases (1000+ coefficients).
+        beta = sample(
+            f"{cls}_{name}_beta",
+            self.coef_dist(scale=scale, **self.coef_kwargs),
+        )
         return activation(_matmul_dot_product(x, beta))
 
 

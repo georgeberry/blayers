@@ -5,6 +5,18 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
+## [0.3.4]
+
+### Added
+- **`HorseshoeLayer(tau0=...)` / `HorseshoeInteractionLayer(tau0=...)`** — the scale
+  of the `HalfCauchy` prior on the global shrinkage `tau`, i.e. how aggressively the
+  layer shrinks (default `1.0`, unchanged from earlier releases; smaller pushes
+  harder toward sparsity, per Piironen & Vehtari). The coefficient prior stays
+  **centered** (`beta ~ Normal(0, tau·λ̃)`): NUTS handles the funnel, so MCMC
+  identifies `tau` fine, while mean-field VI fits it poorly — prefer MCMC for
+  horseshoe selection. (A layer-level non-centering was trialled and reverted: it
+  destabilised mean-field VI on high-dimensional interaction bases.)
+
 ## [0.3.3]
 
 ### Changed

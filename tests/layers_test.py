@@ -30,6 +30,7 @@ from blayers.layers import (
     FM3Layer,
     FMLayer,
     HorseshoeInteractionLayer,
+    HorseshoeLayer,
     InteractionLayer,
     InterceptLayer,
     LowRankBilinearLayer,
@@ -1107,3 +1108,31 @@ def test_interaction_layer_within_set_unique_pairs() -> None:
         math.comb(5, 2),
         1,
     )
+
+
+# --------------------------------------------------------------------------- #
+# HorseshoeLayer: tau0 (configurable global-shrinkage scale)
+# --------------------------------------------------------------------------- #
+
+
+def test_horseshoe_tau0_scales_global_shrinkage_prior() -> None:
+    """tau0 sets the scale of the HalfCauchy prior on the global shrinkage tau
+    (its median tracks tau0); beta stays a plain sampled coefficient (centered).
+    """
+    x = random.normal(random.PRNGKey(0), (30, 4))
+
+    def mk(tau0):
+        def model(x):
+            return deterministic("out", HorseshoeLayer(tau0=tau0)("hs", x))
+
+        return model
+
+    small = Predictive(mk(0.01), num_samples=500)(random.PRNGKey(1), x=x)
+    large = Predictive(mk(10.0), num_samples=500)(random.PRNGKey(1), x=x)
+    # HalfCauchy median scales with its scale parameter
+    assert float(jnp.median(small["HorseshoeLayer_hs_tau"])) < float(
+        jnp.median(large["HorseshoeLayer_hs_tau"])
+    )
+    # beta is sampled directly (centered) — no non-centered z site
+    assert "HorseshoeLayer_hs_z" not in small
+    assert "HorseshoeLayer_hs_beta" in small
