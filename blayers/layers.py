@@ -1257,7 +1257,7 @@ class HorseshoeLayer(BLayer):
     Basic horseshoe:
 
     .. math::
-        \\tau \\sim HalfCauchy(1), \\quad
+        \\tau \\sim HalfCauchy(\\tau_0), \\quad
         \\lambda_j \\sim HalfCauchy(1), \\quad
         \\beta_j \\sim Normal(0,\\; \\tau \\lambda_j)
 
@@ -1271,6 +1271,7 @@ class HorseshoeLayer(BLayer):
 
     def __init__(
         self,
+        tau0: float = 1.0,
         slab_scale: float | None = None,
         slab_df: float = 4.0,
         coef_dist: distributions.Distribution = distributions.Normal,
@@ -1278,6 +1279,16 @@ class HorseshoeLayer(BLayer):
     ):
         """
         Args:
+            tau0: Scale of the HalfCauchy prior on the GLOBAL shrinkage ``tau``.
+                This is the knob that decides whether the layer selects. At
+                ``p >> n`` the default of 1.0 is very loose: tau drifts to O(10)
+                and, under a regularized horseshoe, the per-coefficient scale
+                ``tau * sqrt(c^2 l^2 / (c^2 + tau^2 l^2))`` collapses to just
+                ``c`` for any ``l >> c/tau`` — so the prior degenerates to
+                ``Normal(0, slab_scale)`` and shrinks nothing. Piironen & Vehtari
+                suggest ``tau0 ~ (p0 / (p - p0)) * sigma / sqrt(n)`` for an
+                expected ``p0`` non-zero coefficients; in practice something like
+                0.05 is a reasonable starting point for sparse selection.
             slab_scale: If set, uses the regularized horseshoe with this slab
                 scale.  ``None`` gives the plain horseshoe.
             slab_df: Degrees of freedom for the slab variance prior (only
@@ -1288,6 +1299,7 @@ class HorseshoeLayer(BLayer):
             coef_kwargs: Extra kwargs for ``coef_dist`` (beyond ``scale``).
                 Default ``{"loc": 0.0}``.
         """
+        self.tau0 = tau0
         self.slab_scale = slab_scale
         self.slab_df = slab_df
         self.coef_dist = coef_dist
@@ -1323,7 +1335,7 @@ class HorseshoeLayer(BLayer):
         # Global shrinkage: one scale per output unit
         tau = sample(
             f"{cls}_{name}_tau",
-            distributions.HalfCauchy(1.0).expand([units]),
+            distributions.HalfCauchy(self.tau0).expand([units]),
         )
         # Local shrinkage: one per feature per output unit
         scale = sample(
@@ -1347,6 +1359,12 @@ class HorseshoeLayer(BLayer):
         else:
             scale = tau * scale  # (d, units)
 
+        # Centered coefficient: beta ~ coef_dist(0, scale).  This is Neal's
+        # funnel (beta tightly coupled to the global tau).  NUTS handles it, so
+        # MCMC identifies tau fine; mean-field VI fits the funnel poorly, so
+        # prefer MCMC for horseshoe selection.  A manual non-centering here was
+        # tried and reverted — it destabilised mean-field VI on high-dimensional
+        # interaction bases (1000+ coefficients).
         beta = sample(
             f"{cls}_{name}_beta",
             self.coef_dist(scale=scale, **self.coef_kwargs),
