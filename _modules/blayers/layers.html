@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.layers &#8212; blayers 0.3.3 documentation</title>
+    <title>blayers.layers &#8212; blayers 0.3.4 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=94d292f4"></script>
+    <script src="../../_static/documentation_options.js?v=01c71025"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -171,7 +171,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.3 documentation</p>
+    <p class="title logo__title">blayers 0.3.4 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -1703,7 +1703,7 @@
 <span class="sd">    Basic horseshoe:</span>
 
 <span class="sd">    .. math::</span>
-<span class="sd">        \\tau \\sim HalfCauchy(1), \\quad</span>
+<span class="sd">        \\tau \\sim HalfCauchy(\\tau_0), \\quad</span>
 <span class="sd">        \\lambda_j \\sim HalfCauchy(1), \\quad</span>
 <span class="sd">        \\beta_j \\sim Normal(0,\\; \\tau \\lambda_j)</span>
 
@@ -1719,6 +1719,7 @@
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.HorseshoeLayer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">slab_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">slab_df</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
         <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
@@ -1726,6 +1727,16 @@
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
+<span class="sd">            tau0: Scale of the HalfCauchy prior on the GLOBAL shrinkage ``tau``.</span>
+<span class="sd">                This is the knob that decides whether the layer selects. At</span>
+<span class="sd">                ``p &gt;&gt; n`` the default of 1.0 is very loose: tau drifts to O(10)</span>
+<span class="sd">                and, under a regularized horseshoe, the per-coefficient scale</span>
+<span class="sd">                ``tau * sqrt(c^2 l^2 / (c^2 + tau^2 l^2))`` collapses to just</span>
+<span class="sd">                ``c`` for any ``l &gt;&gt; c/tau`` — so the prior degenerates to</span>
+<span class="sd">                ``Normal(0, slab_scale)`` and shrinks nothing. Piironen &amp; Vehtari</span>
+<span class="sd">                suggest ``tau0 ~ (p0 / (p - p0)) * sigma / sqrt(n)`` for an</span>
+<span class="sd">                expected ``p0`` non-zero coefficients; in practice something like</span>
+<span class="sd">                0.05 is a reasonable starting point for sparse selection.</span>
 <span class="sd">            slab_scale: If set, uses the regularized horseshoe with this slab</span>
 <span class="sd">                scale.  ``None`` gives the plain horseshoe.</span>
 <span class="sd">            slab_df: Degrees of freedom for the slab variance prior (only</span>
@@ -1736,6 +1747,7 @@
 <span class="sd">            coef_kwargs: Extra kwargs for ``coef_dist`` (beyond ``scale``).</span>
 <span class="sd">                Default ``{&quot;loc&quot;: 0.0}``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">tau0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">slab_scale</span> <span class="o">=</span> <span class="n">slab_scale</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">slab_df</span> <span class="o">=</span> <span class="n">slab_df</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
@@ -1774,7 +1786,7 @@
         <span class="c1"># Global shrinkage: one scale per output unit</span>
         <span class="n">tau</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_tau&quot;</span><span class="p">,</span>
-            <span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tau0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="c1"># Local shrinkage: one per feature per output unit</span>
         <span class="n">scale</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
@@ -1798,6 +1810,12 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">scale</span> <span class="o">=</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">scale</span>  <span class="c1"># (d, units)</span>
 
+        <span class="c1"># Centered coefficient: beta ~ coef_dist(0, scale).  This is Neal&#39;s</span>
+        <span class="c1"># funnel (beta tightly coupled to the global tau).  NUTS handles it, so</span>
+        <span class="c1"># MCMC identifies tau fine; mean-field VI fits the funnel poorly, so</span>
+        <span class="c1"># prefer MCMC for horseshoe selection.  A manual non-centering here was</span>
+        <span class="c1"># tried and reverted — it destabilised mean-field VI on high-dimensional</span>
+        <span class="c1"># interaction bases (1000+ coefficients).</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">),</span>
