@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Links &#8212; blayers 0.3.4 documentation</title>
+    <title>Links &#8212; blayers 0.3.5 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=01c71025"></script>
+    <script src="../_static/documentation_options.js?v=ba3b9238"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -177,7 +177,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.4 documentation</p>
+    <p class="title logo__title">blayers 0.3.5 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -429,13 +429,13 @@ abstracting away NumPyro boilerplate for common output types.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"mu"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="c1"># HalfNormal sigma instead of Exponential</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dists</span>
-<span class="n">hn_gaussian</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
+<span class="n">hn_gaussian</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>Available links:</p>
@@ -486,13 +486,13 @@ abstracting away NumPyro boilerplate for common output types.</p>
 
 <span class="c1"># HalfNormal prior instead</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="n">hn_link</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
+<span class="n">hn_link</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
 
 <span class="c1"># Known sigma (e.g. from XGBoost quantile regression)</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_std</span><span class="p">)</span>
 
 <span class="c1"># Learned scale from a layer — softplus applied internally</span>
-<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;log_scale&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"log_scale"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">untransformed_scale</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -658,7 +658,7 @@ for prior predictive / inference.</p></li>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">categorical_link</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">logits</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>   <span class="c1"># 4 classes</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"beta"</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>   <span class="c1"># 4 classes</span>
     <span class="k">return</span> <span class="n">categorical_link</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>

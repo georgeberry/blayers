@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.vi_infer &#8212; blayers 0.3.4 documentation</title>
+    <title>blayers.vi_infer &#8212; blayers 0.3.5 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=01c71025"></script>
+    <script src="../../_static/documentation_options.js?v=ba3b9238"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -171,7 +171,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.4 documentation</p>
+    <p class="title logo__title">blayers 0.3.5 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -313,7 +313,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for blayers.vi_infer</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Variational-inference utilities for blayers.</span>
 
 <span class="sd">Provides :class:`Batched_Trace_ELBO`, a drop-in ``Trace_ELBO`` replacement</span>
@@ -322,7 +322,7 @@
 
 <span class="sd">Use ``Batched_Trace_ELBO`` + ``svi_run_batched`` for plate-free batched VI;</span>
 <span class="sd">fall back to standard ``Trace_ELBO`` if your model already uses plates.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
@@ -339,21 +339,21 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_raise_if_has_plate</span><span class="p">(</span><span class="n">model_trace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;plate&quot;</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"plate"</span> <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Batched_Trace_ELBO does not support models that use &quot;</span>
-            <span class="s2">&quot;numpyro.plate: the N/B log-likelihood rescaling double-counts &quot;</span>
-            <span class="s2">&quot;plate-subsampled sites and produces an incorrect ELBO. Either &quot;</span>
-            <span class="s2">&quot;(a) batch via plate and use the standard numpyro Trace_ELBO, or &quot;</span>
-            <span class="s2">&quot;(b) remove the plate and use Batched_Trace_ELBO + &quot;</span>
-            <span class="s2">&quot;svi_run_batched.&quot;</span>
+            <span class="s2">"Batched_Trace_ELBO does not support models that use "</span>
+            <span class="s2">"numpyro.plate: the N/B log-likelihood rescaling double-counts "</span>
+            <span class="s2">"plate-subsampled sites and produces an incorrect ELBO. Either "</span>
+            <span class="s2">"(a) batch via plate and use the standard numpyro Trace_ELBO, or "</span>
+            <span class="s2">"(b) remove the plate and use Batched_Trace_ELBO + "</span>
+            <span class="s2">"svi_run_batched."</span>
         <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO">
 <a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">ELBO</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ELBO estimator for minibatched VI without ``numpyro.plate``.</span>
+<span class="w">    </span><span class="sd">"""ELBO estimator for minibatched VI without ``numpyro.plate``.</span>
 
 <span class="sd">    Behaves like ``Trace_ELBO`` but rescales the per-batch log-likelihood by</span>
 <span class="sd">    ``num_obs / batch_size`` so the gradient is an unbiased estimate of the</span>
@@ -378,7 +378,7 @@
 <span class="sd">        plate is detected in the model trace — the ``num_obs / batch_size``</span>
 <span class="sd">        rescaling double-counts plate-subsampled sites, so the ELBO would be</span>
 <span class="sd">        silently wrong.  Use the standard ``Trace_ELBO`` with plates instead.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.__init__">
 <a class="viewcode-back" href="../../api/vi_infer.html#blayers.vi_infer.Batched_Trace_ELBO.__init__">[docs]</a>
@@ -411,7 +411,7 @@
             <span class="n">guide</span><span class="p">,</span>
             <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)[</span><span class="s2">&quot;elbo&quot;</span><span class="p">]</span></div>
+        <span class="p">)[</span><span class="s2">"elbo"</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Batched_Trace_ELBO.elbo_components">
@@ -433,7 +433,7 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">batch_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot infer batch size from args or kwargs&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot infer batch size from args or kwargs"</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">rng_keys</span><span class="p">:</span>
             <span class="c1"># a key thing to realize is that this does sampling, so it samples</span>
@@ -455,9 +455,9 @@
 
             <span class="c1"># Extract latent sample values z ~ q(z)</span>
             <span class="n">z_vals</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">name</span><span class="p">:</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">guide_trace</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span>
+                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span>
             <span class="p">}</span>
 
             <span class="c1"># Evaluate model at those latent values</span>
@@ -484,25 +484,25 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span>
                 <span class="o">/</span> <span class="n">batch_size</span>
                 <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span>
-                    <span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
                     <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span> <span class="ow">and</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;is_observed&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span> <span class="ow">and</span> <span class="n">site</span><span class="p">[</span><span class="s2">"is_observed"</span><span class="p">]</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
             <span class="c1"># KL[q(z) || p(z)] = H(q, p) - H(p) =&gt; log q(z) - log p(z)</span>
             <span class="c1"># implication comes from the fact that we draw one sample z ~ q(z)</span>
-            <span class="c1"># if you&#39;d like, swap P and Q and work through the math here:</span>
+            <span class="c1"># if you'd like, swap P and Q and work through the math here:</span>
             <span class="c1"># wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Motivation</span>
             <span class="n">log_pz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;is_observed&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">site</span><span class="p">[</span><span class="s2">"is_observed"</span><span class="p">]</span>
             <span class="p">)</span>
             <span class="n">log_qz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">site</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">guide_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span>
+                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span>
             <span class="p">)</span>
             <span class="n">kls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_qz</span> <span class="o">-</span> <span class="n">log_pz</span><span class="p">)</span>
 
@@ -512,9 +512,9 @@
         <span class="n">elbo</span> <span class="o">=</span> <span class="n">llh_mean</span> <span class="o">-</span> <span class="n">kl_mean</span>
 
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;elbo&quot;</span><span class="p">:</span> <span class="n">elbo</span><span class="p">,</span>
-            <span class="s2">&quot;llh&quot;</span><span class="p">:</span> <span class="n">llh_mean</span><span class="p">,</span>
-            <span class="s2">&quot;kl&quot;</span><span class="p">:</span> <span class="n">kl_mean</span><span class="p">,</span>
+            <span class="s2">"elbo"</span><span class="p">:</span> <span class="n">elbo</span><span class="p">,</span>
+            <span class="s2">"llh"</span><span class="p">:</span> <span class="n">llh_mean</span><span class="p">,</span>
+            <span class="s2">"kl"</span><span class="p">:</span> <span class="n">kl_mean</span><span class="p">,</span>
         <span class="p">}</span></div>
 </div>
 
@@ -534,7 +534,7 @@
     <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVIRunResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drive batched VI.</span>
+<span class="w">    </span><span class="sd">"""Drive batched VI.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        shuffle: When ``True`` (default) the row order is re-permuted every</span>
@@ -542,7 +542,7 @@
 <span class="sd">            contiguous slices in a fixed order, which skips the per-epoch</span>
 <span class="sd">            permutation and per-row gather and is noticeably faster; use it when</span>
 <span class="sd">            your rows are already in random order (or the bias is acceptable).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">:</span> <span class="n">SVIState</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVIState</span><span class="p">:</span>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>BLayers &#8212; blayers 0.3.4 documentation</title>
+    <title>BLayers &#8212; blayers 0.3.5 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=01c71025"></script>
+    <script src="_static/documentation_options.js?v=ba3b9238"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -177,7 +177,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.4 documentation</p>
+    <p class="title logo__title">blayers 0.3.5 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -487,7 +487,7 @@ fundamental building block is the <code class="docutils literal notranslate"><sp
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">'mu'</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -501,20 +501,20 @@ model is exactly equivalent to writing the following, just using way less code.<
     <span class="n">input_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># adaptive prior</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"scale"</span><span class="p">,</span>
         <span class="n">fn</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="c1"># beta coefficients for regression</span>
     <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"beta"</span><span class="p">,</span>
         <span class="n">fn</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">),</span>
         <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,),</span>
     <span class="p">)</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,j-&gt;i&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">'ij,j-&gt;i'</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
     <span class="c1"># the link function does this</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="mf">1.</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="s1">&#39;obs&#39;</span><span class="p">,</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'sigma'</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="mf">1.</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="s1">'obs'</span><span class="p">,</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="mixing-it-up">
@@ -540,9 +540,9 @@ model is exactly equivalent to writing the following, just using way less code.<
     <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
         <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
         <span class="n">coef_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
-        <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
-        <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
-    <span class="p">)(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'rate'</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
+        <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'loc'</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
+    <span class="p">)(</span><span class="s1">'mu'</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -557,12 +557,12 @@ model is exactly equivalent to writing the following, just using way less code.<
 <span class="n">my_lognormal_layer</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">(</span>
     <span class="n">scale_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">Exponential</span><span class="p">,</span>
     <span class="n">coef_dist</span><span class="o">=</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">,</span>
-    <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
-    <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
+    <span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'rate'</span><span class="p">:</span> <span class="mf">1.</span><span class="p">},</span>
+    <span class="n">coef_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'loc'</span><span class="p">:</span> <span class="mf">0.</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">&#39;mu1&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">&#39;mu2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">'mu1'</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">my_lognormal_layer</span><span class="p">(</span><span class="s1">'mu2'</span><span class="p">,</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -624,7 +624,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">pred_std</span><span class="p">)</span>
 
 <span class="c1"># Learned scale from a layer — softplus applied internally for stable gradients</span>
-<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;log_sigma&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"log_sigma"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">untransformed_scale</span><span class="o">=</span><span class="n">raw</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -635,10 +635,10 @@ model is exactly equivalent to writing the following, just using way less code.<
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="c1"># HalfNormal prior instead of Exponential</span>
-<span class="n">hn_gaussian</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
+<span class="n">hn_gaussian</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">gaussian_link</span><span class="p">,</span> <span class="n">sigma_dist</span><span class="o">=</span><span class="n">dists</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span> <span class="n">sigma_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"mu"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">hn_gaussian</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -655,7 +655,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">B</span> <span class="o">=</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">knots</span><span class="p">)</span>             <span class="c1"># (n, num_basis) design matrix</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -664,8 +664,8 @@ model is exactly equivalent to writing the following, just using way less code.<
 <span class="n">knots2</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x2_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">f1</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f1&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">knots1</span><span class="p">))</span>
-    <span class="n">f2</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;f2&quot;</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">knots2</span><span class="p">))</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"f1"</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">knots1</span><span class="p">))</span>
+    <span class="n">f2</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"f2"</span><span class="p">,</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">knots2</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f1</span> <span class="o">+</span> <span class="n">f2</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -681,7 +681,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 
 <span class="nd">@autoreshape</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">HSGPLayer</span><span class="p">()(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">HSGPLayer</span><span class="p">()(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -694,7 +694,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.links</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_link</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">MixtureLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                 <span class="c1"># Normal + Laplace, logistic-normal weights</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">MixtureLayer</span><span class="p">()(</span><span class="s2">"beta"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>                 <span class="c1"># Normal + Laplace, logistic-normal weights</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -710,18 +710,18 @@ model is exactly equivalent to writing the following, just using way less code.<
 
 <span class="nd">@autoreshape</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-    <span class="n">intercept</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"beta"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">intercept</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">"intercept"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="c1"># Variational Inference (default)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
 
 <span class="c1"># MCMC</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mcmc&quot;</span><span class="p">,</span> <span class="n">num_mcmc_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"mcmc"</span><span class="p">,</span> <span class="n">num_mcmc_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
 
 <span class="c1"># SVGD</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;svgd&quot;</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_particles</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"svgd"</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_particles</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">result.predict()</span></code> returns a <code class="docutils literal notranslate"><span class="pre">Predictions</span></code> object with <code class="docutils literal notranslate"><span class="pre">.mean</span></code>, <code class="docutils literal notranslate"><span class="pre">.std</span></code>, and <code class="docutils literal notranslate"><span class="pre">.samples</span></code>. <code class="docutils literal notranslate"><span class="pre">result.summary()</span></code> returns posterior stats per latent variable.</p>
@@ -738,7 +738,7 @@ ArviZ bridge rather than reinventing diagnostics. Install with <code class="docu
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
 
 <span class="c1"># MCMC: divergences, R-hat, ESS, and log-likelihood come through automatically</span>
-<span class="n">idata</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mcmc&quot;</span><span class="p">,</span> <span class="n">num_chains</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">()</span>
+<span class="n">idata</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"mcmc"</span><span class="p">,</span> <span class="n">num_chains</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">()</span>
 <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">idata</span><span class="p">)</span>          <span class="c1"># R-hat / ESS per latent</span>
 <span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">idata</span><span class="p">)</span>              <span class="c1"># PSIS-LOO</span>
 
@@ -746,7 +746,7 @@ ArviZ bridge rather than reinventing diagnostics. Install with <code class="docu
 <span class="n">idata_vi</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
 
 <span class="c1"># Compare models on out-of-sample predictive fit</span>
-<span class="n">az</span><span class="o">.</span><span class="n">compare</span><span class="p">({</span><span class="s2">&quot;mcmc&quot;</span><span class="p">:</span> <span class="n">idata</span><span class="p">,</span> <span class="s2">&quot;vi&quot;</span><span class="p">:</span> <span class="n">idata_vi</span><span class="p">})</span>
+<span class="n">az</span><span class="o">.</span><span class="n">compare</span><span class="p">({</span><span class="s2">"mcmc"</span><span class="p">:</span> <span class="n">idata</span><span class="p">,</span> <span class="s2">"vi"</span><span class="p">:</span> <span class="n">idata_vi</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>SVGD is not supported by <code class="docutils literal notranslate"><span class="pre">to_arviz()</span></code> (too few particles to be a meaningful
@@ -764,9 +764,9 @@ the same way you would to <code class="docutils literal notranslate"><span class
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">RandomEffectsLayer</span><span class="p">()(</span><span class="s2">&quot;grp&quot;</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">num_categories</span><span class="o">=</span><span class="n">n_groups</span><span class="p">)</span>
+        <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">"intercept"</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"mu"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">RandomEffectsLayer</span><span class="p">()(</span><span class="s2">"grp"</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">num_categories</span><span class="o">=</span><span class="n">n_groups</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
@@ -774,15 +774,15 @@ the same way you would to <code class="docutils literal notranslate"><span class
 <span class="n">model_to_latex</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">g</span><span class="o">=</span><span class="n">G</span><span class="p">)</span>           <span class="c1"># renders inline in a notebook</span>
 </pre></div>
 </div>
-<div class="highlight-latex notranslate"><div class="highlight"><pre><span></span><span class="k">\begin</span><span class="nb">{</span>align<span class="nb">}</span>
-<span class="k">\beta_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>intercept<span class="nb">}}</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>Normal<span class="nb">}</span>(0, 1) <span class="k">\\</span>
-<span class="k">\lambda_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>mu<span class="nb">}}</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>HalfNormal<span class="nb">}</span>(1) <span class="k">\\</span>
-<span class="k">\beta_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>mu<span class="nb">}}</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>Normal<span class="nb">}</span>(0, <span class="k">\lambda_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>mu<span class="nb">}}</span>) <span class="k">\\</span>
-<span class="k">\lambda_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>grp<span class="nb">}}</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>HalfNormal<span class="nb">}</span>(1) <span class="k">\\</span>
-<span class="k">\theta_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>grp<span class="nb">}}</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>Normal<span class="nb">}</span>(0, <span class="k">\lambda_</span><span class="nb">{</span><span class="k">\mathrm</span><span class="nb">{</span>grp<span class="nb">}}</span>) <span class="k">\\</span>
-<span class="k">\sigma</span> <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>Exponential<span class="nb">}</span>(1) <span class="k">\\</span>
-y<span class="nb">_</span>i <span class="nb">&amp;</span><span class="k">\sim</span> <span class="k">\mathrm</span><span class="nb">{</span>Normal<span class="nb">}</span>(<span class="k">\eta_i</span>,<span class="k">\;</span> <span class="k">\sigma</span>),<span class="k">\quad</span> i = 1, <span class="k">\dots</span>, n
-<span class="k">\end</span><span class="nb">{</span>align<span class="nb">}</span>
+<div class="highlight-latex notranslate"><div class="highlight"><pre><span></span><span class="k">\begin</span><span class="nb">{align}</span>
+<span class="nv">\beta</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{intercept}} &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{Normal}</span><span class="o">(</span><span class="m">0</span><span class="nb">, </span><span class="m">1</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nv">\lambda</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{mu}} &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{HalfNormal}</span><span class="o">(</span><span class="m">1</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nv">\beta</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{mu}} &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{Normal}</span><span class="o">(</span><span class="m">0</span><span class="nb">, </span><span class="nv">\lambda</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{mu}}</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nv">\lambda</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{grp}} &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{HalfNormal}</span><span class="o">(</span><span class="m">1</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nv">\theta</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{grp}} &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{Normal}</span><span class="o">(</span><span class="m">0</span><span class="nb">, </span><span class="nv">\lambda</span><span class="nb">_{</span><span class="nv">\mathrm</span><span class="nb">{grp}}</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nv">\sigma</span><span class="nb"> &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{Exponential}</span><span class="o">(</span><span class="m">1</span><span class="o">)</span><span class="nb"> </span><span class="nv">\\</span>
+<span class="nb">y_i &amp;</span><span class="nv">\sim</span><span class="nb"> </span><span class="nv">\mathrm</span><span class="nb">{Normal}</span><span class="o">(</span><span class="nv">\eta</span><span class="nb">_i,</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\sigma</span><span class="o">)</span><span class="nb">,</span><span class="nv">\quad</span><span class="nb"> i </span><span class="o">=</span><span class="nb"> </span><span class="m">1</span><span class="nb">, </span><span class="nv">\dots</span><span class="nb">, n</span>
+<span class="k">\end</span><span class="nb">{align}</span>
 </pre></div>
 </div>
 <p>The hierarchy is recovered automatically: a coefficient whose scale is a sampled
@@ -837,7 +837,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 
 <span class="nd">@autoreparam</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s1">'mu'</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
 <span class="n">kernel</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>

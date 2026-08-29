@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.latex &#8212; blayers 0.3.4 documentation</title>
+    <title>blayers.latex &#8212; blayers 0.3.5 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=01c71025"></script>
+    <script src="../../_static/documentation_options.js?v=ba3b9238"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -171,7 +171,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.4 documentation</p>
+    <p class="title logo__title">blayers 0.3.5 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -313,13 +313,13 @@
                 <article class="bd-article">
                   
   <h1>Source code for blayers.latex</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">Render a blayers / NumPyro model as the LaTeX of its generative form.</span>
 
 <span class="sd">A blayers model is a plain NumPyro function that *adds* layers into a linear</span>
 <span class="sd">predictor and caps it with a link.  :func:`model_to_latex` traces the model once</span>
 <span class="sd">and prints the priors and likelihood as a block of sampling statements — the</span>
-<span class="sd">&quot;methods section&quot; version of the model — so you never hand-transcribe it.</span>
+<span class="sd">"methods section" version of the model — so you never hand-transcribe it.</span>
 
 <span class="sd">Example</span>
 <span class="sd">-------</span>
@@ -330,13 +330,13 @@
 <span class="sd">    from blayers.latex import model_to_latex</span>
 
 <span class="sd">    def model(x, y=None):</span>
-<span class="sd">        mu = InterceptLayer()(&quot;intercept&quot;) + AdaptiveLayer()(&quot;mu&quot;, x)</span>
+<span class="sd">        mu = InterceptLayer()("intercept") + AdaptiveLayer()("mu", x)</span>
 <span class="sd">        return gaussian_link(mu, y)</span>
 
 <span class="sd">    print(model_to_latex(model, x=x_train))   # raw LaTeX</span>
 <span class="sd">    model_to_latex(model, x=x_train)           # renders inline in Jupyter</span>
 
-<span class="sd">What is and isn&#39;t recovered</span>
+<span class="sd">What is and isn't recovered</span>
 <span class="sd">---------------------------</span>
 
 <span class="sd">A trace exposes every ``sample`` site, its distribution, and shape, so the</span>
@@ -345,7 +345,7 @@
 <span class="sd">the standard generative model (a list of ``\\sim`` statements), not a</span>
 <span class="sd">reconstructed regression equation.  The linear predictor is denoted</span>
 <span class="sd">``\\eta_i``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
@@ -368,67 +368,67 @@
 
 <span class="c1"># suffix (last token of a blayers site name) -&gt; LaTeX symbol (no subscript yet)</span>
 <span class="n">_SUFFIX_SYMBOLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\beta&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\theta&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;theta1&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\theta^{(1)}&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;theta2&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\theta^{(2)}&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\lambda&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;scale1&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\lambda^{(1)}&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;scale2&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\lambda^{(2)}&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\tau&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;c2&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;c^2&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;z&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;W&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;W&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;weights&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;w&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;logits&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\gamma&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;lengthscale&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\ell&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\alpha&quot;</span><span class="p">,</span>  <span class="c1"># HSGP marginal std (namespaced under the layer)</span>
+    <span class="s2">"beta"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span>
+    <span class="s2">"theta"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\theta"</span><span class="p">,</span>
+    <span class="s2">"theta1"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\theta^{(1)}"</span><span class="p">,</span>
+    <span class="s2">"theta2"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\theta^{(2)}"</span><span class="p">,</span>
+    <span class="s2">"scale"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\lambda"</span><span class="p">,</span>
+    <span class="s2">"scale1"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\lambda^{(1)}"</span><span class="p">,</span>
+    <span class="s2">"scale2"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\lambda^{(2)}"</span><span class="p">,</span>
+    <span class="s2">"tau"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\tau"</span><span class="p">,</span>
+    <span class="s2">"c2"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"c^2"</span><span class="p">,</span>
+    <span class="s2">"z"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"z"</span><span class="p">,</span>
+    <span class="s2">"W"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"W"</span><span class="p">,</span>
+    <span class="s2">"A"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"A"</span><span class="p">,</span>
+    <span class="s2">"B"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"B"</span><span class="p">,</span>
+    <span class="s2">"weights"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"w"</span><span class="p">,</span>
+    <span class="s2">"logits"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\gamma"</span><span class="p">,</span>
+    <span class="s2">"lengthscale"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\ell"</span><span class="p">,</span>
+    <span class="s2">"sigma"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\alpha"</span><span class="p">,</span>  <span class="c1"># HSGP marginal std (namespaced under the layer)</span>
 <span class="p">}</span>
 
 <span class="c1"># standalone sites (link parameters with no layer prefix) -&gt; LaTeX symbol</span>
 <span class="n">_STANDALONE_SYMBOLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\sigma&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gamma_shape&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;beta_phi&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\phi&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;zip_gate&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\pi&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;zinb_gate&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\pi&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;zinb_concentration&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\phi&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ordinal_c0&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;c_0&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ordinal_gaps&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;\delta&quot;</span><span class="p">,</span>
+    <span class="s2">"sigma"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\sigma"</span><span class="p">,</span>
+    <span class="s2">"gamma_shape"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"k"</span><span class="p">,</span>
+    <span class="s2">"beta_phi"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\phi"</span><span class="p">,</span>
+    <span class="s2">"zip_gate"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\pi"</span><span class="p">,</span>
+    <span class="s2">"zinb_gate"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\pi"</span><span class="p">,</span>
+    <span class="s2">"zinb_concentration"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\phi"</span><span class="p">,</span>
+    <span class="s2">"ordinal_c0"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"c_0"</span><span class="p">,</span>
+    <span class="s2">"ordinal_gaps"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"\delta"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c1"># distribution class name -&gt; (display name, ordered param attributes)</span>
 <span class="n">_DIST_TABLE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Normal&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Normal&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;LogNormal&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;LogNormal&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;Laplace&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Laplace&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;Cauchy&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Cauchy&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;StudentT&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;StudentT&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;df&quot;</span><span class="p">,</span> <span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;HalfNormal&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;HalfNormal&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,)),</span>
-    <span class="s2">&quot;HalfCauchy&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;HalfCauchy&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,)),</span>
-    <span class="s2">&quot;Exponential&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Exponential&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;rate&quot;</span><span class="p">,)),</span>
-    <span class="s2">&quot;Gamma&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Gamma&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;concentration&quot;</span><span class="p">,</span> <span class="s2">&quot;rate&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;InverseGamma&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;InverseGamma&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;concentration&quot;</span><span class="p">,</span> <span class="s2">&quot;rate&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;Beta&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Beta&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;concentration1&quot;</span><span class="p">,</span> <span class="s2">&quot;concentration0&quot;</span><span class="p">)),</span>
-    <span class="s2">&quot;Dirichlet&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Dirichlet&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;concentration&quot;</span><span class="p">,)),</span>
-    <span class="s2">&quot;Poisson&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Poisson&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;rate&quot;</span><span class="p">,)),</span>
-    <span class="s2">&quot;NegativeBinomial2&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;NegativeBinomial2&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;concentration&quot;</span><span class="p">)),</span>
+    <span class="s2">"Normal"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Normal"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">)),</span>
+    <span class="s2">"LogNormal"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"LogNormal"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">)),</span>
+    <span class="s2">"Laplace"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Laplace"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">)),</span>
+    <span class="s2">"Cauchy"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Cauchy"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">)),</span>
+    <span class="s2">"StudentT"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"StudentT"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"df"</span><span class="p">,</span> <span class="s2">"loc"</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">)),</span>
+    <span class="s2">"HalfNormal"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"HalfNormal"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"scale"</span><span class="p">,)),</span>
+    <span class="s2">"HalfCauchy"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"HalfCauchy"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"scale"</span><span class="p">,)),</span>
+    <span class="s2">"Exponential"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Exponential"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"rate"</span><span class="p">,)),</span>
+    <span class="s2">"Gamma"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Gamma"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"concentration"</span><span class="p">,</span> <span class="s2">"rate"</span><span class="p">)),</span>
+    <span class="s2">"InverseGamma"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"InverseGamma"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"concentration"</span><span class="p">,</span> <span class="s2">"rate"</span><span class="p">)),</span>
+    <span class="s2">"Beta"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Beta"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"concentration1"</span><span class="p">,</span> <span class="s2">"concentration0"</span><span class="p">)),</span>
+    <span class="s2">"Dirichlet"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Dirichlet"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"concentration"</span><span class="p">,)),</span>
+    <span class="s2">"Poisson"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Poisson"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"rate"</span><span class="p">,)),</span>
+    <span class="s2">"NegativeBinomial2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"NegativeBinomial2"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"concentration"</span><span class="p">)),</span>
 <span class="p">}</span>
 
 
 <div class="viewcode-block" id="LatexStr">
 <a class="viewcode-back" href="../../api/latex.html#blayers.latex.LatexStr">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LatexStr</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A ``str`` of LaTeX that also renders inline in Jupyter.</span>
+<span class="w">    </span><span class="sd">"""A ``str`` of LaTeX that also renders inline in Jupyter.</span>
 
 <span class="sd">    ``print(x)`` / ``str(x)`` give the raw LaTeX; in a notebook the object</span>
 <span class="sd">    displays as typeset math via ``_repr_latex_``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_repr_latex_</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pragma: no cover - notebook only</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;$$</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="se">\n</span><span class="s2">$$&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"$$</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="se">\n</span><span class="s2">$$"</span></div>
 
 
 
@@ -438,65 +438,65 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_unwrap</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Peel ExpandedDistribution / Independent / Masked wrappers to the base.&quot;&quot;&quot;</span>
-    <span class="n">wrappers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ExpandedDistribution&quot;</span><span class="p">,</span> <span class="s2">&quot;Independent&quot;</span><span class="p">,</span> <span class="s2">&quot;MaskedDistribution&quot;</span><span class="p">}</span>
-    <span class="k">while</span> <span class="nb">type</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">wrappers</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;base_dist&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Peel ExpandedDistribution / Independent / Masked wrappers to the base."""</span>
+    <span class="n">wrappers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ExpandedDistribution"</span><span class="p">,</span> <span class="s2">"Independent"</span><span class="p">,</span> <span class="s2">"MaskedDistribution"</span><span class="p">}</span>
+    <span class="k">while</span> <span class="nb">type</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">wrappers</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"base_dist"</span><span class="p">):</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">base_dist</span>
     <span class="k">return</span> <span class="n">fn</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_site</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``&quot;AdaptiveLayer_mu_beta&quot;`` -&gt; ``(&quot;AdaptiveLayer&quot;, &quot;mu&quot;, &quot;beta&quot;)``.</span>
+<span class="w">    </span><span class="sd">"""``"AdaptiveLayer_mu_beta"`` -&gt; ``("AdaptiveLayer", "mu", "beta")``.</span>
 
 <span class="sd">    Returns ``None`` for sites that are not blayers-layer sites (link params</span>
 <span class="sd">    such as ``sigma``, or arbitrary NumPyro sites).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="bp">cls</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="bp">cls</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_LAYER_CLASSES</span> <span class="ow">or</span> <span class="n">suffix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_SUFFIX_SYMBOLS</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">suffix</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">,</span> <span class="s2">"_"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">suffix</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sub</span><span class="p">(</span><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attach a ``\\mathrm{name}`` (optionally ``,index``) subscript.</span>
+<span class="w">    </span><span class="sd">"""Attach a ``\\mathrm{name}`` (optionally ``,index``) subscript.</span>
 
 <span class="sd">    Keeps everything in a single ``_{...}`` group so a following per-element</span>
 <span class="sd">    index never produces an illegal double subscript.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">esc</span> <span class="o">=</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\_&quot;</span><span class="p">)</span>
-    <span class="n">inner</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">esc</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;,</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">esc</span> <span class="o">=</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\_"</span><span class="p">)</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">esc</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">",</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">_</span><span class="se">{{</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;LaTeX symbol for any latent site name.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""LaTeX symbol for any latent site name."""</span>
     <span class="n">parsed</span> <span class="o">=</span> <span class="n">_parse_site</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="n">parsed</span>
         <span class="k">return</span> <span class="n">_sub</span><span class="p">(</span><span class="n">_SUFFIX_SYMBOLS</span><span class="p">[</span><span class="n">suffix</span><span class="p">],</span> <span class="n">layer_name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_STANDALONE_SYMBOLS</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_STANDALONE_SYMBOLS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-    <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;\mathrm{&quot;</span> <span class="o">+</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+    <span class="k">return</span> <span class="sa">r</span><span class="s2">"\mathrm{"</span> <span class="o">+</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\_"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"}"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_scalar</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compact rendering of a scalar prior parameter.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Compact rendering of a scalar prior parameter."""</span>
     <span class="n">v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_value</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;LaTeX for a distribution parameter value.</span>
+<span class="w">    </span><span class="sd">"""LaTeX for a distribution parameter value.</span>
 
-<span class="sd">    * coupled to another latent site (same array object) -&gt; that site&#39;s symbol</span>
+<span class="sd">    * coupled to another latent site (same array object) -&gt; that site's symbol</span>
 <span class="sd">    * constant (broadcast) array -&gt; the scalar</span>
 <span class="sd">    * otherwise (a computed, data-dependent array) -&gt; ``None``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">value_symbols</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value_symbols</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">v</span><span class="p">)]</span>
     <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
@@ -509,20 +509,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dist_latex</span><span class="p">(</span>
-    <span class="n">fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;\cdot&quot;</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"\cdot"</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a (prior) distribution as ``Name(param, ...)``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Render a (prior) distribution as ``Name(param, ...)``."""</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
     <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
 
-    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Bernoulli&quot;</span><span class="p">):</span>
-        <span class="n">arg</span> <span class="o">=</span> <span class="s2">&quot;logits&quot;</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Logits&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;probs&quot;</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Bernoulli"</span><span class="p">):</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="s2">"logits"</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"Logits"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"probs"</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">_render_value</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">arg</span><span class="p">),</span> <span class="n">value_symbols</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fallback</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Bernoulli</span><span class="se">}}</span><span class="s2">(\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Categorical&quot;</span><span class="p">):</span>
-        <span class="n">arg</span> <span class="o">=</span> <span class="s2">&quot;logits&quot;</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Logits&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;probs&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Bernoulli</span><span class="se">}}</span><span class="s2">(\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Categorical"</span><span class="p">):</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="s2">"logits"</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"Logits"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"probs"</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">_render_value</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">arg</span><span class="p">),</span> <span class="n">value_symbols</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fallback</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Categorical</span><span class="se">}}</span><span class="s2">(\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Categorical</span><span class="se">}}</span><span class="s2">(\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">)"</span>
 
     <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">_DIST_TABLE</span><span class="p">:</span>
         <span class="n">display</span><span class="p">,</span> <span class="n">attrs</span> <span class="o">=</span> <span class="n">_DIST_TABLE</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span>
@@ -530,52 +530,52 @@
             <span class="n">_render_value</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">value_symbols</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fallback</span>
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">attrs</span>
         <span class="p">]</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">display</span><span class="si">}</span><span class="se">}}</span><span class="s2">(&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="n">display</span><span class="si">}</span><span class="se">}}</span><span class="s2">("</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span>
 
-    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(\dots)&quot;</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(\dots)"</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1"># Per-layer overrides (layers whose true math a flat trace can&#39;t express)</span>
+<span class="c1"># Per-layer overrides (layers whose true math a flat trace can't express)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_horseshoe</span><span class="p">(</span>
     <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">tau</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\tau&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
-    <span class="n">lam</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\lambda&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
-    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\beta&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\tau"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\lambda"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">HalfCauchy</span><span class="se">}}</span><span class="s2">(1)&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">HalfCauchy</span><span class="se">}}</span><span class="s2">(1)&quot;</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">HalfCauchy</span><span class="se">}}</span><span class="s2">(1)"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">HalfCauchy</span><span class="se">}}</span><span class="s2">(1)"</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="k">if</span> <span class="s2">&quot;c2&quot;</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">:</span>
-        <span class="n">c2</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;c^2&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">InverseGamma</span><span class="se">}}</span><span class="s2">(\nu/2,\; \nu s^2/2)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"c2"</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">:</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"c^2"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">InverseGamma</span><span class="se">}}</span><span class="s2">(\nu/2,\; \nu s^2/2)"</span><span class="p">)</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="sa">rf</span><span class="s2">&quot;\tilde</span><span class="se">{{</span><span class="s2">\lambda</span><span class="se">}}</span><span class="s2">_j^2 &amp;= \frac</span><span class="se">{{</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">^2</span><span class="se">}}</span><span class="s2">&quot;</span>
-            <span class="sa">rf</span><span class="s2">&quot;</span><span class="se">{{</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">^2 </span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">^2</span><span class="se">}}</span><span class="s2">&quot;</span>
+            <span class="sa">rf</span><span class="s2">"\tilde</span><span class="se">{{</span><span class="s2">\lambda</span><span class="se">}}</span><span class="s2">_j^2 &amp;= \frac</span><span class="se">{{</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">^2</span><span class="se">}}</span><span class="s2">"</span>
+            <span class="sa">rf</span><span class="s2">"</span><span class="se">{{</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">^2 </span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">^2</span><span class="se">}}</span><span class="s2">"</span>
         <span class="p">)</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0,\; </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">\tilde</span><span class="se">{{</span><span class="s2">\lambda</span><span class="se">}}</span><span class="s2">_j)&quot;</span>
+            <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0,\; </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">\tilde</span><span class="se">{{</span><span class="s2">\lambda</span><span class="se">}}</span><span class="s2">_j)"</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0,\; </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0,\; </span><span class="si">{</span><span class="n">tau</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">lam</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">lines</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_spike_slab</span><span class="p">(</span>
     <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
-    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\beta&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
-    <span class="n">z_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">][</span><span class="s2">&quot;fn&quot;</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
-    <span class="n">b_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">&quot;beta&quot;</span><span class="p">][</span><span class="s2">&quot;fn&quot;</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"z"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
+    <span class="n">z_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">"z"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
+    <span class="n">b_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">z_dist</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">b_dist</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;\tilde</span><span class="se">{{</span><span class="s2">\beta</span><span class="se">}}</span><span class="s2">_j &amp;= </span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> \quad\text</span><span class="se">{{</span><span class="s2">(gated coefficient)</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">z_dist</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">b_dist</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"\tilde</span><span class="se">{{</span><span class="s2">\beta</span><span class="se">}}</span><span class="s2">_j &amp;= </span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> \quad\text</span><span class="se">{{</span><span class="s2">(gated coefficient)</span><span class="se">}}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">]</span>
 
 
@@ -583,36 +583,36 @@
     <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="s2">&quot;logits&quot;</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">:</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\gamma&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
-        <span class="n">w</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"logits"</span> <span class="ow">in</span> <span class="n">sites</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\gamma"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">)</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">&#39;logits&#39;</span><span class="p">][</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">'logits'</span><span class="p">][</span><span class="s1">'fn'</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2"> &amp;= \mathrm</span><span class="se">{{</span><span class="s2">softmax</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2">)_k&quot;</span><span class="p">)</span>
-    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\beta&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
-    <span class="n">comps</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">&quot;beta&quot;</span><span class="p">][</span><span class="s2">&quot;fn&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">component_distributions</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2"> &amp;= \mathrm</span><span class="se">{{</span><span class="s2">softmax</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">g</span><span class="si">}</span><span class="s2">)_k"</span><span class="p">)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
+    <span class="n">comps</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">])</span><span class="o">.</span><span class="n">component_distributions</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">rf</span><span class="s2">&quot;w_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">rf</span><span class="s2">"w_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comps</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="p">]</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim &quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim "</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">" + "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">lines</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_hsgp</span><span class="p">(</span>
     <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">ell</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\ell&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
-    <span class="n">alpha</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\alpha&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
-    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\beta&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;j&quot;</span><span class="p">)</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+    <span class="n">ell</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\ell"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\alpha"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">)</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ell</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">&#39;lengthscale&#39;</span><span class="p">][</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">][</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0, 1)&quot;</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">(x) &amp;= \textstyle\sum_j \phi_j(x)\,&quot;</span>
-        <span class="sa">rf</span><span class="s2">&quot;\sqrt</span><span class="se">{{</span><span class="s2">S_</span><span class="se">{{</span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">ell</span><span class="si">}</span><span class="se">}}</span><span class="s2">(\sqrt</span><span class="se">{{</span><span class="s2">\lambda_j</span><span class="se">}}</span><span class="s2">)</span><span class="se">}}</span><span class="s2">\,</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">ell</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">'lengthscale'</span><span class="p">][</span><span class="s1">'fn'</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s1">'sigma'</span><span class="p">][</span><span class="s1">'fn'</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim \mathrm</span><span class="se">{{</span><span class="s2">Normal</span><span class="se">}}</span><span class="s2">(0, 1)"</span><span class="p">,</span>
+        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">(x) &amp;= \textstyle\sum_j \phi_j(x)\,"</span>
+        <span class="sa">rf</span><span class="s2">"\sqrt</span><span class="se">{{</span><span class="s2">S_</span><span class="se">{{</span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">ell</span><span class="si">}</span><span class="se">}}</span><span class="s2">(\sqrt</span><span class="se">{{</span><span class="s2">\lambda_j</span><span class="se">}}</span><span class="s2">)</span><span class="se">}}</span><span class="s2">\,</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">lines</span>
 
@@ -620,11 +620,11 @@
 <span class="n">_OVERRIDES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
     <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
 <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;HorseshoeLayer&quot;</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
-    <span class="s2">&quot;HorseshoeInteractionLayer&quot;</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
-    <span class="s2">&quot;SpikeAndSlabLayer&quot;</span><span class="p">:</span> <span class="n">_render_spike_slab</span><span class="p">,</span>
-    <span class="s2">&quot;MixtureLayer&quot;</span><span class="p">:</span> <span class="n">_render_mixture</span><span class="p">,</span>
-    <span class="s2">&quot;HSGPLayer&quot;</span><span class="p">:</span> <span class="n">_render_hsgp</span><span class="p">,</span>
+    <span class="s2">"HorseshoeLayer"</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
+    <span class="s2">"HorseshoeInteractionLayer"</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
+    <span class="s2">"SpikeAndSlabLayer"</span><span class="p">:</span> <span class="n">_render_spike_slab</span><span class="p">,</span>
+    <span class="s2">"MixtureLayer"</span><span class="p">:</span> <span class="n">_render_mixture</span><span class="p">,</span>
+    <span class="s2">"HSGPLayer"</span><span class="p">:</span> <span class="n">_render_hsgp</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -638,18 +638,18 @@
     <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="n">scalar_latents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;LaTeX RHS for the observed ``obs`` site, using ``\\eta_i`` for the</span>
-<span class="sd">    linear predictor and matched symbols for auxiliary parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""LaTeX RHS for the observed ``obs`` site, using ``\\eta_i`` for the</span>
+<span class="sd">    linear predictor and matched symbols for auxiliary parameters."""</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
     <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-    <span class="n">eta</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;\eta_i&quot;</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"\eta_i"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">aux</span><span class="p">(</span><span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="c1"># Auxiliary likelihood parameters (scale, concentration) are latent</span>
         <span class="c1"># scalars. Prefer the coupled site symbol; otherwise match by value</span>
         <span class="c1"># against the scalar latents (NumPyro often broadcasts the scale into a</span>
         <span class="c1"># fresh array, breaking object identity) so the symbol stays consistent</span>
-        <span class="c1"># with the site&#39;s own prior line. Fall back to the conventional symbol —</span>
+        <span class="c1"># with the site's own prior line. Fall back to the conventional symbol —</span>
         <span class="c1"># never the raw sampled number.</span>
         <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -668,43 +668,43 @@
         <span class="n">rendered</span> <span class="o">=</span> <span class="n">_render_value</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">value_symbols</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">rendered</span> <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">default</span>
 
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">aux</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\sigma&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Normal&quot;</span><span class="p">,</span> <span class="s2">&quot;Laplace&quot;</span><span class="p">,</span> <span class="s2">&quot;Cauchy&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;LogNormal&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">LogNormal</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;StudentT&quot;</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">const</span><span class="p">(</span><span class="s2">&quot;df&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">StudentT</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">df</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Bernoulli&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Bernoulli</span><span class="se">}}</span><span class="s2">\!\left(\mathrm</span><span class="se">{{</span><span class="s2">logit</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">-1</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)\right)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Categorical&quot;</span><span class="p">):</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">aux</span><span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\sigma"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Normal"</span><span class="p">,</span> <span class="s2">"Laplace"</span><span class="p">,</span> <span class="s2">"Cauchy"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"LogNormal"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">LogNormal</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"StudentT"</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">const</span><span class="p">(</span><span class="s2">"df"</span><span class="p">,</span> <span class="s2">"4"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">StudentT</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">df</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Bernoulli"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Bernoulli</span><span class="se">}}</span><span class="s2">\!\left(\mathrm</span><span class="se">{{</span><span class="s2">logit</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">-1</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)\right)"</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Categorical"</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">r</span><span class="s2">&quot;\mathrm</span><span class="si">{Categorical}</span><span class="s2">\!\left(\mathrm</span><span class="si">{softmax}</span><span class="s2">&quot;</span>
-            <span class="sa">r</span><span class="s2">&quot;(\boldsymbol{\eta}_i)\right)&quot;</span>
+            <span class="sa">r</span><span class="s2">"\mathrm</span><span class="si">{Categorical}</span><span class="s2">\!\left(\mathrm</span><span class="si">{softmax}</span><span class="s2">"</span>
+            <span class="sa">r</span><span class="s2">"(\boldsymbol{\eta}_i)\right)"</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;Poisson&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Poisson</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;NegativeBinomial2&quot;</span><span class="p">:</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">aux</span><span class="p">(</span><span class="s2">&quot;concentration&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\phi&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">NegativeBinomial2</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">phi</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;Gamma&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Gamma</span><span class="se">}}</span><span class="s2">(k,\; k\,e^</span><span class="se">{{</span><span class="s2">-</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;Exponential&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">Exponential</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="s2">-</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)&quot;</span>
-    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">&quot;Beta&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"Poisson"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Poisson</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"NegativeBinomial2"</span><span class="p">:</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">aux</span><span class="p">(</span><span class="s2">"concentration"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\phi"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">NegativeBinomial2</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">,\; </span><span class="si">{</span><span class="n">phi</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"Gamma"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Gamma</span><span class="se">}}</span><span class="s2">(k,\; k\,e^</span><span class="se">{{</span><span class="s2">-</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"Exponential"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">Exponential</span><span class="se">}}</span><span class="s2">(e^</span><span class="se">{{</span><span class="s2">-</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">)"</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="o">==</span> <span class="s2">"Beta"</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">r</span><span class="s2">&quot;\mathrm</span><span class="si">{Beta}</span><span class="s2">(\bar{\mu}_i\phi,\; (1-\bar{\mu}_i)\phi),\quad &quot;</span>
-            <span class="sa">rf</span><span class="s2">&quot;\bar</span><span class="se">{{</span><span class="s2">\mu</span><span class="se">}}</span><span class="s2">_i = \mathrm</span><span class="se">{{</span><span class="s2">logit</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">-1</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="sa">r</span><span class="s2">"\mathrm</span><span class="si">{Beta}</span><span class="s2">(\bar{\mu}_i\phi,\; (1-\bar{\mu}_i)\phi),\quad "</span>
+            <span class="sa">rf</span><span class="s2">"\bar</span><span class="se">{{</span><span class="s2">\mu</span><span class="se">}}</span><span class="s2">_i = \mathrm</span><span class="se">{{</span><span class="s2">logit</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">-1</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ZeroInflated&quot;</span><span class="p">):</span>
-        <span class="n">inner</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">&quot;base_dist&quot;</span><span class="p">,</span> <span class="n">base</span><span class="p">))</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"ZeroInflated"</span><span class="p">):</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="n">_unwrap</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">"base_dist"</span><span class="p">,</span> <span class="n">base</span><span class="p">))</span>
         <span class="n">inner_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="s2">ZeroInflated</span><span class="se">}}</span><span class="s2">\text</span><span class="se">{{</span><span class="s2">-</span><span class="se">}}</span><span class="si">{</span><span class="n">inner_name</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="sa">rf</span><span class="s2">&quot;(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">;\; \pi)&quot;</span>
+            <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="s2">ZeroInflated</span><span class="se">}}</span><span class="s2">\text</span><span class="se">{{</span><span class="s2">-</span><span class="se">}}</span><span class="si">{</span><span class="n">inner_name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">rf</span><span class="s2">"(e^</span><span class="se">{{</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="se">}}</span><span class="s2">;\; \pi)"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">"\mathrm</span><span class="se">{{</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="se">}}</span><span class="s2">(</span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">)"</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -717,14 +717,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">model_to_latex</span><span class="p">(</span>
     <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;align&quot;</span><span class="p">,</span>
+    <span class="n">env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"align"</span><span class="p">,</span>
     <span class="n">seed_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatexStr</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a blayers / NumPyro model as the LaTeX of its generative form.</span>
+<span class="w">    </span><span class="sd">"""Render a blayers / NumPyro model as the LaTeX of its generative form.</span>
 
 <span class="sd">    Traces ``model_fn`` once (with no observed ``y``) and emits a block of</span>
-<span class="sd">    sampling statements: every latent&#39;s prior, then the likelihood.  Hierarchy</span>
+<span class="sd">    sampling statements: every latent's prior, then the likelihood.  Hierarchy</span>
 <span class="sd">    is recovered automatically — a coefficient whose scale is a sampled site</span>
 <span class="sd">    prints ``\\sim \\mathrm{Normal}(0, \\lambda_{\\mathrm{name}})`` rather than a</span>
 <span class="sd">    number.</span>
@@ -736,8 +736,8 @@
 <span class="sd">        :func:`blayers.fit`, but **without** ``y`` (supplying it would condition</span>
 <span class="sd">        the ``obs`` site; the likelihood is rendered from its distribution</span>
 <span class="sd">        family regardless).</span>
-<span class="sd">    env : ``&quot;align&quot;``, ``&quot;aligned&quot;``, or ``&quot;none&quot;``</span>
-<span class="sd">        LaTeX environment to wrap the lines in.  ``&quot;none&quot;`` returns the bare</span>
+<span class="sd">    env : ``"align"``, ``"aligned"``, or ``"none"``</span>
+<span class="sd">        LaTeX environment to wrap the lines in.  ``"none"`` returns the bare</span>
 <span class="sd">        ``\\\\``-separated body.</span>
 <span class="sd">    seed_value : int</span>
 <span class="sd">        PRNG seed for the trace (only affects sampled shapes, not the output).</span>
@@ -756,11 +756,11 @@
 <span class="sd">    \\begin{align}</span>
 <span class="sd">    ...</span>
 <span class="sd">    \\end{align}</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="s2">"y"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;model_to_latex() renders the generative model; do not pass `y` &quot;</span>
-            <span class="s2">&quot;(it would condition the obs site). Pass only model inputs.&quot;</span>
+            <span class="s2">"model_to_latex() renders the generative model; do not pass `y` "</span>
+            <span class="s2">"(it would condition the obs site). Pass only model inputs."</span>
         <span class="p">)</span>
 
     <span class="n">tr</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span><span class="n">seed</span><span class="p">(</span><span class="n">model_fn</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed_value</span><span class="p">)))</span><span class="o">.</span><span class="n">get_trace</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
@@ -768,22 +768,22 @@
     <span class="n">latent</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">site</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span>
-        <span class="ow">and</span> <span class="ow">not</span> <span class="n">site</span><span class="p">[</span><span class="s2">&quot;is_observed&quot;</span><span class="p">]</span>
-        <span class="ow">and</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;obs&quot;</span>
+        <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">site</span><span class="p">[</span><span class="s2">"is_observed"</span><span class="p">]</span>
+        <span class="ow">and</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">"obs"</span>
     <span class="p">}</span>
 
-    <span class="c1"># Map each latent site&#39;s *value object* to its symbol so downstream</span>
-    <span class="c1"># distributions that reuse it (β&#39;s scale = λ) render symbolically.</span>
+    <span class="c1"># Map each latent site's *value object* to its symbol so downstream</span>
+    <span class="c1"># distributions that reuse it (β's scale = λ) render symbolically.</span>
     <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="nb">id</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]):</span> <span class="n">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">latent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="nb">id</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]):</span> <span class="n">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">latent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">}</span>
     <span class="c1"># Scalar latents, for value-based matching of likelihood auxiliaries whose</span>
     <span class="c1"># object identity was lost to broadcasting (e.g. sigma, concentration).</span>
     <span class="n">scalar_latents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">latent</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span>
     <span class="p">]</span>
 
     <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -796,7 +796,7 @@
         <span class="k">if</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sym</span> <span class="o">=</span> <span class="n">_symbol_for</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s1">'fn'</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
             <span class="k">continue</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parsed</span>
@@ -816,18 +816,18 @@
             <span class="k">for</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">sym</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="n">_SUFFIX_SYMBOLS</span><span class="p">[</span><span class="n">suffix</span><span class="p">],</span> <span class="n">layer_name</span><span class="p">)</span>
                 <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">_dist_latex</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s1">'fn'</span><span class="p">],</span><span class="w"> </span><span class="n">value_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
 
     <span class="c1"># Likelihood</span>
-    <span class="k">if</span> <span class="s2">&quot;obs&quot;</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">:</span>
-        <span class="n">rhs</span> <span class="o">=</span> <span class="n">_render_likelihood</span><span class="p">(</span><span class="n">tr</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">][</span><span class="s2">&quot;fn&quot;</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">,</span> <span class="n">scalar_latents</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;y_i &amp;\sim </span><span class="si">{</span><span class="n">rhs</span><span class="si">}</span><span class="s2">,\quad i = 1, \dots, n&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"obs"</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">:</span>
+        <span class="n">rhs</span> <span class="o">=</span> <span class="n">_render_likelihood</span><span class="p">(</span><span class="n">tr</span><span class="p">[</span><span class="s2">"obs"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">,</span> <span class="n">scalar_latents</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"y_i &amp;\sim </span><span class="si">{</span><span class="n">rhs</span><span class="si">}</span><span class="s2">,\quad i = 1, \dots, n"</span><span class="p">)</span>
 
-    <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot; </span><span class="se">\\\\\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">env</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="s2">" </span><span class="se">\\\\\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">env</span> <span class="o">==</span> <span class="s2">"none"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">LatexStr</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">LatexStr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">begin</span><span class="se">{{</span><span class="si">{</span><span class="n">env</span><span class="si">}</span><span class="se">}}\n</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="se">\n\\</span><span class="s2">end</span><span class="se">{{</span><span class="si">{</span><span class="n">env</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">LatexStr</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\\</span><span class="s2">begin</span><span class="se">{{</span><span class="si">{</span><span class="n">env</span><span class="si">}</span><span class="se">}}\n</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="se">\n\\</span><span class="s2">end</span><span class="se">{{</span><span class="si">{</span><span class="n">env</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span></div>
 
 </pre></div>
 
