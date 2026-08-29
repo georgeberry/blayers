@@ -398,6 +398,66 @@ def test_fit_mcmc_predict(sim_data: dict[str, jax.Array]) -> None:
     assert preds.std.shape == (NUM_OBS,)
 
 
+def test_fit_mcmc_predict_accuracy(sim_data: dict[str, jax.Array]) -> None:
+    """MCMC ``predict`` must actually predict, not just return the right shape.
+
+    The posterior-predictive mean should sit near the irreducible noise floor,
+    well below the predict-zero baseline.
+    """
+    result = fit(
+        linear_model,
+        y=sim_data["y"],
+        method="mcmc",
+        num_warmup=300,
+        num_mcmc_samples=300,
+        num_chains=1,
+        seed=0,
+        x=sim_data["x"],
+    )
+
+    preds = result.predict(x=sim_data["x"])
+    y = sim_data["y"]
+    prediction_rmse = float(rmse(preds.mean, y))
+    baseline_rmse = float(rmse(jnp.zeros_like(y), y))
+
+    assert prediction_rmse < baseline_rmse * 0.55
+
+
+def test_fit_mcmc_predict_autoreparam_invariant(
+    sim_data: dict[str, jax.Array],
+) -> None:
+    """Predictions must not depend on whether ``autoreparam`` was used to fit.
+
+    ``autoreparam`` only non-centers the *sampling* geometry; ``get_samples``
+    returns the original parameterization, so both fits describe the same
+    posterior and must yield the same posterior-predictive.  This pins the bug
+    directly: ``predict`` ran ``Predictive`` on the reparam'd (default) model
+    against original-space samples, so its predictions diverged from the centered
+    fit — in an unpredictable direction (below the noise floor here, above it on
+    a funnel), hence the *two-sided* tolerance rather than "no worse than".
+    """
+    kw = dict(
+        y=sim_data["y"],
+        method="mcmc",
+        num_warmup=300,
+        num_mcmc_samples=300,
+        num_chains=1,
+        seed=0,
+        x=sim_data["x"],
+    )
+    reparam = fit(linear_model, autoreparam_model=True, **kw)
+    centered = fit(linear_model, autoreparam_model=False, **kw)
+
+    rmse_reparam = float(
+        rmse(reparam.predict(x=sim_data["x"]).mean, sim_data["y"])
+    )
+    rmse_centered = float(
+        rmse(centered.predict(x=sim_data["x"]).mean, sim_data["y"])
+    )
+
+    assert rmse_reparam == pytest.approx(rmse_centered, rel=0.1)
+
+
 def test_fit_mcmc_summary(sim_data: dict[str, jax.Array]) -> None:
     result = fit(
         linear_model,

@@ -5,6 +5,21 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
+## [0.3.5]
+
+### Fixed
+- **MCMC `predict` / `to_arviz` gave wrong results after an autoreparameterized
+  fit.** `fit(method="mcmc")` applies `autoreparam` (non-centering) to improve NUTS
+  mixing, but `get_samples()` returns the *original* parameterization. The
+  `FittedModel` stored the reparam'd model and ran `Predictive` (and
+  `log_likelihood`) against it with those original-space samples — a mismatch that
+  silently produced garbage posterior-predictive means (in an unpredictable
+  direction: below the noise floor on well-identified models, well above it on
+  funnels), despite a perfectly good posterior. The fit now keeps the reparam'd
+  model only for the NUTS kernel and stores the original model for prediction, so
+  `predict` matches the centered fit and the true noise floor. Regression tests
+  assert autoreparam on/off predict-invariance.
+
 ## [0.3.4]
 
 ### Added

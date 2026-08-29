@@ -788,10 +788,17 @@ def _fit_mcmc(
     rng_key: jax.Array,
 ) -> FittedModel:
     """Fit a model with NUTS MCMC."""
-    if autoreparam_model:
-        model_fn = autoreparam()(model_fn)
+    # ``autoreparam`` improves NUTS mixing by non-centering LocScale sites, but it
+    # only changes the *sampling* geometry: ``get_samples()`` returns the original
+    # (constrained) parameterization.  Keep the original model for post-fit
+    # ``Predictive`` / ``log_likelihood`` — running those on the reparam'd model
+    # against original-space samples silently mis-predicts (the decentered base
+    # sites are absent, so the reconstructed coefficients are wrong).
+    inference_model_fn = (
+        autoreparam()(model_fn) if autoreparam_model else model_fn
+    )
 
-    kernel = NUTS(model_fn)
+    kernel = NUTS(inference_model_fn)
     mcmc = MCMC(
         kernel,
         num_warmup=num_warmup,

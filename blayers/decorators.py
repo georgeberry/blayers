@@ -17,13 +17,11 @@ from functools import wraps
 from typing import Any, Callable
 
 import jax.numpy as jnp
-import jax.random as random
 
 logger = logging.getLogger(__name__)
 from numpyro import distributions as dist
 from numpyro.handlers import reparam as numpyro_reparam
-from numpyro.handlers import seed, trace
-from numpyro.infer.reparam import LocScaleReparam
+from numpyro.infer.reparam import LocScaleReparam, TransformReparam
 
 LocScaleDist = (
     dist.Normal
@@ -110,24 +108,35 @@ def autoreparam(
     """
 
     def decorator(fn: Any) -> Any:
+        def config(site: dict[str, Any]) -> Any:
+            # Reparameterizers create their own sample sites.  In particular,
+            # LocScaleReparam appends this suffix; selecting it again would
+            # recurse indefinitely.
+            if site["name"].endswith("_decentered"):
+                return None
+            if site.get("is_observed", False):
+                return None
+
+            site_fn = site["fn"]
+            while isinstance(
+                site_fn, (dist.Independent, dist.ExpandedDistribution)
+            ):
+                site_fn = site_fn.base_dist
+
+            # LogNormal has non-real support, so LocScaleReparam cannot be
+            # applied directly.  First expose its Normal base site; the same
+            # config then non-centers that generated ``*_base`` site.
+            if isinstance(site_fn, dist.LogNormal):
+                return TransformReparam()
+            if isinstance(site_fn, dist.StudentT):
+                return LocScaleReparam(centered=centered, shape_params=("df",))
+            if isinstance(site_fn, LocScaleDist):
+                return LocScaleReparam(centered=centered)
+            return None
+
         @wraps(fn)
         def wrapped_model(*args: Any, **kwargs: Any) -> Any:
-            dummy_key = random.PRNGKey(0)
-            with seed(fn, rng_seed=dummy_key):
-                with trace() as tr:
-                    fn(*args, **kwargs)
-
-            config = {}
-            for name, site in tr.items():
-                if site["type"] != "sample" or site.get("is_observed", False):
-                    continue
-                if isinstance(site["fn"], LocScaleDist) or (
-                    hasattr(site["fn"], "base_dist")
-                    and isinstance(site["fn"].base_dist, LocScaleDist)
-                ):
-                    config[name] = LocScaleReparam(centered=centered)
-
-            return numpyro_reparam(config=config)(fn)
+            return numpyro_reparam(config=config)(fn)(*args, **kwargs)
 
         return wrapped_model
 
