@@ -472,7 +472,7 @@ class TestSpikeAndSlabLayer:
         assert "SpikeAndSlabLayer_coef_beta" in samples
 
     def test_z_in_zero_one(self) -> None:
-        """Relaxed Bernoulli z values should lie in (0, 1)."""
+        """Inclusion indicators must be exactly binary."""
         x = random.normal(random.PRNGKey(0), (50, 4))
 
         def model(x):
@@ -480,7 +480,7 @@ class TestSpikeAndSlabLayer:
 
         samples = _prior_samples(model, num_samples=20, x=x)
         z = samples["SpikeAndSlabLayer_coef_z"]
-        assert jnp.all(z > 0) and jnp.all(z < 1)
+        assert jnp.all((z == 0) | (z == 1))
 
     def test_fit_runs(self) -> None:
         x = random.normal(random.PRNGKey(0), (NUM_OBS, 5))
@@ -491,8 +491,16 @@ class TestSpikeAndSlabLayer:
             mu = SpikeAndSlabLayer()("coef", x)
             return gaussian_link(mu, y)
 
-        result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
-        assert result.params is not None
+        result = fit(
+            model,
+            y=y,
+            x=x,
+            method="mcmc",
+            num_warmup=100,
+            num_mcmc_samples=100,
+            seed=0,
+        )
+        assert result.posterior_samples is not None
 
 
 # --------------------------------------------------------------------------- #

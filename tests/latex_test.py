@@ -216,8 +216,13 @@ def test_spike_slab_override():
         return gaussian_link(SpikeAndSlabLayer()("ss", x), y)
 
     tex = model_to_latex(model, x=X)
-    assert r"z_{\mathrm{ss},j} &\sim \mathrm{Beta}" in tex
-    assert r"\tilde{\beta}_j &= z_{\mathrm{ss},j}\,\beta_{\mathrm{ss},j}" in tex
+    assert r"\pi_{\mathrm{ss}} &\sim \mathrm{Beta}(0.5, 0.5)" in tex
+    assert (
+        r"z_{\mathrm{ss},j} &\sim \mathrm{Bernoulli}(\pi_{\mathrm{ss}})" in tex
+    )
+    assert (
+        r"\beta_{\mathrm{ss},j} &= z_{\mathrm{ss},j}\,b_{\mathrm{ss},j}" in tex
+    )
 
 
 def test_mixture_override():

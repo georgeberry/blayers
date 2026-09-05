@@ -15,10 +15,11 @@ import jax
 import jax.numpy as jnp
 import tqdm
 from jax import random
-from numpyro.handlers import seed, substitute, trace
+from numpyro.handlers import seed
 from numpyro.infer import SVI
 from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
+from numpyro.infer.util import compute_log_probs
 
 from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
 
@@ -53,8 +54,15 @@ class Batched_Trace_ELBO(ELBO):
     Args:
         num_obs: Total number of observations in the full training set.
         num_particles: Number of Monte Carlo samples per gradient step.
-        batch_size: Minibatch size.  If ``None``, inferred from the leading
-            dimension of the first batched kwarg at loss-evaluation time.
+        batch_size: Fallback batch size for calls without array inputs.
+            Otherwise the actual leading dimension of row-aligned positional
+            and keyword arrays is used, including short remainder batches.
+            Bind non-row arrays (e.g. knots) into the model with a closure.
+
+    NumPyro scale and mask handlers are honored for model and guide sites.
+    All observed sites, including ``numpyro.factor`` terms, are treated as
+    row-wise likelihood contributions and receive N/B scaling. Global factors
+    and local latent variables are unsupported in minibatched mode.
 
     Warning:
         Does not mix with ``numpyro.plate``.  A ``ValueError`` is raised if a
@@ -69,6 +77,14 @@ class Batched_Trace_ELBO(ELBO):
         num_particles: int = 1,
         batch_size: int | None = None,
     ):
+        if (
+            num_obs <= 0
+            or num_particles <= 0
+            or (batch_size is not None and batch_size <= 0)
+        ):
+            raise ValueError(
+                "num_obs, num_particles, and batch_size must be positive"
+            )
         self.num_obs = num_obs
         self.num_particles = num_particles
         self.batch_size = batch_size
@@ -103,82 +119,50 @@ class Batched_Trace_ELBO(ELBO):
         rng_keys = random.split(rng_key, self.num_particles)
         llhs, kls = [], []
 
-        batch_size = self.batch_size
-        if batch_size is None:
-            if len(kwargs) != 0:
-                batch_size = kwargs[next(iter(kwargs.keys()))].shape[0]
-            else:
-                raise ValueError("Cannot infer batch size from args or kwargs")
-
-        for key in rng_keys:
-            # a key thing to realize is that this does sampling, so it samples
-            # z ~ q(z)
-            # mechanically this means we take expectations over q(z), since one
-            # random sample is the expectation (in expectation)
-            guide_trace = trace(
-                substitute(
-                    seed(
-                        guide,
-                        key,
-                    ),
-                    param_map,
-                )
-            ).get_trace(
-                *args,
-                **kwargs,
+        # Row-aligned inputs describe the *actual* batch, including a short
+        # remainder or a requested batch larger than the entire dataset.
+        sizes = [
+            value.shape[0]
+            for value in (*args, *kwargs.values())
+            if hasattr(value, "shape") and len(value.shape) > 0
+        ]
+        if sizes and any(size != sizes[0] for size in sizes):
+            raise ValueError("Batched inputs must have consistent row counts.")
+        batch_size = sizes[0] if sizes else self.batch_size
+        if batch_size is None or batch_size <= 0:
+            raise ValueError(
+                "Cannot infer a positive batch size from args or kwargs"
             )
 
-            # Extract latent sample values z ~ q(z)
+        for key in rng_keys:
+            # Delegate site densities to NumPyro so scale/mask handlers and
+            # transformed-distribution intermediates retain their semantics.
+            guide_log_probs, guide_trace = compute_log_probs(
+                seed(guide, key), args, kwargs, param_map
+            )
             z_vals = {
                 name: site["value"]
                 for name, site in guide_trace.items()
                 if site["type"] == "sample"
             }
-
-            # Evaluate model at those latent values
-            model_trace = trace(
-                substitute(
-                    seed(
-                        model,
-                        key,
-                    ),
-                    z_vals,
-                )
-            ).get_trace(
-                *args,
-                **kwargs,
+            model_log_probs, model_trace = compute_log_probs(
+                seed(model, key), args, kwargs, {**param_map, **z_vals}
             )
-
             _raise_if_has_plate(model_trace)
+            _raise_if_has_plate(guide_trace)
 
-            # log p(x | z)
-            # upscale here by N / B where N is the nubmer of observations and B
-            # is the batch size. This provides an estimator of the full dataset
-            # loss that scales approriately with the KL.
-            llhs.append(
-                self.num_obs
-                / batch_size
-                * sum(
-                    site["fn"].log_prob(site["value"]).sum()
-                    for site in model_trace.values()
-                    if site["type"] == "sample" and site["is_observed"]
-                )
+            llh = sum(
+                value
+                for name, value in model_log_probs.items()
+                if model_trace[name]["is_observed"]
             )
-
-            # KL[q(z) || p(z)] = H(q, p) - H(p) => log q(z) - log p(z)
-            # implication comes from the fact that we draw one sample z ~ q(z)
-            # if you'd like, swap P and Q and work through the math here:
-            # wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Motivation
             log_pz = sum(
-                site["fn"].log_prob(site["value"]).sum()
-                for site in model_trace.values()
-                if site["type"] == "sample" and not site["is_observed"]
+                value
+                for name, value in model_log_probs.items()
+                if not model_trace[name]["is_observed"]
             )
-            log_qz = sum(
-                site["fn"].log_prob(site["value"]).sum()
-                for site in guide_trace.values()
-                if site["type"] == "sample"
-            )
+            log_qz = sum(guide_log_probs.values())
+            llhs.append(self.num_obs / batch_size * llh)
             kls.append(log_qz - log_pz)
 
         # Average over particles

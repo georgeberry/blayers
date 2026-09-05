@@ -2,7 +2,7 @@
 Model decorators for blayers.
 
 - ``autoreshape``: Auto-reshape 1D arrays to (n, 1)
-- ``autoreparam``: Auto-reparameterize LocScale distributions for MCMC
+- ``autoreparam``: Auto-reparameterize LocScale distributions for VI and MCMC
 
 Usage::
 
@@ -83,11 +83,12 @@ def autoreshape(fn: Callable[..., Any]) -> Callable[..., Any]:
 def autoreparam(
     model_fn: Callable[..., Any] | None = None, *, centered: float = 0.0
 ) -> Any:
-    """Auto-reparameterize LocScale distributions in a model for MCMC.
+    """Auto-reparameterize LocScale distributions in a model for VI and MCMC.
 
     Automatically applies ``LocScaleReparam`` to all LocScale distributions
     (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel) found in the model,
-    which improves NUTS mixing by removing funnel geometries.
+    which can improve NUTS mixing and diagonal-guide VI by removing prior
+    funnel geometries. Strongly informed coefficients may favor centering.
 
     Works with or without parentheses::
 

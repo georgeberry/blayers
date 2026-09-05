@@ -43,6 +43,65 @@ import numpyro.distributions as dists
 from numpyro import sample
 
 
+def _observe(
+    name: str, fn: dists.Distribution, y: jax.Array | None
+) -> jax.Array:
+    """Align scalar-response columns/vectors without broadcasting across rows.
+
+    Multi-output observations must match the predictor's output dimensions.
+    A constant predictor may broadcast over observations, but targets may not
+    broadcast over rows or outputs. Preserve the likelihood's predictive shape.
+    """
+    if y is not None:
+        y = jnp.asarray(y)
+        shape = fn.batch_shape
+        if len(shape) <= 1 and y.ndim == 2 and y.shape[-1] == 1:
+            y = y[:, 0]
+        elif len(shape) == 2 and shape[-1] == 1 and y.ndim == 1:
+            y = y[:, None]
+        if shape:
+            if (
+                y.ndim != len(shape)
+                or y.shape[1:] != shape[1:]
+                or shape[0] not in (1, y.shape[0])
+            ):
+                raise ValueError(
+                    f"Observation shape {y.shape} does not match likelihood "
+                    f"shape {shape}; expected one target per row and output."
+                )
+        elif y.ndim > 1:
+            raise ValueError(
+                "A scalar likelihood expects a scalar or vector target."
+            )
+    return jnp.asarray(sample(name, fn, obs=y))
+
+
+def _scalar_predictor(value: jax.Array) -> jax.Array:
+    """Normalize a scalar response predictor, retaining the single-row axis."""
+    value = jnp.asarray(value)
+    if value.ndim == 2 and value.shape[-1] == 1:
+        value = value[:, 0]
+    if value.ndim != 1:
+        raise ValueError(
+            "Expected a scalar-response predictor of shape (n,) or (n, 1)."
+        )
+    return value
+
+
+def _align_scale(value: float | jax.Array, predictor: jax.Array) -> jax.Array:
+    """Interpret vector scales as per-row scales, including multiple outputs."""
+    value = jnp.asarray(value)
+    if predictor.ndim == 2 and value.ndim == 1:
+        value = value[:, None]
+    elif predictor.ndim == 1 and value.ndim == 2 and value.shape[-1] == 1:
+        value = value[:, 0]
+    if jnp.broadcast_shapes(value.shape, predictor.shape) != predictor.shape:
+        raise ValueError(
+            "Scale must broadcast to the predictor shape without adding rows or outputs."
+        )
+    return value
+
+
 def _loc_scale_link(
     y_hat: jax.Array,
     y: jax.Array | None = None,
@@ -77,6 +136,7 @@ def _loc_scale_link(
     if sigma_kwargs is None:
         sigma_kwargs = {"rate": 1.0}
 
+    y_hat = jnp.asarray(y_hat)
     sigma: float | jax.Array
     if untransformed_scale is not None:
         sigma = jax.nn.softplus(untransformed_scale)
@@ -84,7 +144,8 @@ def _loc_scale_link(
         sigma = scale
     else:
         sigma = sample("sigma", sigma_dist(**sigma_kwargs))
-    return jnp.asarray(sample("obs", obs_dist(loc=y_hat, scale=sigma), obs=y))
+    sigma = _align_scale(sigma, y_hat)
+    return _observe("obs", obs_dist(loc=y_hat, scale=sigma), y)
 
 
 gaussian_link = partial(_loc_scale_link, obs_dist=dists.Normal)
@@ -189,10 +250,10 @@ def gamma_link(
     Returns:
         Sample site ``"obs"``.
     """
-    mean = jnp.exp(y_hat.reshape(-1))
+    mean = jnp.exp(_scalar_predictor(y_hat))
     k = sample("gamma_shape", dists.Exponential(rate=rate))
     return jnp.asarray(
-        sample("obs", dists.Gamma(concentration=k, rate=k / mean), obs=y)
+        _observe("obs", dists.Gamma(concentration=k, rate=k / mean), y)
     )
 
 
@@ -215,8 +276,8 @@ def exponential_link(
     Returns:
         Sample site ``"obs"``.
     """
-    rate = jnp.exp(-y_hat.reshape(-1))
-    return jnp.asarray(sample("obs", dists.Exponential(rate=rate), obs=y))
+    rate = jnp.exp(-_scalar_predictor(y_hat))
+    return jnp.asarray(_observe("obs", dists.Exponential(rate=rate), y))
 
 
 def logit_link(
@@ -232,7 +293,7 @@ def logit_link(
     Returns:
         Sample site ``"obs"``.
     """
-    return jnp.asarray(sample("obs", dists.Bernoulli(logits=y_hat), obs=y))
+    return jnp.asarray(_observe("obs", dists.Bernoulli(logits=y_hat), y))
 
 
 def categorical_link(
@@ -269,7 +330,7 @@ def categorical_link(
     """
     if logits.ndim == 3 and logits.shape[-1] == 1:
         logits = logits.squeeze(-1)
-    return jnp.asarray(sample("obs", dists.Categorical(logits=logits), obs=y))
+    return jnp.asarray(_observe("obs", dists.Categorical(logits=logits), y))
 
 
 def poisson_link(
@@ -285,7 +346,7 @@ def poisson_link(
     Returns:
         Sample site ``"obs"``.
     """
-    return jnp.asarray(sample("obs", dists.Poisson(rate=jnp.exp(y_hat)), obs=y))
+    return jnp.asarray(_observe("obs", dists.Poisson(rate=jnp.exp(y_hat)), y))
 
 
 def negative_binomial_link(
@@ -305,10 +366,10 @@ def negative_binomial_link(
     """
     concentration = sample("sigma", dists.Exponential(rate=rate))
     return jnp.asarray(
-        sample(
+        _observe(
             "obs",
             dists.NegativeBinomial2(mean=y_hat, concentration=concentration),
-            obs=y,
+            y,
         )
     )
 
@@ -338,7 +399,7 @@ def ordinal_link(
     Returns:
         Sample site ``"obs"`` with integer values in ``{0, …, num_classes-1}``.
     """
-    mu_flat = mu.squeeze()
+    mu_flat = _scalar_predictor(mu)
     K = num_classes
 
     c0 = sample("ordinal_c0", dists.Normal(0.0, 2.0))
@@ -356,7 +417,7 @@ def ordinal_link(
     probs_parts.append(1.0 - cum_probs[:, -1:])
     probs = jnp.clip(jnp.concatenate(probs_parts, axis=1), 1e-8, 1.0)
 
-    return jnp.asarray(sample("obs", dists.Categorical(probs=probs), obs=y))
+    return jnp.asarray(_observe("obs", dists.Categorical(probs=probs), y))
 
 
 def zip_link(
@@ -376,10 +437,10 @@ def zip_link(
     Returns:
         Sample site ``"obs"``.
     """
-    rate = jnp.exp(mu.squeeze())
+    rate = jnp.exp(_scalar_predictor(mu))
     gate = sample("zip_gate", dists.Beta(1.0, 10.0))
     return jnp.asarray(
-        sample("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), obs=y)
+        _observe("obs", dists.ZeroInflatedPoisson(gate=gate, rate=rate), y)
     )
 
 
@@ -408,12 +469,12 @@ def zinb_link(
     Returns:
         Sample site ``"obs"``.
     """
-    mean = jnp.exp(mu.reshape(-1))
+    mean = jnp.exp(_scalar_predictor(mu))
     concentration = sample("zinb_concentration", dists.Exponential(rate=rate))
     gate = sample("zinb_gate", dists.Beta(1.0, 10.0))
     base = dists.NegativeBinomial2(mean=mean, concentration=concentration)
     return jnp.asarray(
-        sample("obs", dists.ZeroInflatedDistribution(base, gate=gate), obs=y)
+        _observe("obs", dists.ZeroInflatedDistribution(base, gate=gate), y)
     )
 
 
@@ -437,8 +498,8 @@ def beta_link(
     Returns:
         Sample site ``"obs"``.
     """
-    mean = jnn.sigmoid(mu.squeeze())
+    mean = jnn.sigmoid(_scalar_predictor(mu))
     phi = sample("beta_phi", dists.Exponential(1.0))
     return jnp.asarray(
-        sample("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), obs=y)
+        _observe("obs", dists.Beta(mean * phi, (1.0 - mean) * phi), y)
     )

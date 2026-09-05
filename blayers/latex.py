@@ -63,6 +63,8 @@ _SUFFIX_SYMBOLS: dict[str, str] = {
     "tau": r"\tau",
     "c2": r"c^2",
     "z": r"z",
+    "pi": r"\pi",
+    "slab": r"b",
     "W": r"W",
     "A": r"A",
     "B": r"B",
@@ -252,13 +254,26 @@ def _render_spike_slab(
 ) -> list[str]:
     z = _sub(r"z", layer_name, "j")
     beta = _sub(r"\beta", layer_name, "j")
-    z_dist = _dist_latex(sites["z"]["fn"], value_symbols)
-    b_dist = _dist_latex(sites["beta"]["fn"], value_symbols)
-    return [
-        rf"{z} &\sim {z_dist}",
-        rf"{beta} &\sim {b_dist}",
-        rf"\tilde{{\beta}}_j &= {z}\,{beta} \quad\text{{(gated coefficient)}}",
-    ]
+    slab = _sub(r"b", layer_name, "j")
+    lines = []
+    if "pi" in sites:
+        pi = _sub(r"\pi", layer_name)
+        lines.append(
+            rf"{pi} &\sim {_dist_latex(sites['pi']['fn'], value_symbols)}"
+        )
+    else:
+        pi = (
+            _render_value(_unwrap(sites["z"]["fn"]).probs, value_symbols)
+            or r"\pi"
+        )
+    lines.extend(
+        [
+            rf"{z} &\sim \mathrm{{Bernoulli}}({pi})",
+            rf"{slab} &\sim {_dist_latex(sites['slab']['fn'], value_symbols)}",
+            rf"{beta} &= {z}\,{slab} \quad\text{{(exact spike at zero)}}",
+        ]
+    )
+    return lines
 
 
 def _render_mixture(

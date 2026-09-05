@@ -170,7 +170,7 @@ The full set of layers included with BLayers:
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
-- `SpikeAndSlabLayer` — Spike-and-slab prior; `z ~ Beta(0.5, 0.5)` inclusion weights times a configurable slab.
+- `SpikeAndSlabLayer` — Exact spike at zero plus a configurable continuous slab, with binary inclusion indicators and fixed or learned inclusion probabilities. Fit with MCMC.
 - `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, *and* SVGD. Good for robustness / elastic-net-style priors.
 - `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
@@ -193,6 +193,17 @@ We provide link helpers in `links.py` to reduce Numpyro boilerplate. Available l
 - `zip_link` — Zero-inflated Poisson for count data with excess zeros.
 - `zinb_link` — Zero-inflated NegativeBinomial2 for overdispersed, zero-heavy counts.
 - `beta_link` — Beta regression for proportions strictly in (0, 1).
+
+For a single response, likelihood helpers accept targets shaped either `(n,)`
+or `(n, 1)`, including models decorated with `@autoreshape`. They align the
+singleton output dimension before evaluating the likelihood, so each row
+contributes one log probability. Multi-output targets must match the predictor's
+output dimensions; incompatible shapes raise `ValueError`. Predictive output
+shapes retain the likelihood's existing convention.
+
+For location-scale likelihoods, a vector `scale` or `untransformed_scale` is
+interpreted as one scale per row. For multi-output predictions, use `(1, units)`
+for per-output scales or `(n, units)` for a separate scale per row and output.
 
 ### `gaussian_link`, `lognormal_link`, and `student_t_link`
 
@@ -292,9 +303,71 @@ def model(x, y=None):
 
 For pure sparsity prefer `HorseshoeLayer`; for explicit variable selection prefer `SpikeAndSlabLayer`.
 
+## Exact spike-and-slab variable selection
+
+`SpikeAndSlabLayer` places actual probability mass at zero:
+
+```text
+pi ~ Beta(alpha, beta)       # shared across features, separately per output
+z_j ~ Bernoulli(pi)
+slab_j ~ Normal(0, 1)        # configurable continuous slab
+beta_j = z_j * slab_j
+```
+
+The default `alpha=beta=0.5` learns the inclusion rate. Alternatively, set
+`inclusion_prob=0.1` to fix the prior probability of including each coefficient
+to 10%. Choose the slab scale for your covariate and outcome scales.
+
+```python
+from blayers import SpikeAndSlabLayer, gaussian_link, fit
+
+selection = SpikeAndSlabLayer(inclusion_prob=0.1)
+
+def model(x, y=None):
+    mu = selection("effects", x)
+    return gaussian_link(mu, y)
+
+result = fit(model, x=X, y=y, method="mcmc", num_chains=2)
+stats = result.summary()
+pip = stats["SpikeAndSlabLayer_effects_z"]["mean"]       # P(included | data)
+coef = stats["SpikeAndSlabLayer_effects_beta"]["mean"]   # averages over inclusion
+predictions = result.predict(x=X_new)
+```
+
+`fit(method="mcmc")` automatically uses NumPyro's
+[`DiscreteHMCGibbs`](https://num.pyro.ai/en/stable/mcmc.html#numpyro.infer.hmc_gibbs.DiscreteHMCGibbs)
+around NUTS for unenumerated finite discrete latents. Binary indicators get
+Gibbs updates and continuous parameters get NUTS updates. For direct NumPyro
+usage, construct `MCMC(DiscreteHMCGibbs(NUTS(model)), ...)`. The current `fit()`
+VI and SVGD paths reject these discrete indicators; continuous shrinkage via
+`HorseshoeLayer` remains available for those workflows.
+
+The `*_z` posterior mean is an inclusion probability. The deterministic
+`*_beta` site is the effective coefficient and includes exact zeros. The
+`*_slab` site is an auxiliary coefficient, which follows its prior when the
+feature is excluded. Inspect indicator mixing and effective sample sizes as
+well as NUTS diagnostics, especially with correlated predictors. Gibbs sweeps
+update each feature/output indicator, so cost grows with the number of candidate
+coefficients. For `units > 1`, each feature/output pair is selected separately.
+
+**Migration:** this changes the prior from the earlier continuous Beta gate.
+Previously `*_z` was continuous and `*_beta` was the ungated slab. Refit models
+using this layer; old posterior samples are not compatible with the new sites.
+
 ## fit() helpers
 
-`fit()` handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.
+`fit()` handles the guide, ELBO, batching, and LR schedule. Models with continuous latents run unchanged under VI, MCMC, or SVGD. Exact spike-and-slab models use MCMC.
+
+VI and MCMC automatically non-center supported latent distributions by default
+(`autoreparam_model=True`). For VI, the default diagonal-normal guide is built
+in these transformed coordinates, allowing hierarchical coefficient uncertainty
+to vary with its learned prior scale. No `@autoreparam` decorator is needed.
+Set `autoreparam_model=False` to keep the model's supplied parameterization;
+centering can work better for strongly informed coefficients. SVGD is unaffected.
+Guide classes work with automatic reparameterization. Prebuilt guide instances
+and custom guide functions require `autoreparam_model=False` and must match the
+supplied model; to non-center them, wrap the model with `autoreparam` before
+constructing the guide and pass that same model to `fit()`.
 
 ```python
 from blayers.fit import fit
@@ -419,6 +492,18 @@ svi_result = svi_run_batched(
 )
 ```
 
+The likelihood is scaled by `N / B`, where `B` is the **actual** number of
+rows in each batch, including a short final batch. Array inputs must be aligned
+by row; bind static arrays such as spline knots into the model with a closure
+or `functools.partial`. The constructor's `batch_size` is a fallback for loss
+calls without array inputs.
+
+NumPyro `scale` and `mask` handlers are preserved for both model and guide
+sites. All observed sites, including `numpyro.factor` terms, are treated as
+row-wise likelihood contributions and scaled by `N / B`; global latent priors
+and guide densities are not batch-scaled. Models with global factors or
+per-observation latent variables need a standard NumPyro ELBO instead.
+
 **⚠️⚠️⚠️ `numpyro.plate` + `Batched_Trace_ELBO` do not mix. ⚠️⚠️⚠️**
 
 `Batched_Trace_ELBO` does not support `numpyro.plate`: its `N / batch_size` log-likelihood rescaling double-counts plate-subsampled sites and yields an incorrect ELBO. If your model needs plates, either:
@@ -432,7 +517,7 @@ svi_result = svi_run_batched(
 
 To fit MCMC models well it is crucial to [reparameterize](https://num.pyro.ai/en/latest/reparam.html). BLayers helps you do this via `@autoreparam`, which automatically applies `LocScaleReparam` to all `LocScale` distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).
 
-> **Note:** `fit(method="mcmc")` already applies `@autoreparam` for you (controlled by `autoreparam_model=True`, on by default). You only need to apply the decorator yourself when driving NUTS / HMC manually, as shown below.
+> **Note:** `fit(method="vi")` and `fit(method="mcmc")` already apply `@autoreparam` for you (controlled by `autoreparam_model=True`, on by default). Apply the decorator yourself when driving SVI or NUTS / HMC manually, as shown below for MCMC.
 
 ```python
 from numpyro.infer import MCMC, NUTS
