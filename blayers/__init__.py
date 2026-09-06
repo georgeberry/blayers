@@ -21,7 +21,6 @@ from blayers.layers import (
     MixtureLayer,
     RandomEffectsLayer,
     RandomWalkLayer,
-    SpikeAndSlabLayer,
     hsgp_L,
     pairwise_interactions,
 )
@@ -68,7 +67,6 @@ __all__ = [
     "pairwise_interactions",
     "RandomEffectsLayer",
     "RandomWalkLayer",
-    "SpikeAndSlabLayer",
     # Links
     "beta_link",
     "categorical_link",

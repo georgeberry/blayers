@@ -63,8 +63,6 @@ _SUFFIX_SYMBOLS: dict[str, str] = {
     "tau": r"\tau",
     "c2": r"c^2",
     "z": r"z",
-    "pi": r"\pi",
-    "slab": r"b",
     "W": r"W",
     "A": r"A",
     "B": r"B",
@@ -249,33 +247,6 @@ def _render_horseshoe(
     return lines
 
 
-def _render_spike_slab(
-    layer_name: str, sites: dict[str, Any], value_symbols: dict[int, str]
-) -> list[str]:
-    z = _sub(r"z", layer_name, "j")
-    beta = _sub(r"\beta", layer_name, "j")
-    slab = _sub(r"b", layer_name, "j")
-    lines = []
-    if "pi" in sites:
-        pi = _sub(r"\pi", layer_name)
-        lines.append(
-            rf"{pi} &\sim {_dist_latex(sites['pi']['fn'], value_symbols)}"
-        )
-    else:
-        pi = (
-            _render_value(_unwrap(sites["z"]["fn"]).probs, value_symbols)
-            or r"\pi"
-        )
-    lines.extend(
-        [
-            rf"{z} &\sim \mathrm{{Bernoulli}}({pi})",
-            rf"{slab} &\sim {_dist_latex(sites['slab']['fn'], value_symbols)}",
-            rf"{beta} &= {z}\,{slab} \quad\text{{(exact spike at zero)}}",
-        ]
-    )
-    return lines
-
-
 def _render_mixture(
     layer_name: str, sites: dict[str, Any], value_symbols: dict[int, str]
 ) -> list[str]:
@@ -319,7 +290,6 @@ _OVERRIDES: dict[
 ] = {
     "HorseshoeLayer": _render_horseshoe,
     "HorseshoeInteractionLayer": _render_horseshoe,
-    "SpikeAndSlabLayer": _render_spike_slab,
     "MixtureLayer": _render_mixture,
     "HSGPLayer": _render_hsgp,
 }

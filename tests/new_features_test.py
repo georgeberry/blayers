@@ -11,7 +11,7 @@ from numpyro.infer import Predictive
 from blayers._utils import rmse
 from blayers.decorators import autoreshape
 from blayers.fit import fit, sample_prior
-from blayers.layers import AdaptiveLayer, HorseshoeLayer, SpikeAndSlabLayer
+from blayers.layers import AdaptiveLayer, HorseshoeLayer
 from blayers.links import (
     beta_link,
     categorical_link,
@@ -435,72 +435,6 @@ class TestGaussianLink:
 
         result = fit(model, y=y, x=x, num_steps=300, lr=0.01, seed=0)
         assert result.params is not None
-
-
-# --------------------------------------------------------------------------- #
-# SpikeAndSlabLayer
-# --------------------------------------------------------------------------- #
-
-
-class TestSpikeAndSlabLayer:
-    def test_output_shape(self) -> None:
-        x = random.normal(random.PRNGKey(0), (50, 4))
-
-        def model(x):
-            return deterministic("out", SpikeAndSlabLayer()("coef", x))
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 50, 1)
-
-    def test_output_shape_units(self) -> None:
-        x = random.normal(random.PRNGKey(0), (50, 4))
-
-        def model(x):
-            return deterministic("out", SpikeAndSlabLayer()("coef", x, units=3))
-
-        samples = _prior_samples(model, x=x)
-        assert samples["out"].shape == (4, 50, 3)
-
-    def test_sample_sites(self) -> None:
-        x = random.normal(random.PRNGKey(0), (50, 4))
-
-        def model(x):
-            return SpikeAndSlabLayer()("coef", x)
-
-        samples = _prior_samples(model, x=x)
-        assert "SpikeAndSlabLayer_coef_z" in samples
-        assert "SpikeAndSlabLayer_coef_beta" in samples
-
-    def test_z_in_zero_one(self) -> None:
-        """Inclusion indicators must be exactly binary."""
-        x = random.normal(random.PRNGKey(0), (50, 4))
-
-        def model(x):
-            return SpikeAndSlabLayer()("coef", x)
-
-        samples = _prior_samples(model, num_samples=20, x=x)
-        z = samples["SpikeAndSlabLayer_coef_z"]
-        assert jnp.all((z == 0) | (z == 1))
-
-    def test_fit_runs(self) -> None:
-        x = random.normal(random.PRNGKey(0), (NUM_OBS, 5))
-        y = x[:, 0] * 2.0 + random.normal(random.PRNGKey(1), (NUM_OBS,)) * 0.5
-
-        @autoreshape
-        def model(x, y=None):
-            mu = SpikeAndSlabLayer()("coef", x)
-            return gaussian_link(mu, y)
-
-        result = fit(
-            model,
-            y=y,
-            x=x,
-            method="mcmc",
-            num_warmup=100,
-            num_mcmc_samples=100,
-            seed=0,
-        )
-        assert result.posterior_samples is not None
 
 
 # --------------------------------------------------------------------------- #

@@ -54,18 +54,15 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from numpyro import handlers
 from numpyro.infer import (
     MCMC,
     NUTS,
     SVI,
-    DiscreteHMCGibbs,
     Predictive,
     Trace_ELBO,
     log_likelihood,
 )
 from numpyro.infer.autoguide import AutoDiagonalNormal, AutoGuide
-from numpyro.infer.initialization import init_to_sample
 
 from blayers.decorators import autoreparam
 from blayers.vi_infer import Batched_Trace_ELBO, svi_run_batched
@@ -415,13 +412,6 @@ class FittedModel:
             # log_likelihood defaults to False in arviz >= 1.0; request it so
             # az.loo / az.compare work.  R-hat needs >= 2 chains (num_chains).
             idata = az.from_numpyro(self.mcmc, log_likelihood=True)
-            # Gibbs kernels nest NUTS diagnostics inside hmc_state.
-            if "hmc_state.diverging" in idata["sample_stats"]:
-                idata["sample_stats"] = (
-                    idata["sample_stats"]
-                    .to_dataset()
-                    .rename({"hmc_state.diverging": "diverging"})
-                )
             # from_numpyro stores JAX-backed arrays; arviz-stats (PSIS-LOO)
             # does in-place assignment, which fails on immutable JAX arrays.
             return _datatree_to_numpy(idata)
@@ -516,9 +506,6 @@ def fit(
         Target / observed values.
     method : ``"vi"``, ``"mcmc"``, or ``"svgd"``
         Inference method.  Default ``"vi"``.
-        Unenumerated finite discrete latents (e.g. exact spike-and-slab
-        indicators) require ``"mcmc"``; that path automatically combines
-        ``DiscreteHMCGibbs`` with NUTS. VI and SVGD reject such sites.
 
     batch_size : int, optional
         Mini-batch size for VI.  If *None* the full dataset is used each step
@@ -616,36 +603,6 @@ def fit(
 
     rng_key = jax.random.PRNGKey(seed)
 
-    discrete_sites = {}
-    if method in ("vi", "mcmc", "svgd"):
-        prototype = handlers.trace(
-            handlers.substitute(
-                handlers.seed(bound_model, rng_key),
-                substitute_fn=init_to_sample,
-            )
-        ).get_trace(**data)
-        discrete_sites = {
-            name: site
-            for name, site in prototype.items()
-            if site["type"] == "sample"
-            and not site["is_observed"]
-            and site["fn"].is_discrete
-            and site["infer"].get("enumerate") != "parallel"
-        }
-        if discrete_sites and method != "mcmc":
-            raise ValueError(
-                f"fit(method={method!r}) does not support discrete latent "
-                f"indicators ({', '.join(discrete_sites)}). Use method='mcmc' "
-                "for exact spike-and-slab inference with discrete Gibbs updates."
-            )
-        if any(
-            not site["fn"].has_enumerate_support
-            for site in discrete_sites.values()
-        ):
-            raise ValueError(
-                "Discrete Gibbs updates require finite-support latent sites"
-            )
-
     if method == "vi":
         if autoreparam_model:
             if guide is not None and not isinstance(guide, type):
@@ -679,7 +636,6 @@ def fit(
             num_chains=num_chains,
             autoreparam_model=autoreparam_model,
             rng_key=rng_key,
-            discrete=bool(discrete_sites),
         )
     elif method == "svgd":
         # Compute total steps (same logic as unbatched VI)
@@ -859,9 +815,8 @@ def _fit_mcmc(
     num_chains: int,
     autoreparam_model: bool,
     rng_key: jax.Array,
-    discrete: bool = False,
 ) -> FittedModel:
-    """Fit with NUTS, adding discrete Gibbs updates when needed."""
+    """Fit a model with NUTS MCMC."""
     # ``autoreparam`` improves NUTS mixing by non-centering LocScale sites, but it
     # only changes the *sampling* geometry: ``get_samples()`` returns the original
     # (constrained) parameterization.  Keep the original model for post-fit
@@ -872,9 +827,7 @@ def _fit_mcmc(
         autoreparam()(model_fn) if autoreparam_model else model_fn
     )
 
-    kernel: Any = NUTS(inference_model_fn)
-    if discrete:
-        kernel = DiscreteHMCGibbs(kernel, modified=True)
+    kernel = NUTS(inference_model_fn)
     mcmc = MCMC(
         kernel,
         num_warmup=num_warmup,
@@ -882,8 +835,7 @@ def _fit_mcmc(
         num_chains=num_chains,
         progress_bar=True,
     )
-    extra_fields = ("hmc_state.diverging",) if discrete else ()
-    mcmc.run(rng_key, extra_fields=extra_fields, **data)
+    mcmc.run(rng_key, **data)
 
     return FittedModel(
         model_fn=model_fn,

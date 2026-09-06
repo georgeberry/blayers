@@ -15,7 +15,6 @@ from blayers.layers import (
     InterceptLayer,
     MixtureLayer,
     RandomEffectsLayer,
-    SpikeAndSlabLayer,
 )
 from blayers.links import (
     beta_link,
@@ -211,20 +210,6 @@ def test_horseshoe_interaction_override():
     assert not _has_double_subscript(tex)
 
 
-def test_spike_slab_override():
-    def model(x, y=None):
-        return gaussian_link(SpikeAndSlabLayer()("ss", x), y)
-
-    tex = model_to_latex(model, x=X)
-    assert r"\pi_{\mathrm{ss}} &\sim \mathrm{Beta}(0.5, 0.5)" in tex
-    assert (
-        r"z_{\mathrm{ss},j} &\sim \mathrm{Bernoulli}(\pi_{\mathrm{ss}})" in tex
-    )
-    assert (
-        r"\beta_{\mathrm{ss},j} &= z_{\mathrm{ss},j}\,b_{\mathrm{ss},j}" in tex
-    )
-
-
 def test_mixture_override():
     def model(x, y=None):
         return gaussian_link(MixtureLayer()("mx", x), y)
@@ -256,7 +241,6 @@ def test_no_double_subscripts_anywhere():
     def model(x, xc, g, y=None):
         mu = (
             HorseshoeLayer()("hs", x)
-            + SpikeAndSlabLayer()("ss", x)
             + MixtureLayer()("mx", x)
             + HSGPLayer()("gp", xc, L=3.0, m=6)
             + FixedEffectsLayer()("fe", g, num_categories=3)

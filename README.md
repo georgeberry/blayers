@@ -34,6 +34,9 @@ layer2(...) + ...`). You can stack them into a deep net, but better tools exist 
 `random_flax_module` / `random_haiku_module` instead — they drop a full Flax or
 Haiku net into a NumPyro model with priors on the weights.
 
+Every built-in layer must support both variational inference and HMC/NUTS.
+This is a requirement for adding new layers to the library.
+
 BLayers provides tools to
 
 - Quickly build Bayesian models from layers which encapsulate useful model parts
@@ -170,7 +173,6 @@ The full set of layers included with BLayers:
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
-- `SpikeAndSlabLayer` — Exact spike at zero plus a configurable continuous slab, with binary inclusion indicators and fixed or learned inclusion probabilities. Fit with MCMC.
 - `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, *and* SVGD. Good for robustness / elastic-net-style priors.
 - `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
@@ -301,62 +303,11 @@ def model(x, y=None):
     return gaussian_link(mu, y)
 ```
 
-For pure sparsity prefer `HorseshoeLayer`; for explicit variable selection prefer `SpikeAndSlabLayer`.
-
-## Exact spike-and-slab variable selection
-
-`SpikeAndSlabLayer` places actual probability mass at zero:
-
-```text
-pi ~ Beta(alpha, beta)       # shared across features, separately per output
-z_j ~ Bernoulli(pi)
-slab_j ~ Normal(0, 1)        # configurable continuous slab
-beta_j = z_j * slab_j
-```
-
-The default `alpha=beta=0.5` learns the inclusion rate. Alternatively, set
-`inclusion_prob=0.1` to fix the prior probability of including each coefficient
-to 10%. Choose the slab scale for your covariate and outcome scales.
-
-```python
-from blayers import SpikeAndSlabLayer, gaussian_link, fit
-
-selection = SpikeAndSlabLayer(inclusion_prob=0.1)
-
-def model(x, y=None):
-    mu = selection("effects", x)
-    return gaussian_link(mu, y)
-
-result = fit(model, x=X, y=y, method="mcmc", num_chains=2)
-stats = result.summary()
-pip = stats["SpikeAndSlabLayer_effects_z"]["mean"]       # P(included | data)
-coef = stats["SpikeAndSlabLayer_effects_beta"]["mean"]   # averages over inclusion
-predictions = result.predict(x=X_new)
-```
-
-`fit(method="mcmc")` automatically uses NumPyro's
-[`DiscreteHMCGibbs`](https://num.pyro.ai/en/stable/mcmc.html#numpyro.infer.hmc_gibbs.DiscreteHMCGibbs)
-around NUTS for unenumerated finite discrete latents. Binary indicators get
-Gibbs updates and continuous parameters get NUTS updates. For direct NumPyro
-usage, construct `MCMC(DiscreteHMCGibbs(NUTS(model)), ...)`. The current `fit()`
-VI and SVGD paths reject these discrete indicators; continuous shrinkage via
-`HorseshoeLayer` remains available for those workflows.
-
-The `*_z` posterior mean is an inclusion probability. The deterministic
-`*_beta` site is the effective coefficient and includes exact zeros. The
-`*_slab` site is an auxiliary coefficient, which follows its prior when the
-feature is excluded. Inspect indicator mixing and effective sample sizes as
-well as NUTS diagnostics, especially with correlated predictors. Gibbs sweeps
-update each feature/output indicator, so cost grows with the number of candidate
-coefficients. For `units > 1`, each feature/output pair is selected separately.
-
-**Migration:** this changes the prior from the earlier continuous Beta gate.
-Previously `*_z` was continuous and `*_beta` was the ungated slab. Refit models
-using this layer; old posterior samples are not compatible with the new sites.
+For sparse shrinkage prefer `HorseshoeLayer`.
 
 ## fit() helpers
 
-`fit()` handles the guide, ELBO, batching, and LR schedule. Models with continuous latents run unchanged under VI, MCMC, or SVGD. Exact spike-and-slab models use MCMC.
+`fit()` handles the guide, ELBO, batching, and LR schedule. All built-in layers support both VI and HMC/NUTS; the fitting helpers also provide SVGD.
 
 VI and MCMC automatically non-center supported latent distributions by default
 (`autoreparam_model=True`). For VI, the default diagonal-normal guide is built

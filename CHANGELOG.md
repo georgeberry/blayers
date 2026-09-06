@@ -8,18 +8,10 @@ may carry breaking changes).
 ## [Unreleased]
 
 ### Changed
-- **Breaking: `SpikeAndSlabLayer` now has an exact point-mass spike at zero.**
-  Binary `*_z ~ Bernoulli(pi)` indicators replace the continuous Beta gate;
-  `pi ~ Beta(alpha, beta)` is shared across coefficients per output, or fixed
-  with the new `inclusion_prob` argument. `*_slab` holds the configurable
-  continuous slab and deterministic `*_beta = z * slab` holds the effective
-  coefficient. Posterior means of `*_z` are inclusion probabilities. Old fits
-  must be refit because both the prior and site meanings changed.
-- `fit(method="mcmc")` selects `DiscreteHMCGibbs(NUTS(...))` for unenumerated
-  finite discrete latents. VI and SVGD reject those sites with an actionable
-  error. Gibbs fits retain NUTS divergence diagnostics for ArviZ export.
-- Spike-and-slab LaTeX now displays the Beta/Bernoulli hierarchy and exact
-  coefficient construction.
+- Removed `SpikeAndSlabLayer` and its Gibbs-specific fitting path: every
+  built-in layer must support both VI and HMC/NUTS. Use `HorseshoeLayer` for
+  continuous sparse shrinkage. Neither the earlier relaxed gate nor the exact
+  discrete spike-and-slab implementation remains in the public API.
 - VI fits now honor `autoreparam_model=True` by default, constructing the guide
   on the non-centered model and retaining it for prediction and posterior export.
   Set `autoreparam_model=False` to retain the supplied parameterization. Prebuilt
@@ -41,10 +33,8 @@ may carry breaking changes).
   scaling; global factors remain unsupported for minibatching.
 
 ### Tests
-- Exact spike mass and Beta-binomial model-size prior checks, binary gate
-  algebra, and MCMC inclusion/coefficients checked against exhaustive subset
-  enumeration with analytically integrated Gaussian slabs. Prediction and
-  ArviZ log-likelihood checks ensure posterior indicators remain conditioned.
+- Added an inference-compatibility test covering every built-in layer under
+  VI and HMC/NUTS, with full and minibatched VI.
 - Added likelihood density checks for all 13 links with vector/column targets,
   `@autoreshape`, and single-row inputs; regression and heteroscedastic gradient
   checks; exact expected minibatch objective/gradient checks; end-to-end uneven

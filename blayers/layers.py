@@ -30,7 +30,7 @@ import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import numpy as np
-from numpyro import deterministic, distributions, sample
+from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
 
@@ -1428,115 +1428,6 @@ class HorseshoeInteractionLayer(HorseshoeLayer):
         return super().__call__(name, x_int, units=units, activation=activation)
 
 
-# ---- Spike and slab -------------------------------------------------------- #
-
-
-class SpikeAndSlabLayer(BLayer):
-    """Exact point-mass spike and continuous slab for variable selection.
-
-    For each output, an inclusion probability is shared across coefficients::
-
-        pi ~ Beta(alpha, beta)             # or fixed inclusion_prob
-        z_j ~ Bernoulli(pi)                 # binary inclusion indicator
-        slab_j ~ coef_dist(**coef_kwargs)
-        beta_j = z_j * slab_j               # exactly zero when excluded
-
-    Consequently ``beta_j | pi ~ (1-pi) Delta(0) + pi slab``. The posterior
-    mean of ``z_j`` is the posterior inclusion probability, while the
-    deterministic ``*_beta`` site contains the effective regression coefficient
-    (including its zeros). The sampled ``*_slab`` is an auxiliary coefficient;
-    when excluded, it is not informed by the likelihood.
-
-    Fit with ``fit(method="mcmc")``, which combines discrete Gibbs updates with
-    NUTS automatically. The current VI and SVGD helpers do not support these
-    discrete indicators. When using NumPyro directly, use
-    ``DiscreteHMCGibbs(NUTS(model))``.
-
-    This replaces the earlier continuous Beta gate and changes the prior and
-    posterior site meanings. Each feature/output pair has its own indicator.
-    """
-
-    def __init__(
-        self,
-        alpha: float = 0.5,
-        beta: float = 0.5,
-        coef_dist: type[distributions.Distribution] = distributions.Normal,
-        coef_kwargs: dict[str, float] | None = None,
-        *,
-        inclusion_prob: float | None = None,
-    ):
-        """
-        Args:
-            alpha: Positive first Beta concentration for the shared inclusion
-                rate (one rate per output). Ignored when inclusion_prob is set.
-            beta: Positive second Beta concentration. The prior expected
-                fraction included is alpha / (alpha + beta).
-            coef_dist: Continuous scalar slab distribution class.
-            coef_kwargs: Slab kwargs; defaults to Normal(0, 1).
-            inclusion_prob: Optional fixed probability strictly between 0 and
-                1, replacing the Beta hyperprior. For example, 0.1 encodes an
-                expected 10% included coefficients.
-        """
-        if (
-            not np.isfinite(alpha)
-            or not np.isfinite(beta)
-            or alpha <= 0
-            or beta <= 0
-        ):
-            raise ValueError("alpha and beta must be finite and positive")
-        if inclusion_prob is not None and not 0 < inclusion_prob < 1:
-            raise ValueError("inclusion_prob must be strictly between 0 and 1")
-        self.alpha = alpha
-        self.beta = beta
-        self.inclusion_prob = inclusion_prob
-        self.coef_dist = coef_dist
-        self.coef_kwargs = (
-            dict(coef_kwargs)
-            if coef_kwargs is not None
-            else {"loc": 0.0, "scale": 1.0}
-        )
-        _validate_prior_kwargs(coef_dist, self.coef_kwargs)
-        slab = coef_dist(**self.coef_kwargs)
-        if (
-            slab.is_discrete
-            or slab.event_shape
-            or isinstance(slab, distributions.Delta)
-        ):
-            raise ValueError(
-                "The slab must be a continuous scalar distribution"
-            )
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        units: int = 1,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
-    ) -> jax.Array:
-        """Return an ``(n, units)`` predictor for an ``(n, d)`` design matrix."""
-        x = add_trailing_dim(x)
-        d = x.shape[1]
-        cls = self.__class__.__name__
-
-        if self.inclusion_prob is None:
-            pi = sample(
-                f"{cls}_{name}_pi",
-                distributions.Beta(self.alpha, self.beta).expand([units]),
-            )
-        else:
-            pi = self.inclusion_prob
-        z = sample(
-            f"{cls}_{name}_z",
-            distributions.Bernoulli(probs=pi).expand([d, units]),
-        )
-        slab = sample(
-            f"{cls}_{name}_slab",
-            self.coef_dist(**self.coef_kwargs).expand([d, units]),
-        )
-        beta = deterministic(f"{cls}_{name}_beta", z * slab)
-        return activation(_matmul_dot_product(x, beta))
-
-
 # ---- Mixture priors -------------------------------------------------------- #
 
 
@@ -1551,13 +1442,11 @@ class MixtureLayer(BLayer):
     where the mixing weights ``w`` are either fixed or given a ``Dirichlet``
     prior (shared across coefficients). The component indicator is marginalised
     analytically by :class:`numpyro.distributions.MixtureGeneral`, so the
-    log-density is smooth and works under VI *and* MCMC — unlike a discrete
-    spike-and-slab indicator.
+    log-density is smooth and works under VI *and* MCMC.
 
     Useful for robustness (a heavy-tailed component absorbs a few outlier
     coefficients while the rest stay Gaussian) and elastic-net-flavoured priors
-    (Normal + Laplace). For pure sparsity prefer :class:`HorseshoeLayer`; for
-    explicit variable selection prefer :class:`SpikeAndSlabLayer`.
+    (Normal + Laplace). For sparse shrinkage prefer :class:`HorseshoeLayer`.
     """
 
     def __init__(
