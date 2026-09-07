@@ -15,6 +15,12 @@ from blayers.links import gaussian_link
 
 # Explicit call recipes ensure a new layer requires a compatibility test.
 CALLS = {
+    "AR1Layer": lambda layer, x: layer(
+        "b", (x[:, 0] > 0).astype(int), num_categories=3
+    ),
+    "PSplineLayer": lambda layer, x: layer(
+        "b", x[:, 0], jnp.array([-1.0] * 4 + [0.0] + [1.0] * 4)
+    ),
     "AdaptiveLayer": lambda layer, x: layer("b", x),
     "FixedPriorLayer": lambda layer, x: layer("b", x),
     "InterceptLayer": lambda layer, x: layer("b"),
@@ -33,6 +39,9 @@ CALLS = {
     ),
     "RandomEffectsLayer": lambda layer, x: layer(
         "b", (x[:, 0] > 0).astype(int), num_categories=2
+    ),
+    "RandomSlopesLayer": lambda layer, x: layer(
+        "b", x, (x[:, 0] > 0).astype(int), num_categories=2
     ),
     "FixedEffectsLayer": lambda layer, x: layer(
         "b", (x[:, 0] > 0).astype(int), num_categories=2

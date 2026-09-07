@@ -163,6 +163,7 @@ The full set of layers included with BLayers:
 - `InterceptLayer` — Intercept-only layer (bias term).
 - `EmbeddingLayer` — Bayesian embeddings for sparse categorical features.
 - `RandomEffectsLayer` — Classical random-effects (embedding with output dim 1); learned variance component → partial pooling.
+- `RandomSlopesLayer` — Group-specific slope deviations with one learned pooling scale per predictor/output, shared across groups.
 - `FixedEffectsLayer` — Per-category coefficients with a fixed, user-specified prior; the no-pooling counterpart of `RandomEffectsLayer`.
 - `FMLayer` — Factorization Machine (order 2) for pairwise interaction terms.
 - `FM3Layer` — Factorization Machine (order 3).
@@ -171,12 +172,57 @@ The full set of layers included with BLayers:
 - `HorseshoeInteractionLayer` — Pairwise interactions with a per-pair horseshoe prior; the layer to reach for to *identify* sparse interactions (most pairs shrink to zero, the real ones stand out). Omit `z` for unique within-feature pairs `i<j`; pass `z` for the full cross-set grid.
 - `BilinearLayer` — Bilinear interaction: `x^T W z`.
 - `LowRankBilinearLayer` — Low-rank bilinear interaction.
+- `AR1Layer` — Stationary, mean-reverting effects over equally spaced time slots; learned persistence and innovation scale.
+- `PSplineLayer` — Anchored B-spline smoother with learned second-difference penalties and a separate unpenalized-trend prior.
 - `RandomWalkLayer` — Gaussian random walk prior over an ordered index (e.g., time).
 - `HorseshoeLayer` — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.
 - `MixtureLayer` — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, *and* SVGD. Good for robustness / elastic-net-style priors.
 - `HSGPLayer` — Hilbert-space approximate Gaussian process (1-D, squared-exponential; [Riutort-Mayol et al. 2021](https://arxiv.org/abs/2004.11408)). A GP smoother that learns its own lengthscale; use `hsgp_L(x_train)` to pick the domain boundary.
 
 All layer prior kwargs are validated at construction time — bad kwargs raise `TypeError` immediately.
+
+## Random slopes
+
+`RandomSlopesLayer` adds partially pooled group-specific deviations to population
+slopes. Each predictor/output gets its own learned scale; slopes are independent
+conditional on those scales.
+
+```python
+from blayers import AdaptiveLayer, InterceptLayer, RandomSlopesLayer, gaussian_link, fit
+
+slopes = RandomSlopesLayer(scale_kwargs={"scale": 0.5})
+
+def model(x, groups, num_categories, y=None):
+    mu = (
+        InterceptLayer()("intercept")
+        + AdaptiveLayer()("population", x)
+        + slopes("groups", x, groups, num_categories)
+    )
+    return gaussian_link(mu, y)
+
+result = fit(model, x=X, groups=group_ids, num_categories=G, y=y,
+             num_steps=20000, batch_size=256)
+# The same model supports method="mcmc" (NUTS).
+```
+
+For predictor j and output u: `scale[j, u] ~ HalfNormal(0.5)` and
+`beta[g, j, u] ~ Normal(0, scale[j, u])`. Smaller scales enforce stronger pooling.
+The layer returns only deviations; add population coefficients separately.
+Pass only predictors whose slopes should vary. A column of ones adds a varying
+intercept. Slopes need within-group predictor variation to be learned.
+VI scale estimates can be sensitive to parameterization and optimization time.
+Compare `autoreparam_model=False` for strongly informed slopes: in the scale
+recovery test, centered VI converges substantially faster than non-centered VI.
+Both parameterizations are tested, along with NUTS.
+
+`groups` must be integer IDs in `[0, num_categories)`, shaped `(n,)` or `(n, 1)`.
+Keep `num_categories` and the ID mapping fixed across batches and prediction.
+Reserve slots upfront for groups without training observations; their slopes
+retain the prior conditional on the learned scales. Adding new group slots
+or remapping existing IDs after fitting is unsupported. Invalid concrete IDs
+raise errors; invalid IDs encountered under JIT produce NaNs instead of silently
+wrapping or clipping. All coefficient-table entries are global latent variables
+for the minibatched ELBO.
 
 ## Links
 
@@ -270,6 +316,89 @@ def model(x1, x2, y=None):
     f2 = AdaptiveLayer()("f2", bspline_basis(x2, knots2))
     return gaussian_link(f1 + f2, y)
 ```
+
+## Penalized splines
+
+`PSplineLayer` learns smoothness by shrinking second differences of adjacent
+B-spline coefficients ([Eilers and Marx, 1996](https://sites.stat.washington.edu/courses/stat527/s13/readings/EilersMarx_StatSci_1996.pdf)).
+A smaller `scale` means stronger smoothing. Each output has its own scale.
+
+```python
+from blayers import PSplineLayer, InterceptLayer, fit, gaussian_link
+from blayers.splines import make_knots
+
+knots = make_knots(x_train, num_knots=10)  # prepare once, outside the model
+smooth = PSplineLayer(scale_kwargs={"scale": 0.5}, trend_scale=1.0)
+
+def model(x, y=None):
+    mu = InterceptLayer()("intercept") + smooth("f", x, knots)
+    return gaussian_link(mu, y)
+
+vi = fit(model, x=x_train, y=y_train, num_steps=5000)
+# Also supports batch_size=128, or method="mcmc" for NUTS.
+predictions = vi.predict(x=x_test)
+```
+
+The smooth equals zero at a fixed reference (the knot-domain midpoint by
+default; override with `reference=`). An `InterceptLayer` provides the level.
+The coefficient-linear trend has a proper `Normal(0, trend_scale)` prior and
+is exempt from the smoothing penalty. With clamped or uneven knots this trend
+is not necessarily exactly linear in the input, especially near boundaries.
+It is already part of the smooth, so a separate linear term may be confounded.
+
+Keep knots, degree, and reference fixed for fitting and prediction. Capture
+knots in the model closure: passing them as array data to `fit` would batch
+them as if they were observations. Outside the domain the curve holds its
+boundary value. Smoothing priors depend on knot count and placement; inspect
+prior curves when changing the basis. Multiple smooths add directly, each
+anchored at its own reference.
+
+## AR(1) ordered effects
+
+`AR1Layer` adds a zero-mean stationary process over an equally spaced integer
+grid. It learns persistence `rho` in (-1, 1) and innovation SD `scale`, separately
+for each output. Its recurrence is `theta[t] = rho * theta[t-1] + scale * z[t]`,
+with standard-normal innovations. The initial state has stationary SD
+`scale / sqrt(1-rho**2)`. Use a separate intercept for the population mean.
+
+```python
+from blayers import AR1Layer, InterceptLayer, fit, gaussian_link
+
+num_periods = 120  # includes future slots; retain this size after fitting
+ar = AR1Layer(scale_kwargs={"scale": 0.5}, rho_concentration=2.0)
+
+def model(time, y=None):
+    mu = InterceptLayer()("intercept") + ar("time", time, num_periods)
+    return gaussian_link(mu, y)
+
+# time_train contains integer slots 0..99, possibly repeated or with gaps.
+result = fit(model, time=time_train, y=y_train, method="mcmc")
+# time_future contains reserved slots 100..119.
+forecast = result.predict(time=time_future)
+```
+
+Reserve the forecast horizon before fitting. Future innovations remain latent,
+so forecasts include innovation uncertainty as well as parameter uncertainty.
+Keep missing periods in the grid: slots 2 and 5 are three steps apart. Irregular
+physical time intervals require a different model; this layer does not infer
+time spacing from row order. Repeated/unsorted observations and row-wise VI
+minibatches use the same full latent time grid.
+
+The persistence prior is `rho = 2*p - 1`, with
+`p ~ Beta(rho_concentration, rho_concentration)`. The default 2 mildly favors
+zero; 1 gives a uniform prior on (-1, 1). Negative persistence is supported.
+`scale` is the innovation SD, not the stationary marginal SD. By default the
+layer samples states directly. `AR1Layer(noncentered=True)` instead samples
+standardized innovations; both forms define the same prior and support VI
+and NUTS. This choice is independent of `fit(autoreparam_model=...)`.
+
+In our informative-data recovery test, direct-state diagonal VI recovers
+persistence; innovation-based diagonal VI substantially underestimates it.
+For weakly observed states the innovation form may be preferable. Correlated
+posterior uncertainty, especially over missing/future periods, benefits from
+`guide=AutoMultivariateNormal` or NUTS; the Gaussian posterior validity tests
+use that full-covariance guide. Guide choice and convergence still need to
+be assessed for your data.
 
 ## Gaussian processes (HSGP)
 
