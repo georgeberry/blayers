@@ -330,10 +330,11 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tqdm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">random</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">seed</span><span class="p">,</span> <span class="n">substitute</span><span class="p">,</span> <span class="n">trace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">seed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.elbo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ELBO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.svi</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVIRunResult</span><span class="p">,</span> <span class="n">SVIState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_log_probs</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_steps_and_steps_per_epoch</span><span class="p">,</span> <span class="n">yield_batches</span>
 
@@ -370,8 +371,15 @@
 <span class="sd">    Args:</span>
 <span class="sd">        num_obs: Total number of observations in the full training set.</span>
 <span class="sd">        num_particles: Number of Monte Carlo samples per gradient step.</span>
-<span class="sd">        batch_size: Minibatch size.  If ``None``, inferred from the leading</span>
-<span class="sd">            dimension of the first batched kwarg at loss-evaluation time.</span>
+<span class="sd">        batch_size: Fallback batch size for calls without array inputs.</span>
+<span class="sd">            Otherwise the actual leading dimension of row-aligned positional</span>
+<span class="sd">            and keyword arrays is used, including short remainder batches.</span>
+<span class="sd">            Bind non-row arrays (e.g. knots) into the model with a closure.</span>
+
+<span class="sd">    NumPyro scale and mask handlers are honored for model and guide sites.</span>
+<span class="sd">    All observed sites, including ``numpyro.factor`` terms, are treated as</span>
+<span class="sd">    row-wise likelihood contributions and receive N/B scaling. Global factors</span>
+<span class="sd">    and local latent variables are unsupported in minibatched mode.</span>
 
 <span class="sd">    Warning:</span>
 <span class="sd">        Does not mix with ``numpyro.plate``.  A ``ValueError`` is raised if a</span>
@@ -388,6 +396,14 @@
         <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">num_obs</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="n">num_particles</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"num_obs, num_particles, and batch_size must be positive"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span> <span class="o">=</span> <span class="n">num_obs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_particles</span> <span class="o">=</span> <span class="n">num_particles</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span></div>
@@ -428,82 +444,50 @@
         <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_particles</span><span class="p">)</span>
         <span class="n">llhs</span><span class="p">,</span> <span class="n">kls</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
 
-        <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">batch_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot infer batch size from args or kwargs"</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">rng_keys</span><span class="p">:</span>
-            <span class="c1"># a key thing to realize is that this does sampling, so it samples</span>
-            <span class="c1"># z ~ q(z)</span>
-            <span class="c1"># mechanically this means we take expectations over q(z), since one</span>
-            <span class="c1"># random sample is the expectation (in expectation)</span>
-            <span class="n">guide_trace</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span>
-                <span class="n">substitute</span><span class="p">(</span>
-                    <span class="n">seed</span><span class="p">(</span>
-                        <span class="n">guide</span><span class="p">,</span>
-                        <span class="n">key</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">param_map</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">get_trace</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="c1"># Row-aligned inputs describe the *actual* batch, including a short</span>
+        <span class="c1"># remainder or a requested batch larger than the entire dataset.</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"shape"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">sizes</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">size</span> <span class="o">!=</span> <span class="n">sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">sizes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Batched inputs must have consistent row counts."</span><span class="p">)</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sizes</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Cannot infer a positive batch size from args or kwargs"</span>
             <span class="p">)</span>
 
-            <span class="c1"># Extract latent sample values z ~ q(z)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">rng_keys</span><span class="p">:</span>
+            <span class="c1"># Delegate site densities to NumPyro so scale/mask handlers and</span>
+            <span class="c1"># transformed-distribution intermediates retain their semantics.</span>
+            <span class="n">guide_log_probs</span><span class="p">,</span> <span class="n">guide_trace</span> <span class="o">=</span> <span class="n">compute_log_probs</span><span class="p">(</span>
+                <span class="n">seed</span><span class="p">(</span><span class="n">guide</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">param_map</span>
+            <span class="p">)</span>
             <span class="n">z_vals</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">name</span><span class="p">:</span> <span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">guide_trace</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span>
             <span class="p">}</span>
-
-            <span class="c1"># Evaluate model at those latent values</span>
-            <span class="n">model_trace</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span>
-                <span class="n">substitute</span><span class="p">(</span>
-                    <span class="n">seed</span><span class="p">(</span>
-                        <span class="n">model</span><span class="p">,</span>
-                        <span class="n">key</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">z_vals</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">get_trace</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">model_log_probs</span><span class="p">,</span> <span class="n">model_trace</span> <span class="o">=</span> <span class="n">compute_log_probs</span><span class="p">(</span>
+                <span class="n">seed</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="p">{</span><span class="o">**</span><span class="n">param_map</span><span class="p">,</span> <span class="o">**</span><span class="n">z_vals</span><span class="p">}</span>
             <span class="p">)</span>
-
             <span class="n">_raise_if_has_plate</span><span class="p">(</span><span class="n">model_trace</span><span class="p">)</span>
+            <span class="n">_raise_if_has_plate</span><span class="p">(</span><span class="n">guide_trace</span><span class="p">)</span>
 
-            <span class="c1"># log p(x | z)</span>
-            <span class="c1"># upscale here by N / B where N is the nubmer of observations and B</span>
-            <span class="c1"># is the batch size. This provides an estimator of the full dataset</span>
-            <span class="c1"># loss that scales approriately with the KL.</span>
-            <span class="n">llhs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span>
-                <span class="o">/</span> <span class="n">batch_size</span>
-                <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span>
-                    <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-                    <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span> <span class="ow">and</span> <span class="n">site</span><span class="p">[</span><span class="s2">"is_observed"</span><span class="p">]</span>
-                <span class="p">)</span>
+            <span class="n">llh</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">value</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">model_log_probs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">model_trace</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">"is_observed"</span><span class="p">]</span>
             <span class="p">)</span>
-
-            <span class="c1"># KL[q(z) || p(z)] = H(q, p) - H(p) =&gt; log q(z) - log p(z)</span>
-            <span class="c1"># implication comes from the fact that we draw one sample z ~ q(z)</span>
-            <span class="c1"># if you'd like, swap P and Q and work through the math here:</span>
-            <span class="c1"># wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Motivation</span>
             <span class="n">log_pz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">site</span><span class="p">[</span><span class="s2">"is_observed"</span><span class="p">]</span>
+                <span class="n">value</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">model_log_probs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">model_trace</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">"is_observed"</span><span class="p">]</span>
             <span class="p">)</span>
-            <span class="n">log_qz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">site</span><span class="p">[</span><span class="s2">"fn"</span><span class="p">]</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">site</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">site</span> <span class="ow">in</span> <span class="n">guide_trace</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">site</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sample"</span>
-            <span class="p">)</span>
+            <span class="n">log_qz</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">guide_log_probs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">llhs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_obs</span> <span class="o">/</span> <span class="n">batch_size</span> <span class="o">*</span> <span class="n">llh</span><span class="p">)</span>
             <span class="n">kls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_qz</span> <span class="o">-</span> <span class="n">log_pz</span><span class="p">)</span>
 
         <span class="c1"># Average over particles</span>

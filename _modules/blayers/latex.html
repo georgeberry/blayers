@@ -565,20 +565,6 @@
     <span class="k">return</span> <span class="n">lines</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_render_spike_slab</span><span class="p">(</span>
-    <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"z"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
-    <span class="n">beta</span> <span class="o">=</span> <span class="n">_sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\beta"</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="s2">"j"</span><span class="p">)</span>
-    <span class="n">z_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">"z"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
-    <span class="n">b_dist</span> <span class="o">=</span> <span class="n">_dist_latex</span><span class="p">(</span><span class="n">sites</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">][</span><span class="s2">"fn"</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">z_dist</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> &amp;\sim </span><span class="si">{</span><span class="n">b_dist</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-        <span class="sa">rf</span><span class="s2">"\tilde</span><span class="se">{{</span><span class="s2">\beta</span><span class="se">}}</span><span class="s2">_j &amp;= </span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">\,</span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s2"> \quad\text</span><span class="se">{{</span><span class="s2">(gated coefficient)</span><span class="se">}}</span><span class="s2">"</span><span class="p">,</span>
-    <span class="p">]</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_mixture</span><span class="p">(</span>
     <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">value_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -622,7 +608,6 @@
 <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"HorseshoeLayer"</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
     <span class="s2">"HorseshoeInteractionLayer"</span><span class="p">:</span> <span class="n">_render_horseshoe</span><span class="p">,</span>
-    <span class="s2">"SpikeAndSlabLayer"</span><span class="p">:</span> <span class="n">_render_spike_slab</span><span class="p">,</span>
     <span class="s2">"MixtureLayer"</span><span class="p">:</span> <span class="n">_render_mixture</span><span class="p">,</span>
     <span class="s2">"HSGPLayer"</span><span class="p">:</span> <span class="n">_render_hsgp</span><span class="p">,</span>
 <span class="p">}</span>

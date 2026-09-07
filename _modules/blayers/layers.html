@@ -348,6 +348,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span><span class="p">,</span> <span class="n">sample</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_trailing_dim</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.splines</span><span class="w"> </span><span class="kn">import</span> <span class="n">bspline_basis</span>
 
 <span class="c1"># ---- Matmul functions ------------------------------------------------------ #</span>
 
@@ -1532,6 +1533,113 @@
 
 
 
+<div class="viewcode-block" id="RandomSlopesLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomSlopesLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RandomSlopesLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Independent, partially pooled group-specific slope deviations.</span>
+
+<span class="sd">    For each predictor j and output u, sample a scale shared across groups::</span>
+
+<span class="sd">        tau[j, u] ~ scale_dist(**scale_kwargs)</span>
+<span class="sd">        beta[g, j, u] ~ Normal(0, tau[j, u])</span>
+<span class="sd">        output[i, u] = sum_j x[i, j] * beta[groups[i], j, u]</span>
+
+<span class="sd">    Population slopes belong in a separate layer. A column of ones in x adds</span>
+<span class="sd">    a varying intercept. Coefficients are independent conditional on the scales;</span>
+<span class="sd">    this layer does not estimate correlations between slopes.</span>
+
+<span class="sd">    The centered generative prior follows other BLayers layers; fit() can</span>
+<span class="sd">    non-center it through autoreparam_model=True for VI and HMC/NUTS.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="RandomSlopesLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomSlopesLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scale_dist</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">scale_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure the between-group scale prior (default HalfNormal(1)).</span>
+
+<span class="sd">        The scale prior must be continuous, positive, and scalar-valued;</span>
+<span class="sd">        scalar or (d, units)-broadcastable parameters are supported.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span> <span class="o">=</span> <span class="n">scale_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span> <span class="k">if</span> <span class="n">scale_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">_validate_prior_kwargs</span><span class="p">(</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span> <span class="p">{</span><span class="s2">"loc"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span> <span class="n">scale_dist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span>
+        <span class="p">)</span>
+        <span class="n">prior</span> <span class="o">=</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prior</span><span class="o">.</span><span class="n">is_discrete</span> <span class="ow">or</span> <span class="n">prior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"scale_dist must be a continuous scalar distribution"</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RandomSlopesLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.RandomSlopesLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">groups</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return slope deviations of shape (n, units).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Sample-site namespace.</span>
+<span class="sd">            x: Predictor matrix (n, d), or vector (n,) for one slope.</span>
+<span class="sd">            groups: Integer group IDs, shape (n,) or (n, 1), in</span>
+<span class="sd">                [0, num_categories). IDs must retain their meaning at prediction.</span>
+<span class="sd">            num_categories: Size of the full coefficient table. Keep fixed</span>
+<span class="sd">                across training batches and prediction. Unobserved groups can</span>
+<span class="sd">                occupy reserved slots, whose slopes retain their conditional</span>
+<span class="sd">                prior; adding new slots after fitting is unsupported.</span>
+<span class="sd">            units: Number of output dimensions, with independent slope priors.</span>
+<span class="sd">            activation: Optional transform of the resulting predictor.</span>
+
+<span class="sd">        Invalid concrete group IDs raise ValueError. Under JIT, invalid IDs</span>
+<span class="sd">        produce NaN outputs instead of silently wrapping or clipping indices.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">num_categories</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">units</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"num_categories and units must be positive"</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"x must have shape (n, d) with at least one predictor"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">groups</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">groups</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">groups</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">groups</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"groups must contain one group ID per row of x"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"groups must contain integer group IDs"</span><span class="p">)</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span><span class="n">groups</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">groups</span> <span class="o">&lt;</span> <span class="n">num_categories</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">valid</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"groups must be in [0, num_categories)"</span><span class="p">)</span>
+
+        <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_scale"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_beta"</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">num_categories</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">row_beta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">beta</span><span class="p">[</span><span class="n">groups</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"nd,ndu-&gt;nu"</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">row_beta</span><span class="p">))</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="FixedEffectsLayer">
 <a class="viewcode-back" href="../../api/layers.html#blayers.layers.FixedEffectsLayer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedEffectsLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
@@ -1686,6 +1794,294 @@
         <span class="p">)</span>
         <span class="c1"># matmul and return</span>
         <span class="k">return</span> <span class="n">_matmul_randomwalk</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AR1Layer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AR1Layer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AR1Layer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Stationary, zero-mean AR(1) effects over equally spaced time slots.</span>
+
+<span class="sd">    Independently for each output::</span>
+
+<span class="sd">        p ~ Beta(rho_concentration, rho_concentration)</span>
+<span class="sd">        rho = 2 * p - 1</span>
+<span class="sd">        sigma ~ scale_dist(**scale_kwargs)</span>
+<span class="sd">        z[t] ~ Normal(0, 1)</span>
+<span class="sd">        theta[0] = sigma / sqrt(1 - rho**2) * z[0]</span>
+<span class="sd">        theta[t] = rho * theta[t-1] + sigma * z[t]</span>
+
+<span class="sd">    sigma is the innovation standard deviation, not the marginal standard</span>
+<span class="sd">    deviation. The stationary initial prior gives covariance</span>
+<span class="sd">    sigma**2 * rho**abs(t-s) / (1-rho**2). Add a separate InterceptLayer for</span>
+<span class="sd">    the population mean. States are not sample-centered: that would change</span>
+<span class="sd">    this stationary prior and its forecasting behavior.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="AR1Layer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AR1Layer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scale_dist</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">scale_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">noncentered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure a positive innovation-scale prior and symmetric rho prior.</span>
+
+<span class="sd">        rho_concentration=1 gives Uniform(-1, 1); the default 2 mildly favors</span>
+<span class="sd">        persistence near zero over either stationarity boundary. Scale kwargs</span>
+<span class="sd">        may broadcast to (units,). The default samples states directly. Set</span>
+<span class="sd">        noncentered=True to sample standardized innovations instead, often</span>
+<span class="sd">        useful when states are weakly observed. Both forms have continuous</span>
+<span class="sd">        latents and support VI/NUTS. This explicit choice is not changed by</span>
+<span class="sd">        fit(autoreparam_model=...).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">rho_concentration</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rho_concentration</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"rho_concentration must be finite and positive"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">noncentered</span> <span class="o">=</span> <span class="n">noncentered</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_concentration</span> <span class="o">=</span> <span class="n">rho_concentration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span> <span class="o">=</span> <span class="n">scale_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span> <span class="k">if</span> <span class="n">scale_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">prior</span> <span class="o">=</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prior</span><span class="o">.</span><span class="n">is_discrete</span> <span class="ow">or</span> <span class="n">prior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"scale_dist must be a continuous scalar distribution"</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AR1Layer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.AR1Layer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">num_categories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Look up states, returning (n, units).</span>
+
+<span class="sd">        x contains integer time slots, shape (n,) or (n, 1), in</span>
+<span class="sd">        [0, num_categories). Repeated and unsorted observations are supported.</span>
+<span class="sd">        Keep the full time grid fixed across batches and prediction, including</span>
+<span class="sd">        reserved future slots. Missing periods must retain their slots: do not</span>
+<span class="sd">        compress gaps or treat irregularly spaced times as adjacent periods.</span>
+<span class="sd">        Future states then follow the same recurrence with fresh innovations.</span>
+<span class="sd">        Extending the grid after fitting is unsupported.</span>
+
+<span class="sd">        Invalid concrete indices raise; invalid traced indices yield NaNs.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">num_categories</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">units</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"num_categories and units must be positive"</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x must have shape (n,) or (n, 1)"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"x must contain integer time slots"</span><span class="p">)</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">num_categories</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">valid</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x must be in [0, num_categories)"</span><span class="p">)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_rho"</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">(</span>
+                <span class="n">distributions</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rho_concentration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho_concentration</span>
+                <span class="p">),</span>
+                <span class="n">distributions</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">AffineTransform</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_scale"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">initial_scale</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">rho</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noncentered</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_z"</span><span class="p">,</span>
+                <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">num_categories</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+            <span class="p">)</span>
+            <span class="n">initial</span> <span class="o">=</span> <span class="n">initial_scale</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+                <span class="n">previous</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">innovation</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">previous</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">innovation</span>
+                <span class="k">return</span> <span class="n">current</span><span class="p">,</span> <span class="n">current</span>
+
+            <span class="n">_</span><span class="p">,</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">initial</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">initial</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">remaining</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">innovation_scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="p">(</span><span class="n">num_categories</span><span class="p">,</span> <span class="n">units</span><span class="p">))</span>
+            <span class="n">innovation_scale</span> <span class="o">=</span> <span class="n">innovation_scale</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">initial_scale</span><span class="p">)</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_theta"</span><span class="p">,</span>
+                <span class="n">distributions</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">(</span>
+                    <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">innovation_scale</span><span class="p">)</span><span class="o">.</span><span class="n">to_event</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+                    <span class="n">distributions</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">RecursiveLinearTransform</span><span class="p">(</span>
+                        <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">states</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PSplineLayer">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.PSplineLayer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PSplineLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Anchored B-spline smoother with a second-difference coefficient prior.</span>
+
+<span class="sd">    If D is the second-difference matrix, use its minimum-norm right inverse R</span>
+<span class="sd">    to construct coefficients::</span>
+
+<span class="sd">        scale[u] ~ scale_dist(**scale_kwargs)</span>
+<span class="sd">        differences[:, u] ~ Normal(0, scale[u])</span>
+<span class="sd">        trend[u] ~ Normal(0, trend_scale)</span>
+<span class="sd">        beta = R @ differences + linspace(-1, 1, K)[:, None] * trend</span>
+<span class="sd">        f(x) = (B(clip(x)) - B(reference)) @ beta</span>
+
+<span class="sd">    Thus D @ beta equals the sampled differences exactly. Smaller scales</span>
+<span class="sd">    penalize roughness more strongly. The coefficient-linear null component</span>
+<span class="sd">    has its own proper prior, independent of the smoothing scale. The constant</span>
+<span class="sd">    null component is removed by anchoring f(reference)=0; add InterceptLayer</span>
+<span class="sd">    separately. No batch-dependent centering is performed.</span>
+
+<span class="sd">    This is a coefficient-difference P-spline, not a derivative penalty. With</span>
+<span class="sd">    clamped/uneven knots the unpenalized coefficient trend need not be exactly</span>
+<span class="sd">    linear in x (especially near the boundaries). It is included in this</span>
+<span class="sd">    layer; adding a separate linear term can introduce confounding.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="PSplineLayer.__init__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.PSplineLayer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scale_dist</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">,</span>
+        <span class="n">scale_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trend_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configure smoothing and unpenalized-trend priors.</span>
+
+<span class="sd">        degree must be at least 1. Scale priors must be positive, continuous,</span>
+<span class="sd">        scalar-valued distributions, with kwargs broadcastable to (units,).</span>
+<span class="sd">        trend_scale is the prior SD of the coefficient trend's half-range.</span>
+<span class="sd">        Smoothing scales depend on the number and placement of knots; choose</span>
+<span class="sd">        the basis once, then check prior curves at that resolution.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">degree</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"degree must be an integer &gt;= 1"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">trend_scale</span><span class="p">)</span> <span class="ow">or</span> <span class="n">trend_scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"trend_scale must be finite and positive"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">degree</span> <span class="o">=</span> <span class="n">degree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trend_scale</span> <span class="o">=</span> <span class="n">trend_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span> <span class="o">=</span> <span class="n">scale_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span> <span class="k">if</span> <span class="n">scale_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">prior</span> <span class="o">=</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prior</span><span class="o">.</span><span class="n">is_discrete</span> <span class="ow">or</span> <span class="n">prior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"scale_dist must be a continuous scalar distribution"</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PSplineLayer.__call__">
+<a class="viewcode-back" href="../../api/layers.html#blayers.layers.PSplineLayer.__call__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">knots</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">reference</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return (n, units) smooth effects for a single predictor.</span>
+
+<span class="sd">        x has shape (n,) or (n, 1). knots is a full clamped knot vector, e.g.</span>
+<span class="sd">        from make_knots, defining at least three basis functions. Capture</span>
+<span class="sd">        knots in your model closure, outside fit's row-wise data arguments.</span>
+<span class="sd">        Reuse identical knots and reference for all batches and predictions.</span>
+<span class="sd">        reference defaults to the domain midpoint and must lie in the domain.</span>
+<span class="sd">        Outside the knot domain, the fitted curve holds its boundary value</span>
+<span class="sd">        (constant extrapolation). Inputs and knots must be finite.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">units</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"units must be positive"</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">knots</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x must have shape (n,) or (n, 1)"</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">degree</span>
+        <span class="k">if</span> <span class="n">knots</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">knots</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"knots must be a full clamped knot vector"</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">knots</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"at least three basis functions are required"</span><span class="p">)</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">knots</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"reference must be scalar"</span><span class="p">)</span>
+        <span class="n">valid_knots</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">knots</span><span class="p">))</span>
+            <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">knots</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">knots</span><span class="p">[:</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">lo</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">hi</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">knots</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="o">-</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">ref</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">ref</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid_knots</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="n">valid_knots</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"knots must be finite, ordered and clamped with a nonempty domain; reference must lie within it"</span>
+            <span class="p">)</span>
+        <span class="n">valid_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid_x</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">valid_x</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x must be finite"</span><span class="p">)</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">),</span> <span class="n">knots</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">basis</span> <span class="o">-</span> <span class="n">bspline_basis</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)),</span> <span class="n">knots</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="c1"># NumPy uses double precision for the small fixed basis decomposition;</span>
+        <span class="c1"># only the resulting constant enters JAX's traced model.</span>
+        <span class="n">difference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">right_inverse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">difference</span> <span class="o">@</span> <span class="n">difference</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">difference</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_scale"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_differences"</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">k</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">trend</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_trend"</span><span class="p">,</span>
+            <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trend_scale</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">units</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">right_inverse</span><span class="p">)</span> <span class="o">@</span> <span class="n">delta</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">k</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">trend</span>
+        <span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">valid_x</span> <span class="o">&amp;</span> <span class="n">valid_knots</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">basis</span> <span class="o">@</span> <span class="n">beta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
 </div>
 
 
@@ -1887,95 +2283,6 @@
 
 
 
-<span class="c1"># ---- Spike and slab -------------------------------------------------------- #</span>
-
-
-<div class="viewcode-block" id="SpikeAndSlabLayer">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.SpikeAndSlabLayer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SpikeAndSlabLayer</span><span class="p">(</span><span class="n">BLayer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Sparse regression via a spike-and-slab prior.</span>
-
-<span class="sd">    Each coefficient has a Beta-distributed inclusion weight ``z_j`` in</span>
-<span class="sd">    (0, 1). Included features (``z_j ≈ 1``) take the full slab coefficient;</span>
-<span class="sd">    excluded features (``z_j ≈ 0``) are gated toward zero (the spike).</span>
-
-<span class="sd">    Generative model::</span>
-
-<span class="sd">        z_j ~ Beta(alpha, beta)          # inclusion weight (hardcoded Beta)</span>
-<span class="sd">        β_j ~ coef_dist(**coef_kwargs)   # slab coefficient</span>
-<span class="sd">        y   ~ link(z · β · x, ...)       # z gates each coefficient</span>
-
-<span class="sd">    The default ``Beta(0.5, 0.5)`` (Jeffreys prior) places mass near 0 and 1,</span>
-<span class="sd">    encouraging features to be clearly included or excluded.  The posterior</span>
-<span class="sd">    mean of ``z_j`` approximates ``P(feature j included | data)``.</span>
-
-<span class="sd">    The slab distribution defaults to ``Normal(0, 1)`` but can be swapped for</span>
-<span class="sd">    e.g. ``StudentT`` for heavier-tailed slab behaviour.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        alpha: First concentration parameter of the Beta prior on ``z``.</span>
-<span class="sd">        beta: Second concentration parameter of the Beta prior on ``z``.</span>
-<span class="sd">        coef_dist: Distribution for the slab coefficients.</span>
-<span class="sd">        coef_kwargs: Kwargs for ``coef_dist``.</span>
-<span class="sd">    """</span>
-
-<div class="viewcode-block" id="SpikeAndSlabLayer.__init__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.SpikeAndSlabLayer.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">coef_dist</span><span class="p">:</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span> <span class="o">=</span> <span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span>
-        <span class="n">coef_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"loc"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
-    <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span> <span class="o">=</span> <span class="n">coef_dist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span> <span class="o">=</span> <span class="n">coef_kwargs</span>
-        <span class="n">_validate_prior_kwargs</span><span class="p">(</span><span class="n">coef_dist</span><span class="p">,</span> <span class="n">coef_kwargs</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="SpikeAndSlabLayer.__call__">
-<a class="viewcode-back" href="../../api/layers.html#blayers.layers.SpikeAndSlabLayer.__call__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
-        <span class="n">units</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="n">activation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnn</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Args:</span>
-<span class="sd">            name: Variable name scope.</span>
-<span class="sd">            x: Input of shape ``(n, d)``.</span>
-<span class="sd">            units: Number of output dimensions.</span>
-<span class="sd">            activation: Activation function.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            jax.Array of shape ``(n, units)``.</span>
-<span class="sd">        """</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">add_trailing_dim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-
-        <span class="c1"># Inclusion weight: posterior z_j ≈ P(feature j included | data)</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_z"</span><span class="p">,</span>
-            <span class="n">distributions</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Slab coefficients</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="n">sample</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_beta"</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">coef_dist</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">units</span><span class="p">]),</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)</span>
-        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">_matmul_dot_product</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span> <span class="o">*</span> <span class="n">beta</span><span class="p">))</span></div>
-</div>
-
-
-
 <span class="c1"># ---- Mixture priors -------------------------------------------------------- #</span>
 
 
@@ -1992,13 +2299,11 @@
 <span class="sd">    where the mixing weights ``w`` are either fixed or given a ``Dirichlet``</span>
 <span class="sd">    prior (shared across coefficients). The component indicator is marginalised</span>
 <span class="sd">    analytically by :class:`numpyro.distributions.MixtureGeneral`, so the</span>
-<span class="sd">    log-density is smooth and works under VI *and* MCMC — unlike a discrete</span>
-<span class="sd">    spike-and-slab indicator.</span>
+<span class="sd">    log-density is smooth and works under VI *and* MCMC.</span>
 
 <span class="sd">    Useful for robustness (a heavy-tailed component absorbs a few outlier</span>
 <span class="sd">    coefficients while the rest stay Gaussian) and elastic-net-flavoured priors</span>
-<span class="sd">    (Normal + Laplace). For pure sparsity prefer :class:`HorseshoeLayer`; for</span>
-<span class="sd">    explicit variable selection prefer :class:`SpikeAndSlabLayer`.</span>
+<span class="sd">    (Normal + Laplace). For sparse shrinkage prefer :class:`HorseshoeLayer`.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="MixtureLayer.__init__">

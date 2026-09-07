@@ -317,7 +317,7 @@
 <span class="sd">Model decorators for blayers.</span>
 
 <span class="sd">- ``autoreshape``: Auto-reshape 1D arrays to (n, 1)</span>
-<span class="sd">- ``autoreparam``: Auto-reparameterize LocScale distributions for MCMC</span>
+<span class="sd">- ``autoreparam``: Auto-reparameterize LocScale distributions for VI and MCMC</span>
 
 <span class="sd">Usage::</span>
 
@@ -403,11 +403,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">autoreparam</span><span class="p">(</span>
     <span class="n">model_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">centered</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Auto-reparameterize LocScale distributions in a model for MCMC.</span>
+<span class="w">    </span><span class="sd">"""Auto-reparameterize LocScale distributions in a model for VI and MCMC.</span>
 
 <span class="sd">    Automatically applies ``LocScaleReparam`` to all LocScale distributions</span>
 <span class="sd">    (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel) found in the model,</span>
-<span class="sd">    which improves NUTS mixing by removing funnel geometries.</span>
+<span class="sd">    which can improve NUTS mixing and diagonal-guide VI by removing prior</span>
+<span class="sd">    funnel geometries. Strongly informed coefficients may favor centering.</span>
 
 <span class="sd">    Works with or without parentheses::</span>
 

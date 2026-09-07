@@ -457,6 +457,11 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__call__()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer.__init__"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer.__call__()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer.__call__()</span></code></a></li>
@@ -467,6 +472,16 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomWalkLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer.__call__()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer"><code class="docutils literal notranslate"><span class="pre">AR1Layer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer.__init__"><code class="docutils literal notranslate"><span class="pre">AR1Layer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer.__call__"><code class="docutils literal notranslate"><span class="pre">AR1Layer.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer"><code class="docutils literal notranslate"><span class="pre">PSplineLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer.__init__"><code class="docutils literal notranslate"><span class="pre">PSplineLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer.__call__"><code class="docutils literal notranslate"><span class="pre">PSplineLayer.__call__()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer.__init__"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer.__call__"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer.__call__()</span></code></a></li>
@@ -474,11 +489,6 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeInteractionLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeInteractionLayer.__call__"><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer.__call__()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer.__init__"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer.__init__()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer.__call__"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer.__call__()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.MixtureLayer"><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code></a><ul class="nav section-nav flex-column">
@@ -1310,6 +1320,75 @@ prior.</p></li>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.RandomSlopesLayer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">RandomSlopesLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomSlopesLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomSlopesLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Independent, partially pooled group-specific slope deviations.</p>
+<p>For each predictor j and output u, sample a scale shared across groups:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tau</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">u</span><span class="p">]</span> <span class="o">~</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="n">scale_kwargs</span><span class="p">)</span>
+<span class="n">beta</span><span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">u</span><span class="p">]</span> <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">tau</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">u</span><span class="p">])</span>
+<span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_j</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">beta</span><span class="p">[</span><span class="n">groups</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">j</span><span class="p">,</span> <span class="n">u</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Population slopes belong in a separate layer. A column of ones in x adds
+a varying intercept. Coefficients are independent conditional on the scales;
+this layer does not estimate correlations between slopes.</p>
+<p>The centered generative prior follows other BLayers layers; fit() can
+non-center it through autoreparam_model=True for VI and HMC/NUTS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomSlopesLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomSlopesLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomSlopesLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Configure the between-group scale prior (default HalfNormal(1)).</p>
+<p>The scale prior must be continuous, positive, and scalar-valued;
+scalar or (d, units)-broadcastable parameters are supported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.RandomSlopesLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_categories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PjitFunction</span> <span class="pre">of</span> <span class="pre">&lt;function</span> <span class="pre">identity&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#RandomSlopesLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.RandomSlopesLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Return slope deviations of shape (n, units).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Sample-site namespace.</p></li>
+<li><p><strong>x</strong> (<em>Array</em>) – Predictor matrix (n, d), or vector (n,) for one slope.</p></li>
+<li><p><strong>groups</strong> (<em>Array</em>) – Integer group IDs, shape (n,) or (n, 1), in
+[0, num_categories). IDs must retain their meaning at prediction.</p></li>
+<li><p><strong>num_categories</strong> (<em>int</em>) – Size of the full coefficient table. Keep fixed
+across training batches and prediction. Unobserved groups can
+occupy reserved slots, whose slopes retain their conditional
+prior; adding new slots after fitting is unsupported.</p></li>
+<li><p><strong>units</strong> (<em>int</em>) – Number of output dimensions, with independent slope priors.</p></li>
+<li><p><strong>activation</strong> (<em>Callable</em><em>[</em><em>[</em><em>Array</em><em>]</em><em>, </em><em>Array</em><em>]</em>) – Optional transform of the resulting predictor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+<p>Invalid concrete group IDs raise ValueError. Under JIT, invalid IDs
+produce NaN outputs instead of silently wrapping or clipping indices.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="blayers.layers.FixedEffectsLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">FixedEffectsLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#FixedEffectsLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.FixedEffectsLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
@@ -1436,6 +1515,172 @@ adjacent periods share information through the walk prior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>jax.Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.AR1Layer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">AR1Layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_concentration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noncentered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AR1Layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AR1Layer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Stationary, zero-mean AR(1) effects over equally spaced time slots.</p>
+<p>Independently for each output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">~</span> <span class="n">Beta</span><span class="p">(</span><span class="n">rho_concentration</span><span class="p">,</span> <span class="n">rho_concentration</span><span class="p">)</span>
+<span class="n">rho</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">sigma</span> <span class="o">~</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="n">scale_kwargs</span><span class="p">)</span>
+<span class="n">z</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rho</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">theta</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">z</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>sigma is the innovation standard deviation, not the marginal standard
+deviation. The stationary initial prior gives covariance
+sigma**2 * rho**abs(t-s) / (1-rho**2). Add a separate InterceptLayer for
+the population mean. States are not sample-centered: that would change
+this stationary prior and its forecasting behavior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>rho_concentration</strong> (<em>float</em>)</p></li>
+<li><p><strong>noncentered</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.AR1Layer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_concentration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noncentered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AR1Layer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AR1Layer.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Configure a positive innovation-scale prior and symmetric rho prior.</p>
+<p>rho_concentration=1 gives Uniform(-1, 1); the default 2 mildly favors
+persistence near zero over either stationarity boundary. Scale kwargs
+may broadcast to (units,). The default samples states directly. Set
+noncentered=True to sample standardized innovations instead, often
+useful when states are weakly observed. Both forms have continuous
+latents and support VI/NUTS. This explicit choice is not changed by
+fit(autoreparam_model=…).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>rho_concentration</strong> (<em>float</em>)</p></li>
+<li><p><strong>noncentered</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.AR1Layer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_categories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PjitFunction</span> <span class="pre">of</span> <span class="pre">&lt;function</span> <span class="pre">identity&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#AR1Layer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.AR1Layer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Look up states, returning (n, units).</p>
+<p>x contains integer time slots, shape (n,) or (n, 1), in
+[0, num_categories). Repeated and unsorted observations are supported.
+Keep the full time grid fixed across batches and prediction, including
+reserved future slots. Missing periods must retain their slots: do not
+compress gaps or treat irregularly spaced times as adjacent periods.
+Future states then follow the same recurrence with fresh innovations.
+Extending the grid after fitting is unsupported.</p>
+<p>Invalid concrete indices raise; invalid traced indices yield NaNs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>x</strong> (<em>Array</em>)</p></li>
+<li><p><strong>num_categories</strong> (<em>int</em>)</p></li>
+<li><p><strong>units</strong> (<em>int</em>)</p></li>
+<li><p><strong>activation</strong> (<em>Callable</em><em>[</em><em>[</em><em>Array</em><em>]</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blayers.layers.PSplineLayer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">PSplineLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trend_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#PSplineLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.PSplineLayer" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
+<p>Anchored B-spline smoother with a second-difference coefficient prior.</p>
+<p>If D is the second-difference matrix, use its minimum-norm right inverse R
+to construct coefficients:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scale</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">~</span> <span class="n">scale_dist</span><span class="p">(</span><span class="o">**</span><span class="n">scale_kwargs</span><span class="p">)</span>
+<span class="n">differences</span><span class="p">[:,</span> <span class="n">u</span><span class="p">]</span> <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="p">[</span><span class="n">u</span><span class="p">])</span>
+<span class="n">trend</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">~</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">trend_scale</span><span class="p">)</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">R</span> <span class="o">@</span> <span class="n">differences</span> <span class="o">+</span> <span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">trend</span>
+<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">(</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">-</span> <span class="n">B</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span> <span class="o">@</span> <span class="n">beta</span>
+</pre></div>
+</div>
+<p>Thus D &#64; beta equals the sampled differences exactly. Smaller scales
+penalize roughness more strongly. The coefficient-linear null component
+has its own proper prior, independent of the smoothing scale. The constant
+null component is removed by anchoring f(reference)=0; add InterceptLayer
+separately. No batch-dependent centering is performed.</p>
+<p>This is a coefficient-difference P-spline, not a derivative penalty. With
+clamped/uneven knots the unpenalized coefficient trend need not be exactly
+linear in x (especially near the boundaries). It is included in this
+layer; adding a separate linear term can introduce confounding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>trend_scale</strong> (<em>float</em>)</p></li>
+<li><p><strong>degree</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.PSplineLayer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.HalfNormal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trend_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#PSplineLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.PSplineLayer.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Configure smoothing and unpenalized-trend priors.</p>
+<p>degree must be at least 1. Scale priors must be positive, continuous,
+scalar-valued distributions, with kwargs broadcastable to (units,).
+trend_scale is the prior SD of the coefficient trend’s half-range.
+Smoothing scales depend on the number and placement of knots; choose
+the basis once, then check prior curves at that resolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale_dist</strong> (<em>type</em><em>[</em><em>Distribution</em><em>]</em>)</p></li>
+<li><p><strong>scale_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>trend_scale</strong> (<em>float</em>)</p></li>
+<li><p><strong>degree</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blayers.layers.PSplineLayer.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PjitFunction</span> <span class="pre">of</span> <span class="pre">&lt;function</span> <span class="pre">identity&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#PSplineLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.PSplineLayer.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Return (n, units) smooth effects for a single predictor.</p>
+<p>x has shape (n,) or (n, 1). knots is a full clamped knot vector, e.g.
+from make_knots, defining at least three basis functions. Capture
+knots in your model closure, outside fit’s row-wise data arguments.
+Reuse identical knots and reference for all batches and predictions.
+reference defaults to the domain midpoint and must lie in the domain.
+Outside the knot domain, the fitted curve holds its boundary value
+(constant extrapolation). Inputs and knots must be finite.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>x</strong> (<em>Array</em>)</p></li>
+<li><p><strong>knots</strong> (<em>Array</em>)</p></li>
+<li><p><strong>units</strong> (<em>int</em>)</p></li>
+<li><p><strong>reference</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>activation</strong> (<em>Callable</em><em>[</em><em>[</em><em>Array</em><em>]</em><em>, </em><em>Array</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Array</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1584,74 +1829,6 @@ interactions are the unique within-<code class="docutils literal notranslate"><s
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="blayers.layers.SpikeAndSlabLayer">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">SpikeAndSlabLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#SpikeAndSlabLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.SpikeAndSlabLayer" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
-<p>Sparse regression via a spike-and-slab prior.</p>
-<p>Each coefficient has a Beta-distributed inclusion weight <code class="docutils literal notranslate"><span class="pre">z_j</span></code> in
-(0, 1). Included features (<code class="docutils literal notranslate"><span class="pre">z_j</span> <span class="pre">≈</span> <span class="pre">1</span></code>) take the full slab coefficient;
-excluded features (<code class="docutils literal notranslate"><span class="pre">z_j</span> <span class="pre">≈</span> <span class="pre">0</span></code>) are gated toward zero (the spike).</p>
-<p>Generative model:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>z_j ~ Beta(alpha, beta)          # inclusion weight (hardcoded Beta)
-β_j ~ coef_dist(**coef_kwargs)   # slab coefficient
-y   ~ link(z · β · x, ...)       # z gates each coefficient
-</pre></div>
-</div>
-<p>The default <code class="docutils literal notranslate"><span class="pre">Beta(0.5,</span> <span class="pre">0.5)</span></code> (Jeffreys prior) places mass near 0 and 1,
-encouraging features to be clearly included or excluded.  The posterior
-mean of <code class="docutils literal notranslate"><span class="pre">z_j</span></code> approximates <code class="docutils literal notranslate"><span class="pre">P(feature</span> <span class="pre">j</span> <span class="pre">included</span> <span class="pre">|</span> <span class="pre">data)</span></code>.</p>
-<p>The slab distribution defaults to <code class="docutils literal notranslate"><span class="pre">Normal(0,</span> <span class="pre">1)</span></code> but can be swapped for
-e.g. <code class="docutils literal notranslate"><span class="pre">StudentT</span></code> for heavier-tailed slab behaviour.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>float</em>) – First concentration parameter of the Beta prior on <code class="docutils literal notranslate"><span class="pre">z</span></code>.</p></li>
-<li><p><strong>beta</strong> (<em>float</em>) – Second concentration parameter of the Beta prior on <code class="docutils literal notranslate"><span class="pre">z</span></code>.</p></li>
-<li><p><strong>coef_dist</strong> (<em>Distribution</em>) – Distribution for the slab coefficients.</p></li>
-<li><p><strong>coef_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – Kwargs for <code class="docutils literal notranslate"><span class="pre">coef_dist</span></code>.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.SpikeAndSlabLayer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coef_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#SpikeAndSlabLayer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.SpikeAndSlabLayer.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Initialize layer parameters. This is the Bayesian model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
-<li><p><strong>beta</strong> (<em>float</em>)</p></li>
-<li><p><strong>coef_dist</strong> (<em>Distribution</em>)</p></li>
-<li><p><strong>coef_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="blayers.layers.SpikeAndSlabLayer.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PjitFunction</span> <span class="pre">of</span> <span class="pre">&lt;function</span> <span class="pre">identity&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#SpikeAndSlabLayer.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.SpikeAndSlabLayer.__call__" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – Variable name scope.</p></li>
-<li><p><strong>x</strong> (<em>Array</em>) – Input of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
-<li><p><strong>units</strong> (<em>int</em>) – Number of output dimensions.</p></li>
-<li><p><strong>activation</strong> (<em>Callable</em><em>[</em><em>[</em><em>Array</em><em>]</em><em>, </em><em>Array</em><em>]</em>) – Activation function.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>jax.Array of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">units)</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Array</em></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="blayers.layers.MixtureLayer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">blayers.layers.</span></span><span class="sig-name descname"><span class="pre">MixtureLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component_dists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Normal'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'numpyro.distributions.continuous.Laplace'&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">({'loc':</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">{'loc'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'scale'</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">1.0})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/layers.html#MixtureLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.layers.MixtureLayer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#blayers.layers.BLayer" title="blayers.layers.BLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BLayer</span></code></a></p>
@@ -1662,12 +1839,10 @@ e.g. <code class="docutils literal notranslate"><span class="pre">StudentT</span
 <p>where the mixing weights <code class="docutils literal notranslate"><span class="pre">w</span></code> are either fixed or given a <code class="docutils literal notranslate"><span class="pre">Dirichlet</span></code>
 prior (shared across coefficients). The component indicator is marginalised
 analytically by <code class="xref py py-class docutils literal notranslate"><span class="pre">numpyro.distributions.MixtureGeneral</span></code>, so the
-log-density is smooth and works under VI <em>and</em> MCMC — unlike a discrete
-spike-and-slab indicator.</p>
+log-density is smooth and works under VI <em>and</em> MCMC.</p>
 <p>Useful for robustness (a heavy-tailed component absorbs a few outlier
 coefficients while the rest stay Gaussian) and elastic-net-flavoured priors
-(Normal + Laplace). For pure sparsity prefer <a class="reference internal" href="#blayers.layers.HorseshoeLayer" title="blayers.layers.HorseshoeLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a>; for
-explicit variable selection prefer <a class="reference internal" href="#blayers.layers.SpikeAndSlabLayer" title="blayers.layers.SpikeAndSlabLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code></a>.</p>
+(Normal + Laplace). For sparse shrinkage prefer <a class="reference internal" href="#blayers.layers.HorseshoeLayer" title="blayers.layers.HorseshoeLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1926,6 +2101,11 @@ for lengthscales that are very short relative to the domain.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer.__call__()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer.__init__"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomSlopesLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer.__call__()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer.__init__"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.FixedEffectsLayer.__call__"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer.__call__()</span></code></a></li>
@@ -1936,6 +2116,16 @@ for lengthscales that are very short relative to the domain.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.RandomWalkLayer.__call__"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer.__call__()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer"><code class="docutils literal notranslate"><span class="pre">AR1Layer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer.__init__"><code class="docutils literal notranslate"><span class="pre">AR1Layer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.AR1Layer.__call__"><code class="docutils literal notranslate"><span class="pre">AR1Layer.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer"><code class="docutils literal notranslate"><span class="pre">PSplineLayer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer.__init__"><code class="docutils literal notranslate"><span class="pre">PSplineLayer.__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.PSplineLayer.__call__"><code class="docutils literal notranslate"><span class="pre">PSplineLayer.__call__()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer.__init__"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer.__init__()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeLayer.__call__"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer.__call__()</span></code></a></li>
@@ -1943,11 +2133,6 @@ for lengthscales that are very short relative to the domain.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeInteractionLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.HorseshoeInteractionLayer.__call__"><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer.__call__()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer.__init__"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer.__init__()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.SpikeAndSlabLayer.__call__"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer.__call__()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blayers.layers.MixtureLayer"><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code></a><ul class="nav section-nav flex-column">

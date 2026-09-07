@@ -413,7 +413,7 @@
 <p>Model decorators for blayers.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">autoreshape</span></code>: Auto-reshape 1D arrays to (n, 1)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">autoreparam</span></code>: Auto-reparameterize LocScale distributions for MCMC</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">autoreparam</span></code>: Auto-reparameterize LocScale distributions for VI and MCMC</p></li>
 </ul>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@autoreshape</span>
@@ -450,10 +450,11 @@ return gaussian_link(mu, y)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.decorators.autoreparam">
 <span class="sig-prename descclassname"><span class="pre">blayers.decorators.</span></span><span class="sig-name descname"><span class="pre">autoreparam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/decorators.html#autoreparam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.decorators.autoreparam" title="Link to this definition">#</a></dt>
-<dd><p>Auto-reparameterize LocScale distributions in a model for MCMC.</p>
+<dd><p>Auto-reparameterize LocScale distributions in a model for VI and MCMC.</p>
 <p>Automatically applies <code class="docutils literal notranslate"><span class="pre">LocScaleReparam</span></code> to all LocScale distributions
 (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel) found in the model,
-which improves NUTS mixing by removing funnel geometries.</p>
+which can improve NUTS mixing and diagonal-guide VI by removing prior
+funnel geometries. Strongly informed coefficients may favor centering.</p>
 <p>Works with or without parentheses:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@autoreparam</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span> <span class="o">...</span>

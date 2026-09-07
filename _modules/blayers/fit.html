@@ -629,6 +629,23 @@
                 <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">samples</span> <span class="o">=</span> <span class="n">predictive</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+            <span class="c1"># autoreparam turns original coefficients into deterministic sites.</span>
+            <span class="c1"># Recover them from these same guide draws (including LogNormal's</span>
+            <span class="c1"># nested *_base_decentered -&gt; *_base -&gt; original transformation).</span>
+            <span class="n">original_sites</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">"_decentered"</span><span class="p">,</span> <span class="s2">"_base"</span><span class="p">)):</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">original_sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">original_sites</span><span class="p">:</span>
+                <span class="n">samples</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="n">Predictive</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">model_fn</span><span class="p">,</span>
+                        <span class="n">posterior_samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+                        <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+                        <span class="n">return_sites</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">original_sites</span><span class="p">),</span>
+                    <span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+                <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"svgd"</span><span class="p">:</span>
             <span class="c1"># For SVGD the params dict already contains per-particle values</span>
             <span class="c1"># with shape (num_particles, ...).  Treat particles as samples.</span>
@@ -797,11 +814,11 @@
     <span class="n">num_warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
     <span class="n">num_mcmc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">autoreparam_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="c1"># SVGD parameters</span>
     <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">kernel_fn</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="c1"># Common</span>
+    <span class="n">autoreparam_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FittedModel</span><span class="p">:</span>
@@ -845,8 +862,10 @@
 <span class="sd">        the cost of that de-biasing.  Safe to disable when your rows are already</span>
 <span class="sd">        in random order.  No effect without ``batch_size``.</span>
 <span class="sd">    guide : type or AutoGuide instance, optional</span>
-<span class="sd">        Variational family.  Pass a **class** (instantiated on *model_fn*) or</span>
+<span class="sd">        Variational family.  Pass a **class** (instantiated on the inference model) or</span>
 <span class="sd">        a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.</span>
+<span class="sd">        Instances and custom guide callables require ``autoreparam_model=False``;</span>
+<span class="sd">        their model parameterization must match the supplied model.</span>
 <span class="sd">        Not used for SVGD (which auto-generates an ``AutoDelta`` guide).</span>
 <span class="sd">    optimizer : optax.GradientTransformation, optional</span>
 <span class="sd">        A fully-constructed optax optimizer.  When provided, *lr* and</span>
@@ -859,8 +878,9 @@
 <span class="sd">    num_chains : int</span>
 <span class="sd">        Number of MCMC chains (default 1).</span>
 <span class="sd">    autoreparam_model : bool</span>
-<span class="sd">        Automatically reparameterize LocScale distributions for MCMC</span>
-<span class="sd">        (default True).</span>
+<span class="sd">        Automatically non-center LocScale distributions for VI and MCMC</span>
+<span class="sd">        (default True). For VI, build the guide on the transformed model and</span>
+<span class="sd">        retain that model for prediction. Ignored for SVGD.</span>
 
 <span class="sd">    num_particles : int</span>
 <span class="sd">        Number of Stein particles (default 10).  Only used for SVGD.</span>
@@ -916,6 +936,15 @@
     <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"vi"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">autoreparam_model</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">guide</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">guide</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Automatic VI reparameterization requires a guide class "</span>
+                    <span class="s2">"or guide=None. For a guide instance or custom callable, "</span>
+                    <span class="s2">"set autoreparam_model=False and ensure the guide matches "</span>
+                    <span class="s2">"the supplied model's parameterization."</span>
+                <span class="p">)</span>
+            <span class="n">bound_model</span> <span class="o">=</span> <span class="n">autoreparam</span><span class="p">()(</span><span class="n">bound_model</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_fit_vi</span><span class="p">(</span>
             <span class="n">bound_model</span><span class="p">,</span>
             <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>

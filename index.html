@@ -405,11 +405,14 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-slopes">Random slopes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-lognormal-link-and-student-t-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#penalized-splines">Penalized splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ar-1-ordered-effects">AR(1) ordered effects</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-processes-hsgp">Gaussian processes (HSGP)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-priors">Mixture priors</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a><ul class="nav section-nav flex-column">
@@ -461,6 +464,8 @@ are meant to be <strong>added together into a linear predictor</strong> (<code c
 <a class="reference external" href="https://num.pyro.ai/en/stable/primitives.html#module"><code class="docutils literal notranslate"><span class="pre">numpyro.contrib.module</span></code></a>’s
 <code class="docutils literal notranslate"><span class="pre">random_flax_module</span></code> / <code class="docutils literal notranslate"><span class="pre">random_haiku_module</span></code> instead — they drop a full Flax or
 Haiku net into a NumPyro model with priors on the weights.</p>
+<p>Every built-in layer must support both variational inference and HMC/NUTS.
+This is a requirement for adding new layers to the library.</p>
 <p>BLayers provides tools to</p>
 <ul class="simple">
 <li><p>Quickly build Bayesian models from layers which encapsulate useful model parts</p></li>
@@ -577,6 +582,7 @@ model is exactly equivalent to writing the following, just using way less code.<
 <li><p><code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code> — Intercept-only layer (bias term).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code> — Bayesian embeddings for sparse categorical features.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code> — Classical random-effects (embedding with output dim 1); learned variance component → partial pooling.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer</span></code> — Group-specific slope deviations with one learned pooling scale per predictor/output, shared across groups.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code> — Per-category coefficients with a fixed, user-specified prior; the no-pooling counterpart of <code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FMLayer</span></code> — Factorization Machine (order 2) for pairwise interaction terms.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">FM3Layer</span></code> — Factorization Machine (order 3).</p></li>
@@ -585,13 +591,54 @@ model is exactly equivalent to writing the following, just using way less code.<
 <li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer</span></code> — Pairwise interactions with a per-pair horseshoe prior; the layer to reach for to <em>identify</em> sparse interactions (most pairs shrink to zero, the real ones stand out). Omit <code class="docutils literal notranslate"><span class="pre">z</span></code> for unique within-feature pairs <code class="docutils literal notranslate"><span class="pre">i&lt;j</span></code>; pass <code class="docutils literal notranslate"><span class="pre">z</span></code> for the full cross-set grid.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BilinearLayer</span></code> — Bilinear interaction: <code class="docutils literal notranslate"><span class="pre">x^T</span> <span class="pre">W</span> <span class="pre">z</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code> — Low-rank bilinear interaction.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AR1Layer</span></code> — Stationary, mean-reverting effects over equally spaced time slots; learned persistence and innovation scale.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PSplineLayer</span></code> — Anchored B-spline smoother with learned second-difference penalties and a separate unpenalized-trend prior.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code> — Gaussian random walk prior over an ordered index (e.g., time).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code> — Horseshoe prior for sparse regression; global-local shrinkage via HalfCauchy.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code> — Spike-and-slab prior; <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">~</span> <span class="pre">Beta(0.5,</span> <span class="pre">0.5)</span></code> inclusion weights times a configurable slab.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code> — Finite mixture-of-priors on coefficients (default Normal + Laplace) with a logistic-normal (or fixed) weight; the component indicator is marginalised so it works under VI, MCMC, <em>and</em> SVGD. Good for robustness / elastic-net-style priors.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code> — Hilbert-space approximate Gaussian process (1-D, squared-exponential; <a class="reference external" href="https://arxiv.org/abs/2004.11408">Riutort-Mayol et al. 2021</a>). A GP smoother that learns its own lengthscale; use <code class="docutils literal notranslate"><span class="pre">hsgp_L(x_train)</span></code> to pick the domain boundary.</p></li>
 </ul>
 <p>All layer prior kwargs are validated at construction time — bad kwargs raise <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> immediately.</p>
+</section>
+<section id="random-slopes">
+<h2>Random slopes<a class="headerlink" href="#random-slopes" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer</span></code> adds partially pooled group-specific deviations to population
+slopes. Each predictor/output gets its own learned scale; slopes are independent
+conditional on those scales.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">InterceptLayer</span><span class="p">,</span> <span class="n">RandomSlopesLayer</span><span class="p">,</span> <span class="n">gaussian_link</span><span class="p">,</span> <span class="n">fit</span>
+
+<span class="n">slopes</span> <span class="o">=</span> <span class="n">RandomSlopesLayer</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">})</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">num_categories</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">"intercept"</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">AdaptiveLayer</span><span class="p">()(</span><span class="s2">"population"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">slopes</span><span class="p">(</span><span class="s2">"groups"</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">num_categories</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">group_ids</span><span class="p">,</span> <span class="n">num_categories</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+             <span class="n">num_steps</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="c1"># The same model supports method="mcmc" (NUTS).</span>
+</pre></div>
+</div>
+<p>For predictor j and output u: <code class="docutils literal notranslate"><span class="pre">scale[j,</span> <span class="pre">u]</span> <span class="pre">~</span> <span class="pre">HalfNormal(0.5)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">beta[g,</span> <span class="pre">j,</span> <span class="pre">u]</span> <span class="pre">~</span> <span class="pre">Normal(0,</span> <span class="pre">scale[j,</span> <span class="pre">u])</span></code>. Smaller scales enforce stronger pooling.
+The layer returns only deviations; add population coefficients separately.
+Pass only predictors whose slopes should vary. A column of ones adds a varying
+intercept. Slopes need within-group predictor variation to be learned.
+VI scale estimates can be sensitive to parameterization and optimization time.
+Compare <code class="docutils literal notranslate"><span class="pre">autoreparam_model=False</span></code> for strongly informed slopes: in the scale
+recovery test, centered VI converges substantially faster than non-centered VI.
+Both parameterizations are tested, along with NUTS.</p>
+<p><code class="docutils literal notranslate"><span class="pre">groups</span></code> must be integer IDs in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">num_categories)</span></code>, shaped <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code>.
+Keep <code class="docutils literal notranslate"><span class="pre">num_categories</span></code> and the ID mapping fixed across batches and prediction.
+Reserve slots upfront for groups without training observations; their slopes
+retain the prior conditional on the learned scales. Adding new group slots
+or remapping existing IDs after fitting is unsupported. Invalid concrete IDs
+raise errors; invalid IDs encountered under JIT produce NaNs instead of silently
+wrapping or clipping. All coefficient-table entries are global latent variables
+for the minibatched ELBO.</p>
 </section>
 <section id="links">
 <h2>Links<a class="headerlink" href="#links" title="Link to this heading">#</a></h2>
@@ -611,6 +658,15 @@ model is exactly equivalent to writing the following, just using way less code.<
 <li><p><code class="docutils literal notranslate"><span class="pre">zinb_link</span></code> — Zero-inflated NegativeBinomial2 for overdispersed, zero-heavy counts.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">beta_link</span></code> — Beta regression for proportions strictly in (0, 1).</p></li>
 </ul>
+<p>For a single response, likelihood helpers accept targets shaped either <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>
+or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">1)</span></code>, including models decorated with <code class="docutils literal notranslate"><span class="pre">&#64;autoreshape</span></code>. They align the
+singleton output dimension before evaluating the likelihood, so each row
+contributes one log probability. Multi-output targets must match the predictor’s
+output dimensions; incompatible shapes raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Predictive output
+shapes retain the likelihood’s existing convention.</p>
+<p>For location-scale likelihoods, a vector <code class="docutils literal notranslate"><span class="pre">scale</span></code> or <code class="docutils literal notranslate"><span class="pre">untransformed_scale</span></code> is
+interpreted as one scale per row. For multi-output predictions, use <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">units)</span></code>
+for per-output scales or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">units)</span></code> for a separate scale per row and output.</p>
 <section id="gaussian-link-lognormal-link-and-student-t-link">
 <h3><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code><a class="headerlink" href="#gaussian-link-lognormal-link-and-student-t-link" title="Link to this heading">#</a></h3>
 <p>All three share a common location-scale base and support three scale modes:</p>
@@ -670,6 +726,82 @@ model is exactly equivalent to writing the following, just using way less code.<
 </pre></div>
 </div>
 </section>
+<section id="penalized-splines">
+<h2>Penalized splines<a class="headerlink" href="#penalized-splines" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PSplineLayer</span></code> learns smoothness by shrinking second differences of adjacent
+B-spline coefficients (<a class="reference external" href="https://sites.stat.washington.edu/courses/stat527/s13/readings/EilersMarx_StatSci_1996.pdf">Eilers and Marx, 1996</a>).
+A smaller <code class="docutils literal notranslate"><span class="pre">scale</span></code> means stronger smoothing. Each output has its own scale.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSplineLayer</span><span class="p">,</span> <span class="n">InterceptLayer</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">gaussian_link</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers.splines</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_knots</span>
+
+<span class="n">knots</span> <span class="o">=</span> <span class="n">make_knots</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">num_knots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># prepare once, outside the model</span>
+<span class="n">smooth</span> <span class="o">=</span> <span class="n">PSplineLayer</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span> <span class="n">trend_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">"intercept"</span><span class="p">)</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">knots</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">vi</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_train</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+<span class="c1"># Also supports batch_size=128, or method="mcmc" for NUTS.</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">vi</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_test</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The smooth equals zero at a fixed reference (the knot-domain midpoint by
+default; override with <code class="docutils literal notranslate"><span class="pre">reference=</span></code>). An <code class="docutils literal notranslate"><span class="pre">InterceptLayer</span></code> provides the level.
+The coefficient-linear trend has a proper <code class="docutils literal notranslate"><span class="pre">Normal(0,</span> <span class="pre">trend_scale)</span></code> prior and
+is exempt from the smoothing penalty. With clamped or uneven knots this trend
+is not necessarily exactly linear in the input, especially near boundaries.
+It is already part of the smooth, so a separate linear term may be confounded.</p>
+<p>Keep knots, degree, and reference fixed for fitting and prediction. Capture
+knots in the model closure: passing them as array data to <code class="docutils literal notranslate"><span class="pre">fit</span></code> would batch
+them as if they were observations. Outside the domain the curve holds its
+boundary value. Smoothing priors depend on knot count and placement; inspect
+prior curves when changing the basis. Multiple smooths add directly, each
+anchored at its own reference.</p>
+</section>
+<section id="ar-1-ordered-effects">
+<h2>AR(1) ordered effects<a class="headerlink" href="#ar-1-ordered-effects" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">AR1Layer</span></code> adds a zero-mean stationary process over an equally spaced integer
+grid. It learns persistence <code class="docutils literal notranslate"><span class="pre">rho</span></code> in (-1, 1) and innovation SD <code class="docutils literal notranslate"><span class="pre">scale</span></code>, separately
+for each output. Its recurrence is <code class="docutils literal notranslate"><span class="pre">theta[t]</span> <span class="pre">=</span> <span class="pre">rho</span> <span class="pre">*</span> <span class="pre">theta[t-1]</span> <span class="pre">+</span> <span class="pre">scale</span> <span class="pre">*</span> <span class="pre">z[t]</span></code>,
+with standard-normal innovations. The initial state has stationary SD
+<code class="docutils literal notranslate"><span class="pre">scale</span> <span class="pre">/</span> <span class="pre">sqrt(1-rho**2)</span></code>. Use a separate intercept for the population mean.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AR1Layer</span><span class="p">,</span> <span class="n">InterceptLayer</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">gaussian_link</span>
+
+<span class="n">num_periods</span> <span class="o">=</span> <span class="mi">120</span>  <span class="c1"># includes future slots; retain this size after fitting</span>
+<span class="n">ar</span> <span class="o">=</span> <span class="n">AR1Layer</span><span class="p">(</span><span class="n">scale_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"scale"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span> <span class="n">rho_concentration</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">InterceptLayer</span><span class="p">()(</span><span class="s2">"intercept"</span><span class="p">)</span> <span class="o">+</span> <span class="n">ar</span><span class="p">(</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">num_periods</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># time_train contains integer slots 0..99, possibly repeated or with gaps.</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time_train</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_train</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"mcmc"</span><span class="p">)</span>
+<span class="c1"># time_future contains reserved slots 100..119.</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time_future</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Reserve the forecast horizon before fitting. Future innovations remain latent,
+so forecasts include innovation uncertainty as well as parameter uncertainty.
+Keep missing periods in the grid: slots 2 and 5 are three steps apart. Irregular
+physical time intervals require a different model; this layer does not infer
+time spacing from row order. Repeated/unsorted observations and row-wise VI
+minibatches use the same full latent time grid.</p>
+<p>The persistence prior is <code class="docutils literal notranslate"><span class="pre">rho</span> <span class="pre">=</span> <span class="pre">2*p</span> <span class="pre">-</span> <span class="pre">1</span></code>, with
+<code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">~</span> <span class="pre">Beta(rho_concentration,</span> <span class="pre">rho_concentration)</span></code>. The default 2 mildly favors
+zero; 1 gives a uniform prior on (-1, 1). Negative persistence is supported.
+<code class="docutils literal notranslate"><span class="pre">scale</span></code> is the innovation SD, not the stationary marginal SD. By default the
+layer samples states directly. <code class="docutils literal notranslate"><span class="pre">AR1Layer(noncentered=True)</span></code> instead samples
+standardized innovations; both forms define the same prior and support VI
+and NUTS. This choice is independent of <code class="docutils literal notranslate"><span class="pre">fit(autoreparam_model=...)</span></code>.</p>
+<p>In our informative-data recovery test, direct-state diagonal VI recovers
+persistence; innovation-based diagonal VI substantially underestimates it.
+For weakly observed states the innovation form may be preferable. Correlated
+posterior uncertainty, especially over missing/future periods, benefits from
+<code class="docutils literal notranslate"><span class="pre">guide=AutoMultivariateNormal</span></code> or NUTS; the Gaussian posterior validity tests
+use that full-covariance guide. Guide choice and convergence still need to
+be assessed for your data.</p>
+</section>
 <section id="gaussian-processes-hsgp">
 <h2>Gaussian processes (HSGP)<a class="headerlink" href="#gaussian-processes-hsgp" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code> is a Hilbert-space approximate GP (<a class="reference external" href="https://arxiv.org/abs/2004.11408">Riutort-Mayol et al. 2021</a>) — a smoother like splines, but it learns its own lengthscale and carries a proper GP interpretation. Pick the domain boundary <code class="docutils literal notranslate"><span class="pre">L</span></code> once on the training inputs with <code class="docutils literal notranslate"><span class="pre">hsgp_L</span></code> and reuse it at predict time; <code class="docutils literal notranslate"><span class="pre">m</span></code> is the number of basis functions (~20–50).</p>
@@ -698,11 +830,21 @@ model is exactly equivalent to writing the following, just using way less code.<
     <span class="k">return</span> <span class="n">gaussian_link</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For pure sparsity prefer <code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code>; for explicit variable selection prefer <code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code>.</p>
+<p>For sparse shrinkage prefer <code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code>.</p>
 </section>
 <section id="fit-helpers">
 <h2>fit() helpers<a class="headerlink" href="#fit-helpers" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> handles the guide, ELBO, batching, and LR schedule. The same model runs unchanged under VI, MCMC, or SVGD.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> handles the guide, ELBO, batching, and LR schedule. All built-in layers support both VI and HMC/NUTS; the fitting helpers also provide SVGD.</p>
+<p>VI and MCMC automatically non-center supported latent distributions by default
+(<code class="docutils literal notranslate"><span class="pre">autoreparam_model=True</span></code>). For VI, the default diagonal-normal guide is built
+in these transformed coordinates, allowing hierarchical coefficient uncertainty
+to vary with its learned prior scale. No <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code> decorator is needed.
+Set <code class="docutils literal notranslate"><span class="pre">autoreparam_model=False</span></code> to keep the model’s supplied parameterization;
+centering can work better for strongly informed coefficients. SVGD is unaffected.
+Guide classes work with automatic reparameterization. Prebuilt guide instances
+and custom guide functions require <code class="docutils literal notranslate"><span class="pre">autoreparam_model=False</span></code> and must match the
+supplied model; to non-center them, wrap the model with <code class="docutils literal notranslate"><span class="pre">autoreparam</span></code> before
+constructing the guide and pass that same model to <code class="docutils literal notranslate"><span class="pre">fit()</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">blayers.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreshape</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span><span class="p">,</span> <span class="n">InterceptLayer</span>
@@ -815,6 +957,16 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>The likelihood is scaled by <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">/</span> <span class="pre">B</span></code>, where <code class="docutils literal notranslate"><span class="pre">B</span></code> is the <strong>actual</strong> number of
+rows in each batch, including a short final batch. Array inputs must be aligned
+by row; bind static arrays such as spline knots into the model with a closure
+or <code class="docutils literal notranslate"><span class="pre">functools.partial</span></code>. The constructor’s <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> is a fallback for loss
+calls without array inputs.</p>
+<p>NumPyro <code class="docutils literal notranslate"><span class="pre">scale</span></code> and <code class="docutils literal notranslate"><span class="pre">mask</span></code> handlers are preserved for both model and guide
+sites. All observed sites, including <code class="docutils literal notranslate"><span class="pre">numpyro.factor</span></code> terms, are treated as
+row-wise likelihood contributions and scaled by <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">/</span> <span class="pre">B</span></code>; global latent priors
+and guide densities are not batch-scaled. Models with global factors or
+per-observation latent variables need a standard NumPyro ELBO instead.</p>
 <p><strong>⚠️⚠️⚠️ <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code> + <code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> do not mix. ⚠️⚠️⚠️</strong></p>
 <p><code class="docutils literal notranslate"><span class="pre">Batched_Trace_ELBO</span></code> does not support <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>: its <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">/</span> <span class="pre">batch_size</span></code> log-likelihood rescaling double-counts plate-subsampled sites and yields an incorrect ELBO. If your model needs plates, either:</p>
 <ol class="arabic simple">
@@ -826,7 +978,7 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <h3>Reparameterizing<a class="headerlink" href="#reparameterizing" title="Link to this heading">#</a></h3>
 <p>To fit MCMC models well it is crucial to <a class="reference external" href="https://num.pyro.ai/en/latest/reparam.html">reparameterize</a>. BLayers helps you do this via <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code>, which automatically applies <code class="docutils literal notranslate"><span class="pre">LocScaleReparam</span></code> to all <code class="docutils literal notranslate"><span class="pre">LocScale</span></code> distributions in your model (Normal, LogNormal, StudentT, Cauchy, Laplace, Gumbel).</p>
 <blockquote>
-<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">fit(method=&quot;mcmc&quot;)</span></code> already applies <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code> for you (controlled by <code class="docutils literal notranslate"><span class="pre">autoreparam_model=True</span></code>, on by default). You only need to apply the decorator yourself when driving NUTS / HMC manually, as shown below.</p>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">fit(method=&quot;vi&quot;)</span></code> and <code class="docutils literal notranslate"><span class="pre">fit(method=&quot;mcmc&quot;)</span></code> already apply <code class="docutils literal notranslate"><span class="pre">&#64;autoreparam</span></code> for you (controlled by <code class="docutils literal notranslate"><span class="pre">autoreparam_model=True</span></code>, on by default). Apply the decorator yourself when driving SVI or NUTS / HMC manually, as shown below for MCMC.</p>
 </div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blayers.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveLayer</span>
@@ -882,11 +1034,13 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.LowRankBilinearLayer"><code class="docutils literal notranslate"><span class="pre">LowRankBilinearLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.EmbeddingLayer"><code class="docutils literal notranslate"><span class="pre">EmbeddingLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomEffectsLayer"><code class="docutils literal notranslate"><span class="pre">RandomEffectsLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomSlopesLayer"><code class="docutils literal notranslate"><span class="pre">RandomSlopesLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.FixedEffectsLayer"><code class="docutils literal notranslate"><span class="pre">FixedEffectsLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.RandomWalkLayer"><code class="docutils literal notranslate"><span class="pre">RandomWalkLayer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.AR1Layer"><code class="docutils literal notranslate"><span class="pre">AR1Layer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.PSplineLayer"><code class="docutils literal notranslate"><span class="pre">PSplineLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HorseshoeLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HorseshoeInteractionLayer"><code class="docutils literal notranslate"><span class="pre">HorseshoeInteractionLayer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.SpikeAndSlabLayer"><code class="docutils literal notranslate"><span class="pre">SpikeAndSlabLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.MixtureLayer"><code class="docutils literal notranslate"><span class="pre">MixtureLayer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.hsgp_L"><code class="docutils literal notranslate"><span class="pre">hsgp_L()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/layers.html#blayers.layers.HSGPLayer"><code class="docutils literal notranslate"><span class="pre">HSGPLayer</span></code></a></li>
@@ -987,11 +1141,14 @@ you to use <code class="docutils literal notranslate"><span class="pre">plate</s
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers">Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-slopes">Random slopes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#links">Links</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-link-lognormal-link-and-student-t-link"><code class="docutils literal notranslate"><span class="pre">gaussian_link</span></code>, <code class="docutils literal notranslate"><span class="pre">lognormal_link</span></code>, and <code class="docutils literal notranslate"><span class="pre">student_t_link</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#splines">Splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#penalized-splines">Penalized splines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ar-1-ordered-effects">AR(1) ordered effects</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gaussian-processes-hsgp">Gaussian processes (HSGP)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixture-priors">Mixture priors</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fit-helpers">fit() helpers</a><ul class="nav section-nav flex-column">

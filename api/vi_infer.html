@@ -440,11 +440,17 @@ use <code class="docutils literal notranslate"><span class="pre">numpyro.plate</
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_obs</strong> (<em>int</em>) – Total number of observations in the full training set.</p></li>
 <li><p><strong>num_particles</strong> (<em>int</em>) – Number of Monte Carlo samples per gradient step.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Minibatch size.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, inferred from the leading
-dimension of the first batched kwarg at loss-evaluation time.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Fallback batch size for calls without array inputs.
+Otherwise the actual leading dimension of row-aligned positional
+and keyword arrays is used, including short remainder batches.
+Bind non-row arrays (e.g. knots) into the model with a closure.</p></li>
 </ul>
 </dd>
 </dl>
+<p>NumPyro scale and mask handlers are honored for model and guide sites.
+All observed sites, including <code class="docutils literal notranslate"><span class="pre">numpyro.factor</span></code> terms, are treated as
+row-wise likelihood contributions and receive N/B scaling. Global factors
+and local latent variables are unsupported in minibatched mode.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Does not mix with <code class="docutils literal notranslate"><span class="pre">numpyro.plate</span></code>.  A <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is raised if a
