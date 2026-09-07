@@ -7,6 +7,8 @@ may carry breaking changes).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-09-07
+
 ### Added
 
 Three new additive regression layers, exported from `blayers`, with support for
