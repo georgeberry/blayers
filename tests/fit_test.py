@@ -5,12 +5,12 @@ import jax.numpy as jnp
 import jax.random as random
 import numpyro.distributions as dist
 import pytest
-from numpyro import sample
+from numpyro import deterministic, sample
 from numpyro.infer import Predictive
 from numpyro.infer.autoguide import AutoDiagonalNormal, AutoMultivariateNormal
 
 from blayers._utils import rmse
-from blayers.decorators import autoreshape
+from blayers.decorators import autoreparam, autoreshape
 from blayers.fit import (
     FittedModel,
     Predictions,
@@ -228,6 +228,70 @@ def test_constant_binding(sim_data: dict[str, jax.Array]) -> None:
 # --------------------------------------------------------------------------- #
 
 
+@pytest.mark.parametrize("batch_size", [None, 3])
+@pytest.mark.parametrize("noncentered", [False, True])
+def test_vi_reparam_coordinates_and_prediction(batch_size, noncentered):
+    def model(x, y=None):
+        tau = sample("tau", dist.HalfNormal(1.0))
+        beta = sample("beta", dist.Normal(0.0, tau))
+        mu = deterministic("mu", x * beta)
+        return sample("obs", dist.Normal(mu, 0.1), obs=y)
+
+    x = jnp.ones(7)
+    result = fit(
+        model,
+        x=x,
+        y=x,
+        num_steps=3,
+        batch_size=batch_size,
+        **({} if noncentered else {"autoreparam_model": False}),
+    )
+    assert jnp.isfinite(result.losses).all()
+    draws = Predictive(result.guide, params=result.params, num_samples=20)(
+        random.PRNGKey(5), x=x
+    )
+    assert ("beta_decentered" in draws) == noncentered
+    if noncentered:
+        beta = draws["tau"] * draws["beta_decentered"]
+    else:
+        beta = draws["beta"]
+    # Replay exactly the fitted coordinates and reconstruct beta = tau * z.
+    predicted = Predictive(
+        result.model_fn, posterior_samples=draws, return_sites=["mu"]
+    )(random.PRNGKey(6), x=x)["mu"]
+    assert jnp.allclose(predicted, beta[:, None])
+    summary = result.summary(x=x, num_samples=20, seed=5)
+    assert jnp.allclose(summary["beta"]["mean"], beta.mean())
+    assert jnp.allclose(summary["beta"]["std"], beta.std())
+    assert result.predict(x=x, num_samples=20).samples.shape == (20, 7)
+
+
+def test_vi_prebuilt_guide_requires_explicit_parameterization():
+    with pytest.raises(ValueError, match="autoreparam_model=False"):
+        fit(
+            linear_model,
+            x=jnp.ones((4, 1)),
+            y=jnp.ones(4),
+            num_steps=1,
+            guide=AutoDiagonalNormal(linear_model),
+        )
+
+
+def test_vi_explicit_reparam_with_prebuilt_guide():
+    model = autoreparam(linear_model)
+    guide = AutoDiagonalNormal(model)
+    result = fit(
+        model,
+        x=jnp.ones((4, 1)),
+        y=jnp.ones(4),
+        num_steps=2,
+        guide=guide,
+        autoreparam_model=False,
+    )
+    assert result.guide is guide
+    assert jnp.isfinite(result.predict(x=jnp.ones((4, 1))).mean).all()
+
+
 def test_custom_guide_class(sim_data: dict[str, jax.Array]) -> None:
     """Passing a guide class should instantiate it on the model."""
     result = fit(
@@ -253,6 +317,7 @@ def test_custom_guide_instance(sim_data: dict[str, jax.Array]) -> None:
         batch_size=512,
         num_epochs=10,
         guide=guide_instance,
+        autoreparam_model=False,
         seed=0,
         x=sim_data["x"],
     )

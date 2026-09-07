@@ -247,20 +247,6 @@ def _render_horseshoe(
     return lines
 
 
-def _render_spike_slab(
-    layer_name: str, sites: dict[str, Any], value_symbols: dict[int, str]
-) -> list[str]:
-    z = _sub(r"z", layer_name, "j")
-    beta = _sub(r"\beta", layer_name, "j")
-    z_dist = _dist_latex(sites["z"]["fn"], value_symbols)
-    b_dist = _dist_latex(sites["beta"]["fn"], value_symbols)
-    return [
-        rf"{z} &\sim {z_dist}",
-        rf"{beta} &\sim {b_dist}",
-        rf"\tilde{{\beta}}_j &= {z}\,{beta} \quad\text{{(gated coefficient)}}",
-    ]
-
-
 def _render_mixture(
     layer_name: str, sites: dict[str, Any], value_symbols: dict[int, str]
 ) -> list[str]:
@@ -304,7 +290,6 @@ _OVERRIDES: dict[
 ] = {
     "HorseshoeLayer": _render_horseshoe,
     "HorseshoeInteractionLayer": _render_horseshoe,
-    "SpikeAndSlabLayer": _render_spike_slab,
     "MixtureLayer": _render_mixture,
     "HSGPLayer": _render_hsgp,
 }

@@ -33,6 +33,7 @@ import numpy as np
 from numpyro import distributions, sample
 
 from blayers._utils import add_trailing_dim
+from blayers.splines import bspline_basis
 
 # ---- Matmul functions ------------------------------------------------------ #
 
@@ -1106,6 +1107,104 @@ class RandomEffectsLayer(BLayer):
         return jnp.asarray(theta[x.reshape(-1).astype(jnp.int32)])
 
 
+class RandomSlopesLayer(BLayer):
+    """Independent, partially pooled group-specific slope deviations.
+
+    For each predictor j and output u, sample a scale shared across groups::
+
+        tau[j, u] ~ scale_dist(**scale_kwargs)
+        beta[g, j, u] ~ Normal(0, tau[j, u])
+        output[i, u] = sum_j x[i, j] * beta[groups[i], j, u]
+
+    Population slopes belong in a separate layer. A column of ones in x adds
+    a varying intercept. Coefficients are independent conditional on the scales;
+    this layer does not estimate correlations between slopes.
+
+    The centered generative prior follows other BLayers layers; fit() can
+    non-center it through autoreparam_model=True for VI and HMC/NUTS.
+    """
+
+    def __init__(
+        self,
+        scale_dist: type[distributions.Distribution] = distributions.HalfNormal,
+        scale_kwargs: dict[str, Any] | None = None,
+    ):
+        """Configure the between-group scale prior (default HalfNormal(1)).
+
+        The scale prior must be continuous, positive, and scalar-valued;
+        scalar or (d, units)-broadcastable parameters are supported.
+        """
+        self.scale_dist = scale_dist
+        self.scale_kwargs = (
+            {"scale": 1.0} if scale_kwargs is None else dict(scale_kwargs)
+        )
+        _validate_prior_kwargs(
+            distributions.Normal, {"loc": 0.0}, scale_dist, self.scale_kwargs
+        )
+        prior = scale_dist(**self.scale_kwargs)
+        if prior.is_discrete or prior.event_shape:
+            raise ValueError(
+                "scale_dist must be a continuous scalar distribution"
+            )
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        groups: jax.Array,
+        num_categories: int,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """Return slope deviations of shape (n, units).
+
+        Args:
+            name: Sample-site namespace.
+            x: Predictor matrix (n, d), or vector (n,) for one slope.
+            groups: Integer group IDs, shape (n,) or (n, 1), in
+                [0, num_categories). IDs must retain their meaning at prediction.
+            num_categories: Size of the full coefficient table. Keep fixed
+                across training batches and prediction. Unobserved groups can
+                occupy reserved slots, whose slopes retain their conditional
+                prior; adding new slots after fitting is unsupported.
+            units: Number of output dimensions, with independent slope priors.
+            activation: Optional transform of the resulting predictor.
+
+        Invalid concrete group IDs raise ValueError. Under JIT, invalid IDs
+        produce NaN outputs instead of silently wrapping or clipping indices.
+        """
+        if num_categories <= 0 or units <= 0:
+            raise ValueError("num_categories and units must be positive")
+        x = add_trailing_dim(jnp.asarray(x))
+        groups = jnp.asarray(groups)
+        if x.ndim != 2 or x.shape[1] == 0:
+            raise ValueError(
+                "x must have shape (n, d) with at least one predictor"
+            )
+        if groups.ndim == 2 and groups.shape[1] == 1:
+            groups = groups[:, 0]
+        if groups.ndim != 1 or groups.shape[0] != x.shape[0]:
+            raise ValueError("groups must contain one group ID per row of x")
+        if not jnp.issubdtype(groups.dtype, jnp.integer):
+            raise TypeError("groups must contain integer group IDs")
+        valid = (groups >= 0) & (groups < num_categories)
+        if not isinstance(valid, jax.core.Tracer) and not bool(jnp.all(valid)):
+            raise ValueError("groups must be in [0, num_categories)")
+
+        prefix = f"{self.__class__.__name__}_{name}"
+        d = x.shape[1]
+        scale = sample(
+            f"{prefix}_scale",
+            self.scale_dist(**self.scale_kwargs).expand([d, units]),
+        )
+        beta = sample(
+            f"{prefix}_beta",
+            distributions.Normal(0.0, scale).expand([num_categories, d, units]),
+        )
+        row_beta = jnp.where(valid[:, None, None], beta[groups], jnp.nan)
+        return activation(jnp.einsum("nd,ndu->nu", x, row_beta))
+
+
 class FixedEffectsLayer(BLayer):
     """Bayesian fixed-effects layer — per-category coefficients, fixed prior.
 
@@ -1244,6 +1343,276 @@ class RandomWalkLayer(BLayer):
         )
         # matmul and return
         return _matmul_randomwalk(theta, x)
+
+
+class AR1Layer(BLayer):
+    """Stationary, zero-mean AR(1) effects over equally spaced time slots.
+
+    Independently for each output::
+
+        p ~ Beta(rho_concentration, rho_concentration)
+        rho = 2 * p - 1
+        sigma ~ scale_dist(**scale_kwargs)
+        z[t] ~ Normal(0, 1)
+        theta[0] = sigma / sqrt(1 - rho**2) * z[0]
+        theta[t] = rho * theta[t-1] + sigma * z[t]
+
+    sigma is the innovation standard deviation, not the marginal standard
+    deviation. The stationary initial prior gives covariance
+    sigma**2 * rho**abs(t-s) / (1-rho**2). Add a separate InterceptLayer for
+    the population mean. States are not sample-centered: that would change
+    this stationary prior and its forecasting behavior.
+    """
+
+    def __init__(
+        self,
+        scale_dist: type[distributions.Distribution] = distributions.HalfNormal,
+        scale_kwargs: dict[str, Any] | None = None,
+        rho_concentration: float = 2.0,
+        noncentered: bool = False,
+    ):
+        """Configure a positive innovation-scale prior and symmetric rho prior.
+
+        rho_concentration=1 gives Uniform(-1, 1); the default 2 mildly favors
+        persistence near zero over either stationarity boundary. Scale kwargs
+        may broadcast to (units,). The default samples states directly. Set
+        noncentered=True to sample standardized innovations instead, often
+        useful when states are weakly observed. Both forms have continuous
+        latents and support VI/NUTS. This explicit choice is not changed by
+        fit(autoreparam_model=...).
+        """
+        if not np.isfinite(rho_concentration) or rho_concentration <= 0:
+            raise ValueError("rho_concentration must be finite and positive")
+        self.noncentered = noncentered
+        self.rho_concentration = rho_concentration
+        self.scale_dist = scale_dist
+        self.scale_kwargs = (
+            {"scale": 1.0} if scale_kwargs is None else dict(scale_kwargs)
+        )
+        prior = scale_dist(**self.scale_kwargs)
+        if prior.is_discrete or prior.event_shape:
+            raise ValueError(
+                "scale_dist must be a continuous scalar distribution"
+            )
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        num_categories: int,
+        units: int = 1,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """Look up states, returning (n, units).
+
+        x contains integer time slots, shape (n,) or (n, 1), in
+        [0, num_categories). Repeated and unsorted observations are supported.
+        Keep the full time grid fixed across batches and prediction, including
+        reserved future slots. Missing periods must retain their slots: do not
+        compress gaps or treat irregularly spaced times as adjacent periods.
+        Future states then follow the same recurrence with fresh innovations.
+        Extending the grid after fitting is unsupported.
+
+        Invalid concrete indices raise; invalid traced indices yield NaNs.
+        """
+        if num_categories <= 0 or units <= 0:
+            raise ValueError("num_categories and units must be positive")
+        x = jnp.asarray(x)
+        if x.ndim == 2 and x.shape[1] == 1:
+            x = x[:, 0]
+        if x.ndim != 1:
+            raise ValueError("x must have shape (n,) or (n, 1)")
+        if not jnp.issubdtype(x.dtype, jnp.integer):
+            raise TypeError("x must contain integer time slots")
+        valid = (x >= 0) & (x < num_categories)
+        if not isinstance(valid, jax.core.Tracer) and not bool(jnp.all(valid)):
+            raise ValueError("x must be in [0, num_categories)")
+        prefix = f"{self.__class__.__name__}_{name}"
+        rho = sample(
+            f"{prefix}_rho",
+            distributions.TransformedDistribution(
+                distributions.Beta(
+                    self.rho_concentration, self.rho_concentration
+                ),
+                distributions.transforms.AffineTransform(-1.0, 2.0),
+            ).expand([units]),
+        )
+        scale = sample(
+            f"{prefix}_scale",
+            self.scale_dist(**self.scale_kwargs).expand([units]),
+        )
+        initial_scale = scale / jnp.sqrt((1.0 - rho) * (1.0 + rho))
+        if self.noncentered:
+            z = sample(
+                f"{prefix}_z",
+                distributions.Normal(0.0, 1.0).expand([num_categories, units]),
+            )
+            initial = initial_scale * z[0]
+
+            def step(
+                previous: jax.Array, innovation: jax.Array
+            ) -> tuple[jax.Array, jax.Array]:
+                current = rho * previous + scale * innovation
+                return current, current
+
+            _, remaining = jax.lax.scan(step, initial, z[1:])
+            states = jnp.concatenate([initial[None, :], remaining], axis=0)
+        else:
+            innovation_scale = jnp.broadcast_to(scale, (num_categories, units))
+            innovation_scale = innovation_scale.at[0].set(initial_scale)
+            states = sample(
+                f"{prefix}_theta",
+                distributions.TransformedDistribution(
+                    distributions.Normal(0.0, innovation_scale).to_event(2),
+                    distributions.transforms.RecursiveLinearTransform(
+                        jnp.diag(rho)
+                    ),
+                ),
+            )
+        return activation(jnp.where(valid[:, None], states[x], jnp.nan))
+
+
+class PSplineLayer(BLayer):
+    """Anchored B-spline smoother with a second-difference coefficient prior.
+
+    If D is the second-difference matrix, use its minimum-norm right inverse R
+    to construct coefficients::
+
+        scale[u] ~ scale_dist(**scale_kwargs)
+        differences[:, u] ~ Normal(0, scale[u])
+        trend[u] ~ Normal(0, trend_scale)
+        beta = R @ differences + linspace(-1, 1, K)[:, None] * trend
+        f(x) = (B(clip(x)) - B(reference)) @ beta
+
+    Thus D @ beta equals the sampled differences exactly. Smaller scales
+    penalize roughness more strongly. The coefficient-linear null component
+    has its own proper prior, independent of the smoothing scale. The constant
+    null component is removed by anchoring f(reference)=0; add InterceptLayer
+    separately. No batch-dependent centering is performed.
+
+    This is a coefficient-difference P-spline, not a derivative penalty. With
+    clamped/uneven knots the unpenalized coefficient trend need not be exactly
+    linear in x (especially near the boundaries). It is included in this
+    layer; adding a separate linear term can introduce confounding.
+    """
+
+    def __init__(
+        self,
+        scale_dist: type[distributions.Distribution] = distributions.HalfNormal,
+        scale_kwargs: dict[str, Any] | None = None,
+        trend_scale: float = 1.0,
+        degree: int = 3,
+    ):
+        """Configure smoothing and unpenalized-trend priors.
+
+        degree must be at least 1. Scale priors must be positive, continuous,
+        scalar-valued distributions, with kwargs broadcastable to (units,).
+        trend_scale is the prior SD of the coefficient trend's half-range.
+        Smoothing scales depend on the number and placement of knots; choose
+        the basis once, then check prior curves at that resolution.
+        """
+        if not isinstance(degree, int) or degree < 1:
+            raise ValueError("degree must be an integer >= 1")
+        if not np.isfinite(trend_scale) or trend_scale <= 0:
+            raise ValueError("trend_scale must be finite and positive")
+        self.degree = degree
+        self.trend_scale = trend_scale
+        self.scale_dist = scale_dist
+        self.scale_kwargs = (
+            {"scale": 1.0} if scale_kwargs is None else dict(scale_kwargs)
+        )
+        prior = scale_dist(**self.scale_kwargs)
+        if prior.is_discrete or prior.event_shape:
+            raise ValueError(
+                "scale_dist must be a continuous scalar distribution"
+            )
+
+    def __call__(
+        self,
+        name: str,
+        x: jax.Array,
+        knots: jax.Array,
+        units: int = 1,
+        reference: float | None = None,
+        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
+    ) -> jax.Array:
+        """Return (n, units) smooth effects for a single predictor.
+
+        x has shape (n,) or (n, 1). knots is a full clamped knot vector, e.g.
+        from make_knots, defining at least three basis functions. Capture
+        knots in your model closure, outside fit's row-wise data arguments.
+        Reuse identical knots and reference for all batches and predictions.
+        reference defaults to the domain midpoint and must lie in the domain.
+        Outside the knot domain, the fitted curve holds its boundary value
+        (constant extrapolation). Inputs and knots must be finite.
+        """
+        if units <= 0:
+            raise ValueError("units must be positive")
+        x = jnp.asarray(x)
+        knots = jnp.asarray(knots)
+        if x.ndim == 2 and x.shape[1] == 1:
+            x = x[:, 0]
+        if x.ndim != 1:
+            raise ValueError("x must have shape (n,) or (n, 1)")
+        p = self.degree
+        if knots.ndim != 1 or knots.shape[0] < 2 * (p + 1):
+            raise ValueError("knots must be a full clamped knot vector")
+        k = knots.shape[0] - p - 1
+        if k < 3:
+            raise ValueError("at least three basis functions are required")
+        lo, hi = knots[0], knots[-1]
+        ref = (lo + hi) / 2 if reference is None else jnp.asarray(reference)
+        if jnp.ndim(ref) != 0:
+            raise ValueError("reference must be scalar")
+        valid_knots = (
+            jnp.all(jnp.isfinite(knots))
+            & jnp.all(jnp.diff(knots) >= 0)
+            & (hi > lo)
+            & jnp.all(knots[: p + 1] == lo)
+            & jnp.all(knots[-p - 1 :] == hi)
+            & jnp.all(knots[p + 1 : -p - 1] > lo)
+            & jnp.all(knots[p + 1 : -p - 1] < hi)
+            & (ref >= lo)
+            & (ref <= hi)
+        )
+        if not isinstance(valid_knots, jax.core.Tracer) and not bool(
+            valid_knots
+        ):
+            raise ValueError(
+                "knots must be finite, ordered and clamped with a nonempty domain; reference must lie within it"
+            )
+        valid_x = jnp.isfinite(x)
+        if not isinstance(valid_x, jax.core.Tracer) and not bool(
+            jnp.all(valid_x)
+        ):
+            raise ValueError("x must be finite")
+        basis = bspline_basis(jnp.clip(x, lo, hi), knots, p)
+        basis = basis - bspline_basis(jnp.reshape(ref, (1,)), knots, p)
+        # NumPy uses double precision for the small fixed basis decomposition;
+        # only the resulting constant enters JAX's traced model.
+        difference = np.diff(np.eye(k), n=2, axis=0)
+        right_inverse = np.linalg.solve(difference @ difference.T, difference).T
+        prefix = f"{self.__class__.__name__}_{name}"
+        scale = sample(
+            f"{prefix}_scale",
+            self.scale_dist(**self.scale_kwargs).expand([units]),
+        )
+        delta = sample(
+            f"{prefix}_differences",
+            distributions.Normal(0.0, scale).expand([k - 2, units]),
+        )
+        trend = sample(
+            f"{prefix}_trend",
+            distributions.Normal(0.0, self.trend_scale).expand([units]),
+        )
+        beta = (
+            jnp.asarray(right_inverse) @ delta
+            + jnp.linspace(-1.0, 1.0, k)[:, None] * trend
+        )
+        output = jnp.where(
+            (valid_x & valid_knots)[:, None], basis @ beta, jnp.nan
+        )
+        return activation(output)
 
 
 # ---- Sparse priors --------------------------------------------------------- #
@@ -1428,86 +1797,6 @@ class HorseshoeInteractionLayer(HorseshoeLayer):
         return super().__call__(name, x_int, units=units, activation=activation)
 
 
-# ---- Spike and slab -------------------------------------------------------- #
-
-
-class SpikeAndSlabLayer(BLayer):
-    """Sparse regression via a spike-and-slab prior.
-
-    Each coefficient has a Beta-distributed inclusion weight ``z_j`` in
-    (0, 1). Included features (``z_j ≈ 1``) take the full slab coefficient;
-    excluded features (``z_j ≈ 0``) are gated toward zero (the spike).
-
-    Generative model::
-
-        z_j ~ Beta(alpha, beta)          # inclusion weight (hardcoded Beta)
-        β_j ~ coef_dist(**coef_kwargs)   # slab coefficient
-        y   ~ link(z · β · x, ...)       # z gates each coefficient
-
-    The default ``Beta(0.5, 0.5)`` (Jeffreys prior) places mass near 0 and 1,
-    encouraging features to be clearly included or excluded.  The posterior
-    mean of ``z_j`` approximates ``P(feature j included | data)``.
-
-    The slab distribution defaults to ``Normal(0, 1)`` but can be swapped for
-    e.g. ``StudentT`` for heavier-tailed slab behaviour.
-
-    Args:
-        alpha: First concentration parameter of the Beta prior on ``z``.
-        beta: Second concentration parameter of the Beta prior on ``z``.
-        coef_dist: Distribution for the slab coefficients.
-        coef_kwargs: Kwargs for ``coef_dist``.
-    """
-
-    def __init__(
-        self,
-        alpha: float = 0.5,
-        beta: float = 0.5,
-        coef_dist: distributions.Distribution = distributions.Normal,
-        coef_kwargs: dict[str, float] = {"loc": 0.0, "scale": 1.0},
-    ):
-        self.alpha = alpha
-        self.beta = beta
-        self.coef_dist = coef_dist
-        self.coef_kwargs = coef_kwargs
-        _validate_prior_kwargs(coef_dist, coef_kwargs)
-
-    def __call__(
-        self,
-        name: str,
-        x: jax.Array,
-        units: int = 1,
-        activation: Callable[[jax.Array], jax.Array] = jnn.identity,
-    ) -> jax.Array:
-        """
-        Args:
-            name: Variable name scope.
-            x: Input of shape ``(n, d)``.
-            units: Number of output dimensions.
-            activation: Activation function.
-
-        Returns:
-            jax.Array of shape ``(n, units)``.
-        """
-        x = add_trailing_dim(x)
-        d = x.shape[1]
-        cls = self.__class__.__name__
-
-        # Inclusion weight: posterior z_j ≈ P(feature j included | data)
-        z = sample(
-            f"{cls}_{name}_z",
-            distributions.Beta(self.alpha, self.beta).expand([d, units]),
-        )
-
-        # Slab coefficients
-        beta = sample(
-            f"{cls}_{name}_beta",
-            self.coef_dist(**self.coef_kwargs).expand([d, units]),
-        )
-
-        # Gate: z≈1 → full slab value; z≈0 → near zero (spike at 0)
-        return activation(_matmul_dot_product(x, z * beta))
-
-
 # ---- Mixture priors -------------------------------------------------------- #
 
 
@@ -1522,13 +1811,11 @@ class MixtureLayer(BLayer):
     where the mixing weights ``w`` are either fixed or given a ``Dirichlet``
     prior (shared across coefficients). The component indicator is marginalised
     analytically by :class:`numpyro.distributions.MixtureGeneral`, so the
-    log-density is smooth and works under VI *and* MCMC — unlike a discrete
-    spike-and-slab indicator.
+    log-density is smooth and works under VI *and* MCMC.
 
     Useful for robustness (a heavy-tailed component absorbs a few outlier
     coefficients while the rest stay Gaussian) and elastic-net-flavoured priors
-    (Normal + Laplace). For pure sparsity prefer :class:`HorseshoeLayer`; for
-    explicit variable selection prefer :class:`SpikeAndSlabLayer`.
+    (Normal + Laplace). For sparse shrinkage prefer :class:`HorseshoeLayer`.
     """
 
     def __init__(

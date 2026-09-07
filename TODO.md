@@ -31,9 +31,36 @@ ordered by value/effort for that niche.
       never supported 3.9), `__version__`, CI on 3.12, deduped the `black`
       pre-commit hook, `pytest -n auto` (pytest-xdist) to parallelize CI.
 
+## Proposed regression layers (banked for exploration)
+
+Keep the existing layer APIs; no interaction-layer consolidation is planned.
+Every new layer must support both VI and HMC/NUTS and work with the global-latent,
+row-wise minibatching contract. These are design tasks, not settled APIs.
+
+- [x] `RandomSlopesLayer`: independent, zero-centered group slope deviations
+      with one learned scale per predictor/output. Population coefficients are
+      separate. Uses the existing automatic non-centering support; unseen groups
+      use reserved slots. Includes conditional Gaussian posterior validity tests.
+- [ ] Correlated random slopes: extend `RandomSlopesLayer` with a
+      scale/correlation decomposition and an LKJ prior; preserve the independent
+      default and validate identifiability and VI/HMC behavior.
+- [x] `PSplineLayer`: second-difference coefficient prior, separate proper
+      coefficient-trend prior, fixed-reference anchoring, and constant boundary
+      extrapolation. Prior and Gaussian posterior validity tests for VI/HMC.
+- [x] `AR1Layer`: stationary initial state, learned persistence and innovation
+      scale, continuous innovations on a fixed equally spaced grid, and reserved
+      forecast slots. Covariance, forecast, and VI/HMC posterior validity tests.
+- [ ] Tensor-product smooths: nonlinear interactions between covariates with
+      separate marginal smoothing scales. Build on penalized splines and
+      separate interaction terms from main-effect smooths for identifiability.
+- [ ] Group-specific smooth deviations: partially pooled curves around a
+      population smooth, with shared smoothness/shrinkage structure. Build on
+      the varying-effects and penalized-spline designs.
+
 ## Tier 1 — remaining workflow tooling
-- [ ] MCMC diagnostics surfaced in `summary()` too (R-hat, ESS, divergence
-      count) for users who don't reach for ArviZ.
+- [ ] **Deferred / out of scope for now:** MCMC diagnostics in `summary()`
+      (R-hat, ESS, divergences). NumPyro already provides these; revisit only
+      if a BLayers convenience wrapper is needed.
 - [ ] `posterior_predictive` group in `to_arviz()` so `az.plot_ppc_*` works
       natively (the one missing group in the diagnostic loop).
 

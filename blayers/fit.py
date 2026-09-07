@@ -304,6 +304,23 @@ class FittedModel:
                 num_samples=num_samples,
             )
             samples = predictive(rng_key, **data)
+            # autoreparam turns original coefficients into deterministic sites.
+            # Recover them from these same guide draws (including LogNormal's
+            # nested *_base_decentered -> *_base -> original transformation).
+            original_sites = set()
+            for name in samples:
+                while name.endswith(("_decentered", "_base")):
+                    name = name.rsplit("_", 1)[0]
+                    original_sites.add(name)
+            if original_sites:
+                samples.update(
+                    Predictive(
+                        self.model_fn,
+                        posterior_samples=samples,
+                        params=self.params,
+                        return_sites=sorted(original_sites),
+                    )(rng_key, **data)
+                )
         elif self.method == "svgd":
             # For SVGD the params dict already contains per-particle values
             # with shape (num_particles, ...).  Treat particles as samples.
@@ -465,11 +482,11 @@ def fit(
     num_warmup: int = 500,
     num_mcmc_samples: int = 1000,
     num_chains: int = 1,
-    autoreparam_model: bool = True,
     # SVGD parameters
     num_particles: int = 10,
     kernel_fn: Any = None,
     # Common
+    autoreparam_model: bool = True,
     seed: int = 0,
     **kwargs: Any,
 ) -> FittedModel:
@@ -513,8 +530,10 @@ def fit(
         the cost of that de-biasing.  Safe to disable when your rows are already
         in random order.  No effect without ``batch_size``.
     guide : type or AutoGuide instance, optional
-        Variational family.  Pass a **class** (instantiated on *model_fn*) or
+        Variational family.  Pass a **class** (instantiated on the inference model) or
         a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.
+        Instances and custom guide callables require ``autoreparam_model=False``;
+        their model parameterization must match the supplied model.
         Not used for SVGD (which auto-generates an ``AutoDelta`` guide).
     optimizer : optax.GradientTransformation, optional
         A fully-constructed optax optimizer.  When provided, *lr* and
@@ -527,8 +546,9 @@ def fit(
     num_chains : int
         Number of MCMC chains (default 1).
     autoreparam_model : bool
-        Automatically reparameterize LocScale distributions for MCMC
-        (default True).
+        Automatically non-center LocScale distributions for VI and MCMC
+        (default True). For VI, build the guide on the transformed model and
+        retain that model for prediction. Ignored for SVGD.
 
     num_particles : int
         Number of Stein particles (default 10).  Only used for SVGD.
@@ -584,6 +604,15 @@ def fit(
     rng_key = jax.random.PRNGKey(seed)
 
     if method == "vi":
+        if autoreparam_model:
+            if guide is not None and not isinstance(guide, type):
+                raise ValueError(
+                    "Automatic VI reparameterization requires a guide class "
+                    "or guide=None. For a guide instance or custom callable, "
+                    "set autoreparam_model=False and ensure the guide matches "
+                    "the supplied model's parameterization."
+                )
+            bound_model = autoreparam()(bound_model)
         return _fit_vi(
             bound_model,
             data=data,

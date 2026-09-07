@@ -66,7 +66,7 @@ def test_builtin_vs_batched_elbo_regression() -> None:
     N, D = 100, 1
     true_beta = jnp.array([2.5])
     x = jax.random.normal(rng_key, (N, D))
-    y = x * true_beta + jax.random.normal(rng_key, (N,))
+    y = x * true_beta + jax.random.normal(rng_key, (N, 1))
 
     guide = AutoDiagonalNormal(model)
     optim = numpyro.optim.Adam(0.0)
@@ -86,8 +86,8 @@ def test_builtin_vs_batched_elbo_regression() -> None:
         optim,
         loss=Batched_Trace_ELBO(
             num_particles=1000,
-            num_obs=1,
-            batch_size=1,
+            num_obs=N,
+            batch_size=N,
         ),
         x=x,
         y=y,

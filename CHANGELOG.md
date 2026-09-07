@@ -5,6 +5,98 @@ All notable changes to BLayers are documented here. The format follows
 to follow semantic versioning (with the usual 0.x caveat that minor releases
 may carry breaking changes).
 
+## [Unreleased]
+
+### Added
+
+Three new additive regression layers, exported from `blayers`, with support for
+full-batch VI, row-wise minibatched VI, and ordinary HMC/NUTS:
+
+- **`RandomSlopesLayer`** adds partially pooled group-specific slope deviations:
+  `u[g, j] ~ Normal(0, tau[j])`. Each predictor/output learns a pooling scale
+  shared across groups. Population slopes belong in a separate layer;
+  correlations between slope deviations are not estimated. Keep group IDs and
+  the full group count fixed; unseen groups require slots reserved before fit.
+- **`PSplineLayer`** learns a nonlinear curve using B-splines with Normal priors
+  on second differences of neighboring coefficients. Each output learns its
+  own smoothing scale. A separate proper prior handles the unpenalized
+  coefficient trend, and anchoring at a fixed reference removes the constant
+  component. With clamped/uneven knots, the coefficient trend is not necessarily
+  exactly linear in the input. Reuse knots and reference across batches and
+  prediction; outside the knot domain the curve holds its boundary value.
+- **`AR1Layer`** adds stationary temporal effects:
+  `theta[t] = rho * theta[t-1] + epsilon[t]`. Both persistence `rho` and innovation
+  scale are learned per output and shared across periods. The default prior is
+  `rho = 2*p - 1`, with `p ~ Beta(2, 2)`, allowing positive and negative
+  persistence. The initial state has the stationary prior. Equally spaced
+  integer time slots preserve missing periods and support forecasting through
+  future slots reserved before fitting.
+- README examples for composing all three layers with intercepts, population
+  effects, and observation links, including prediction and prior configuration.
+
+### Inference notes
+
+- `AR1Layer` samples states directly by default. `noncentered=True` samples
+  standardized innovations instead; this choice is independent of
+  `fit(autoreparam_model=...)`. Both forms define the same prior. Direct-state
+  diagonal VI recovered persistence in the informative-data test where
+  innovation-based diagonal VI substantially underestimated it.
+- Random slopes and penalized splines use the existing automatic non-centering
+  support. Parameterization, optimization budget, and guide choice still matter.
+  Correlated uncertainty, especially across missing/future AR periods, benefits
+  from a full-covariance VI guide or NUTS. Compatibility tests establish support,
+  not convergence guarantees for arbitrary datasets.
+
+### Changed
+- Removed `SpikeAndSlabLayer` and its Gibbs-specific fitting path: every
+  built-in layer must support both VI and HMC/NUTS. Use `HorseshoeLayer` for
+  continuous sparse shrinkage. Neither the earlier relaxed gate nor the exact
+  discrete spike-and-slab implementation remains in the public API.
+- VI fits now honor `autoreparam_model=True` by default, constructing the guide
+  on the non-centered model and retaining it for prediction and posterior export.
+  Set `autoreparam_model=False` to retain the supplied parameterization. Prebuilt
+  guides and custom guide callables require this opt-out and must match the model.
+
+### Fixed
+- VI summaries recover original coefficient sites from non-centered guide
+  draws, including nested LogNormal transformations, instead of only exposing
+  the transformed coordinates.
+- Likelihood helpers align `(n,)` and `(n, 1)` targets, preventing silent
+  `(n, n)` broadcasting with layers and `@autoreshape`. Incompatible row/output
+  shapes raise an error. Location-scale links align per-row scales as well;
+  scalar-response links preserve the row axis for a single observation.
+- Batched VI uses the actual input row count for likelihood scaling, including
+  short remainder batches and batch sizes larger than the dataset.
+- Batched ELBO site densities now use NumPyro's density calculation, preserving
+  model/guide scales, masks, and distribution intermediates. Model parameters
+  are substituted alongside guide samples. Row-wise factors receive likelihood
+  scaling; global factors remain unsupported for minibatching.
+
+### Tests
+
+- Random slopes: coefficient lookup and multi-output shapes, prior scaling and
+  independence, eager/JIT group-ID safety, recovery of distinct pooling scales,
+  and analytical Gaussian posterior means/standard deviations under full and
+  minibatched VI and NUTS, including a reserved unobserved group.
+- Penalized splines: exact second-difference construction, anchoring and batch
+  invariance, constant extrapolation, prior covariance and roughness, input
+  validation, and learning different smoothing strengths for simple and wavy
+  functions.
+- AR(1): stationary covariance with positive, zero, and negative persistence in
+  both parameterizations; exact direct-state prior density; recurrence, repeated
+  indices, forecast innovation variance, index safety, and recovery of
+  persistence and innovation scales under diagonal VI and NUTS.
+- Splines and both AR parameterizations: posterior predictive means and
+  covariances checked against analytical conditional Gaussian solutions under
+  full/minibatched VI and NUTS, including unobserved positions. These VI
+  uncertainty checks use `AutoMultivariateNormal` to represent correlations.
+- Added an inference-compatibility test covering every built-in layer under
+  VI and HMC/NUTS, with full and minibatched VI.
+- Added likelihood density checks for all 13 links with vector/column targets,
+  `@autoreshape`, and single-row inputs; regression and heteroscedastic gradient
+  checks; exact expected minibatch objective/gradient checks; end-to-end uneven
+  batch fits; and comparisons with NumPyro for scaled/masked sites and factors.
+
 ## [0.3.5]
 
 ### Fixed

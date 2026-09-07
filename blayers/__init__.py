@@ -5,6 +5,7 @@ from blayers.fit import FittedModel, Predictions, fit, sample_prior
 from blayers.latex import model_to_latex
 from blayers.layers import (
     AdaptiveLayer,
+    AR1Layer,
     BilinearLayer,
     EmbeddingLayer,
     FixedEffectsLayer,
@@ -19,9 +20,10 @@ from blayers.layers import (
     LowRankBilinearLayer,
     LowRankInteractionLayer,
     MixtureLayer,
+    PSplineLayer,
     RandomEffectsLayer,
+    RandomSlopesLayer,
     RandomWalkLayer,
-    SpikeAndSlabLayer,
     hsgp_L,
     pairwise_interactions,
 )
@@ -50,6 +52,8 @@ __all__ = [
     "__version__",
     # Layers
     "AdaptiveLayer",
+    "AR1Layer",
+    "PSplineLayer",
     "BilinearLayer",
     "EmbeddingLayer",
     "FixedEffectsLayer",
@@ -67,8 +71,8 @@ __all__ = [
     "hsgp_L",
     "pairwise_interactions",
     "RandomEffectsLayer",
+    "RandomSlopesLayer",
     "RandomWalkLayer",
-    "SpikeAndSlabLayer",
     # Links
     "beta_link",
     "categorical_link",
