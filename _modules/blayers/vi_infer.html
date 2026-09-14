@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.vi_infer &#8212; blayers 0.3.5 documentation</title>
+    <title>blayers.vi_infer &#8212; blayers 0.3.6 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=ba3b9238"></script>
+    <script src="../../_static/documentation_options.js?v=ad4f125e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -171,7 +171,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.5 documentation</p>
+    <p class="title logo__title">blayers 0.3.6 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -336,7 +336,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.svi</span><span class="w"> </span><span class="kn">import</span> <span class="n">SVIRunResult</span><span class="p">,</span> <span class="n">SVIState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.infer.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_log_probs</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blayers._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_steps_and_steps_per_epoch</span><span class="p">,</span> <span class="n">yield_batches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blayers._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_dataset_size</span><span class="p">,</span> <span class="n">get_steps_and_steps_per_epoch</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_raise_if_has_plate</span><span class="p">(</span><span class="n">model_trace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -516,45 +516,126 @@
     <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVIRunResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Drive batched VI.</span>
+<span class="w">    </span><span class="sd">"""Drive batched VI with compiled minibatch and epoch loops.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        shuffle: When ``True`` (default) the row order is re-permuted every</span>
-<span class="sd">            epoch — the unbiased-gradient behaviour.  When ``False`` batches are</span>
-<span class="sd">            contiguous slices in a fixed order, which skips the per-epoch</span>
-<span class="sd">            permutation and per-row gather and is noticeably faster; use it when</span>
-<span class="sd">            your rows are already in random order (or the bias is acceptable).</span>
+<span class="sd">        shuffle: Re-permute rows each epoch (default). False retains the</span>
+<span class="sd">            existing contiguous batch order, including its statistical tradeoff.</span>
+<span class="sd">        progress_bar: Report progress once per epoch. Defaults to False so the</span>
+<span class="sd">            complete update sequence runs without Python dispatch per epoch.</span>
+
+<span class="sd">    Returns one loss per update. Short final batches retain their actual row</span>
+<span class="sd">    count and N/B likelihood scaling; no observations are padded or dropped.</span>
+<span class="sd">    Batch order and random-key splitting match the Python batch generator.</span>
 <span class="sd">    """</span>
-
-    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">:</span> <span class="n">SVIState</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVIState</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">svi</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="n">total_steps_to_run</span><span class="p">,</span> <span class="n">steps_per_epoch</span> <span class="o">=</span> <span class="n">get_steps_and_steps_per_epoch</span><span class="p">(</span>
+    <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"batch_size must be positive"</span><span class="p">)</span>
+    <span class="n">total_steps</span><span class="p">,</span> <span class="n">steps_per_epoch</span> <span class="o">=</span> <span class="n">get_steps_and_steps_per_epoch</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">,</span>
         <span class="n">num_steps</span><span class="p">,</span>
         <span class="n">num_epochs</span><span class="p">,</span>
     <span class="p">)</span>
-
+    <span class="k">if</span> <span class="n">total_steps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">total_steps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"num_steps or num_epochs must be positive"</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">get_dataset_size</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Batched data must contain at least one row"</span><span class="p">)</span>
+    <span class="n">epochs</span><span class="p">,</span> <span class="n">extra_steps</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">total_steps</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
     <span class="n">init_key</span><span class="p">,</span> <span class="n">batch_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-    <span class="n">svi_state</span> <span class="o">=</span> <span class="n">svi</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span>
-        <span class="n">yield_batches</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span>
-            <span class="n">batch_size</span><span class="p">,</span>
-            <span class="n">total_steps_to_run</span><span class="p">,</span>
-            <span class="n">steps_per_epoch</span><span class="p">,</span>
-            <span class="n">rng_key</span><span class="o">=</span><span class="n">batch_key</span> <span class="k">if</span> <span class="n">shuffle</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">total</span><span class="o">=</span><span class="n">total_steps_to_run</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="n">svi_state</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">,</span> <span class="o">**</span><span class="n">batch</span><span class="p">)</span>
-        <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SVIRunResult</span><span class="p">(</span><span class="n">svi</span><span class="o">.</span><span class="n">get_params</span><span class="p">(</span><span class="n">svi_state</span><span class="p">),</span> <span class="n">svi_state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">losses</span><span class="p">))</span></div>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">svi</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">epoch</span><span class="p">(</span>
+        <span class="n">carry</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SVIState</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+        <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+        <span class="n">step_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">SVIState</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+        <span class="n">svi_state</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">full_batch</span><span class="p">(</span>
+            <span class="n">svi_state</span><span class="p">:</span> <span class="n">SVIState</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SVIState</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">index</span> <span class="o">*</span> <span class="n">batch_size</span>
+            <span class="k">if</span> <span class="n">permutation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_slice_in_dim</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_slice_in_dim</span><span class="p">(</span>
+                    <span class="n">permutation</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">batch_size</span>
+                <span class="p">)</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">next_state</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">svi</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">,</span> <span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">loss</span>
+
+        <span class="n">full_steps</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">step_count</span><span class="p">,</span> <span class="n">size</span> <span class="o">//</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="c1"># Do not trace a full-size slice when the dataset is smaller than a batch.</span>
+        <span class="k">if</span> <span class="n">full_steps</span><span class="p">:</span>
+            <span class="n">svi_state</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                <span class="n">full_batch</span><span class="p">,</span>
+                <span class="n">svi_state</span><span class="p">,</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">full_steps</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">step_count</span> <span class="o">&gt;</span> <span class="n">full_steps</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">full_steps</span> <span class="o">*</span> <span class="n">batch_size</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">start</span><span class="p">:]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                <span class="k">if</span> <span class="n">permutation</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">permutation</span><span class="p">[</span><span class="n">start</span><span class="p">:]]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="p">)</span>
+            <span class="n">svi_state</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">svi</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">svi_state</span><span class="p">,</span> <span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">losses</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">losses</span><span class="p">,</span> <span class="n">loss</span><span class="p">[</span><span class="kc">None</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">full_steps</span>
+                <span class="k">else</span> <span class="n">loss</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">svi_state</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">losses</span>
+
+    <span class="n">carry</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">batch_key</span><span class="p">)</span>
+    <span class="n">loss_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">epochs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
+            <span class="n">compiled_epoch</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">static_argnums</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s2">"epoch"</span><span class="p">):</span>
+                <span class="n">carry</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">compiled_epoch</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+                <span class="c1"># Progress reflects completed device work, not queued dispatch.</span>
+                <span class="n">jax</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+                <span class="n">loss_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">run_epochs</span><span class="p">(</span>
+                <span class="n">carry</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SVIState</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+                <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">SVIState</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">],</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+                <span class="n">next_carry</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">c</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">epoch</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">arrays</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">),</span>
+                    <span class="n">carry</span><span class="p">,</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">length</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">next_carry</span><span class="p">,</span> <span class="n">losses</span>
+
+            <span class="n">carry</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">run_epochs</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="n">loss_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">losses</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">extra_steps</span><span class="p">:</span>
+        <span class="n">carry</span><span class="p">,</span> <span class="n">losses</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">static_argnums</span><span class="o">=</span><span class="mi">2</span><span class="p">)(</span>
+            <span class="n">carry</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extra_steps</span>
+        <span class="p">)</span>
+        <span class="n">loss_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
+    <span class="k">return</span> <span class="n">SVIRunResult</span><span class="p">(</span>
+        <span class="n">svi</span><span class="o">.</span><span class="n">get_params</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="n">state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">loss_chunks</span><span class="p">)</span>
+    <span class="p">)</span></div>
 
 </pre></div>
 

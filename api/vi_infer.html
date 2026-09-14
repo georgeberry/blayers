@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>VI Inference &#8212; blayers 0.3.5 documentation</title>
+    <title>VI Inference &#8212; blayers 0.3.6 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=ba3b9238"></script>
+    <script src="../_static/documentation_options.js?v=ad4f125e"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -175,7 +175,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.5 documentation</p>
+    <p class="title logo__title">blayers 0.3.6 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -523,16 +523,15 @@ during the course of fitting).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blayers.vi_infer.svi_run_batched">
-<span class="sig-prename descclassname"><span class="pre">blayers.vi_infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/vi_infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.vi_infer.svi_run_batched" title="Link to this definition">#</a></dt>
-<dd><p>Drive batched VI.</p>
+<span class="sig-prename descclassname"><span class="pre">blayers.vi_infer.</span></span><span class="sig-name descname"><span class="pre">svi_run_batched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/blayers/vi_infer.html#svi_run_batched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blayers.vi_infer.svi_run_batched" title="Link to this definition">#</a></dt>
+<dd><p>Drive batched VI with compiled minibatch and epoch loops.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>shuffle</strong> (<em>bool</em>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default) the row order is re-permuted every
-epoch — the unbiased-gradient behaviour.  When <code class="docutils literal notranslate"><span class="pre">False</span></code> batches are
-contiguous slices in a fixed order, which skips the per-epoch
-permutation and per-row gather and is noticeably faster; use it when
-your rows are already in random order (or the bias is acceptable).</p></li>
+<li><p><strong>shuffle</strong> (<em>bool</em>) – Re-permute rows each epoch (default). False retains the
+existing contiguous batch order, including its statistical tradeoff.</p></li>
+<li><p><strong>progress_bar</strong> (<em>bool</em>) – Report progress once per epoch. Defaults to False so the
+complete update sequence runs without Python dispatch per epoch.</p></li>
 <li><p><strong>svi</strong> (<em>SVI</em>)</p></li>
 <li><p><strong>rng_key</strong> (<em>Array</em>)</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
@@ -545,6 +544,9 @@ your rows are already in random order (or the bias is acceptable).</p></li>
 <dd class="field-even"><p><em>SVIRunResult</em></p>
 </dd>
 </dl>
+<p>Returns one loss per update. Short final batches retain their actual row
+count and N/B likelihood scaling; no observations are padded or dropped.
+Batch order and random-key splitting match the Python batch generator.</p>
 </dd></dl>
 
 </section>
