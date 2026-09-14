@@ -21,7 +21,7 @@ from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 from numpyro.infer.util import compute_log_probs
 
-from blayers._utils import get_steps_and_steps_per_epoch, yield_batches
+from blayers._utils import get_dataset_size, get_steps_and_steps_per_epoch
 
 
 def _raise_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
@@ -187,42 +187,123 @@ def svi_run_batched(
     num_steps: int | None = None,
     num_epochs: int | None = None,
     shuffle: bool = True,
+    progress_bar: bool = False,
     **data: jax.Array,
 ) -> SVIRunResult:
-    """Drive batched VI.
+    """Drive batched VI with compiled minibatch and epoch loops.
 
     Args:
-        shuffle: When ``True`` (default) the row order is re-permuted every
-            epoch — the unbiased-gradient behaviour.  When ``False`` batches are
-            contiguous slices in a fixed order, which skips the per-epoch
-            permutation and per-row gather and is noticeably faster; use it when
-            your rows are already in random order (or the bias is acceptable).
+        shuffle: Re-permute rows each epoch (default). False retains the
+            existing contiguous batch order, including its statistical tradeoff.
+        progress_bar: Report progress once per epoch. Defaults to False so the
+            complete update sequence runs without Python dispatch per epoch.
+
+    Returns one loss per update. Short final batches retain their actual row
+    count and N/B likelihood scaling; no observations are padded or dropped.
+    Batch order and random-key splitting match the Python batch generator.
     """
-
-    @jax.jit
-    def update(svi_state: SVIState, **kwargs: Any) -> SVIState:
-        return svi.update(svi_state, **kwargs)
-
-    total_steps_to_run, steps_per_epoch = get_steps_and_steps_per_epoch(
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    total_steps, steps_per_epoch = get_steps_and_steps_per_epoch(
         data,
         batch_size,
         num_steps,
         num_epochs,
     )
-
+    if total_steps is None or total_steps <= 0:
+        raise ValueError("num_steps or num_epochs must be positive")
+    size = get_dataset_size(data)
+    if size <= 0:
+        raise ValueError("Batched data must contain at least one row")
+    epochs, extra_steps = divmod(total_steps, steps_per_epoch)
     init_key, batch_key = random.split(rng_key)
-    svi_state = svi.init(init_key, **data)
-    losses = []
-    for batch in tqdm.tqdm(
-        yield_batches(
-            data,
-            batch_size,
-            total_steps_to_run,
-            steps_per_epoch,
-            rng_key=batch_key if shuffle else None,
-        ),
-        total=total_steps_to_run,
-    ):
-        svi_state, loss = update(svi_state, **batch)
-        losses.append(loss)
-    return SVIRunResult(svi.get_params(svi_state), svi_state, jnp.stack(losses))
+    state = svi.init(init_key, **data)
+
+    def epoch(
+        carry: tuple[SVIState, jax.Array],
+        arrays: dict[str, jax.Array],
+        step_count: int,
+    ) -> tuple[tuple[SVIState, jax.Array], jax.Array]:
+        svi_state, key = carry
+        if shuffle:
+            key, subkey = random.split(key)
+            permutation = random.permutation(subkey, size)
+        else:
+            permutation = None
+
+        def full_batch(
+            svi_state: SVIState, index: jax.Array
+        ) -> tuple[SVIState, jax.Array]:
+            start = index * batch_size
+            if permutation is None:
+                batch = {
+                    k: jax.lax.dynamic_slice_in_dim(v, start, batch_size)
+                    for k, v in arrays.items()
+                }
+            else:
+                indices = jax.lax.dynamic_slice_in_dim(
+                    permutation, start, batch_size
+                )
+                batch = {k: v[indices] for k, v in arrays.items()}
+            next_state, loss = svi.update(svi_state, **batch)
+            return next_state, loss
+
+        full_steps = min(step_count, size // batch_size)
+        # Do not trace a full-size slice when the dataset is smaller than a batch.
+        if full_steps:
+            svi_state, losses = jax.lax.scan(
+                full_batch,
+                svi_state,
+                jnp.arange(full_steps),
+            )
+        if step_count > full_steps:
+            start = full_steps * batch_size
+            batch = (
+                {k: v[start:] for k, v in arrays.items()}
+                if permutation is None
+                else {k: v[permutation[start:]] for k, v in arrays.items()}
+            )
+            svi_state, loss = svi.update(svi_state, **batch)
+            losses = (
+                jnp.concatenate((losses, loss[None]))
+                if full_steps
+                else loss[None]
+            )
+        return (svi_state, key), losses
+
+    carry = (state, batch_key)
+    loss_chunks = []
+    if epochs:
+        if progress_bar:
+            compiled_epoch = jax.jit(epoch, static_argnums=2)
+            for _ in tqdm.tqdm(range(epochs), unit="epoch"):
+                carry, losses = compiled_epoch(carry, data, steps_per_epoch)
+                # Progress reflects completed device work, not queued dispatch.
+                jax.block_until_ready(losses)
+                loss_chunks.append(losses)
+        else:
+
+            @jax.jit
+            def run_epochs(
+                carry: tuple[SVIState, jax.Array],
+                arrays: dict[str, jax.Array],
+            ) -> tuple[tuple[SVIState, jax.Array], jax.Array]:
+                next_carry, losses = jax.lax.scan(
+                    lambda c, _: epoch(c, arrays, steps_per_epoch),
+                    carry,
+                    None,
+                    length=epochs,
+                )
+                return next_carry, losses
+
+            carry, losses = run_epochs(carry, data)
+            loss_chunks.append(losses.reshape(-1))
+    if extra_steps:
+        carry, losses = jax.jit(epoch, static_argnums=2)(
+            carry, data, extra_steps
+        )
+        loss_chunks.append(losses)
+    state, _ = carry
+    return SVIRunResult(
+        svi.get_params(state), state, jnp.concatenate(loss_chunks)
+    )

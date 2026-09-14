@@ -88,5 +88,5 @@ row-wise minibatching contract. These are design tasks, not settled APIs.
       the scalable substitute for the common case.
 
 ## Docs
-- [ ] Short "how BLayers composes with `random_flax_module`" note for people who
+- [x] Short "how BLayers composes with `random_flax_module`" note for people who
       want to mix structured terms with a neural component.
