@@ -58,6 +58,15 @@ class Batched_Trace_ELBO(ELBO):
             Otherwise the actual leading dimension of row-aligned positional
             and keyword arrays is used, including short remainder batches.
             Bind non-row arrays (e.g. knots) into the model with a closure.
+        reference_batch_size: For fixed epoch partitions, use this reference
+            size B (capped at num_obs) to weight every observation equally.
+            Likelihood scales by N/B and KL by actual_rows/B. Thus a short
+            final batch contributes proportionally, rather than being expanded
+            into another full-data estimate. An epoch's summed ELBO is N/B
+            times the full-data ELBO. None retains the unbiased full-data
+            estimator for randomly sampled minibatches. This changes loss
+            weighting only; it does not change batch membership or optimizer
+            update count.
 
     NumPyro scale and mask handlers are honored for model and guide sites.
     All observed sites, including ``numpyro.factor`` terms, are treated as
@@ -76,18 +85,21 @@ class Batched_Trace_ELBO(ELBO):
         num_obs: int,
         num_particles: int = 1,
         batch_size: int | None = None,
+        reference_batch_size: int | None = None,
     ):
         if (
             num_obs <= 0
             or num_particles <= 0
             or (batch_size is not None and batch_size <= 0)
+            or (reference_batch_size is not None and reference_batch_size <= 0)
         ):
             raise ValueError(
-                "num_obs, num_particles, and batch_size must be positive"
+                "num_obs, num_particles, batch_size, and reference_batch_size must be positive"
             )
         self.num_obs = num_obs
         self.num_particles = num_particles
         self.batch_size = batch_size
+        self.reference_batch_size = reference_batch_size
 
     def loss(
         self,
@@ -134,6 +146,12 @@ class Batched_Trace_ELBO(ELBO):
                 "Cannot infer a positive batch size from args or kwargs"
             )
 
+        reference = (
+            min(self.reference_batch_size, self.num_obs)
+            if self.reference_batch_size is not None
+            else batch_size
+        )
+        kl_weight = batch_size / reference
         for key in rng_keys:
             # Delegate site densities to NumPyro so scale/mask handlers and
             # transformed-distribution intermediates retain their semantics.
@@ -162,8 +180,8 @@ class Batched_Trace_ELBO(ELBO):
                 if not model_trace[name]["is_observed"]
             )
             log_qz = sum(guide_log_probs.values())
-            llhs.append(self.num_obs / batch_size * llh)
-            kls.append(log_qz - log_pz)
+            llhs.append(self.num_obs / reference * llh)
+            kls.append(kl_weight * (log_qz - log_pz))
 
         # Average over particles
         llh_mean = jnp.mean(jnp.stack(llhs))

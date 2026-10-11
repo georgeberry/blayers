@@ -7,6 +7,13 @@ may carry breaking changes).
 
 ## [Unreleased]
 
+### Added
+
+- `Batched_Trace_ELBO(reference_batch_size=...)` supports proportional loss
+  weighting for fixed epoch partitions. Short remainder batches no longer
+  receive full-batch influence; likelihood and global KL are weighted
+  consistently. The default random-minibatch estimator is unchanged.
+
 ## [0.3.6] - 2026-09-07
 
 ### Added
