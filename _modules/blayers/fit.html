@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>blayers.fit &#8212; blayers 0.3.6 documentation</title>
+    <title>blayers.fit &#8212; blayers 0.3.8 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=ad4f125e"></script>
+    <script src="../../_static/documentation_options.js?v=5c1511bd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -171,7 +171,7 @@
   
   
   
-    <p class="title logo__title">blayers 0.3.6 documentation</p>
+    <p class="title logo__title">blayers 0.3.8 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -808,6 +808,7 @@
     <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
     <span class="n">schedule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cosine"</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">upscale_tail_batches</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">guide</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="n">AutoGuide</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="c1"># MCMC parameters</span>
@@ -855,12 +856,18 @@
 <span class="sd">        LR schedule name: ``"cosine"`` (default), ``"warmup_cosine"``, or</span>
 <span class="sd">        ``"constant"``.  Only used for VI.</span>
 <span class="sd">    shuffle : bool</span>
-<span class="sd">        Batched VI only.  When ``True`` (default) the data is re-shuffled every</span>
-<span class="sd">        epoch so minibatches are i.i.d. (an unbiased ELBO gradient).  Set</span>
-<span class="sd">        ``False`` to iterate fixed contiguous slices instead — this skips the</span>
-<span class="sd">        per-epoch permutation and per-row gather and is noticeably faster, at</span>
-<span class="sd">        the cost of that de-biasing.  Safe to disable when your rows are already</span>
-<span class="sd">        in random order.  No effect without ``batch_size``.</span>
+<span class="sd">        Batched VI only. When ``True`` (default), each epoch uses a fresh,</span>
+<span class="sd">        seeded CPU permutation of row indices; batch selection and updates</span>
+<span class="sd">        run on device in a compiled loop. ``False`` uses fixed contiguous</span>
+<span class="sd">        batches. No effect without ``batch_size``. Shuffled batches within an</span>
+<span class="sd">        epoch sample without replacement and are not independent.</span>
+<span class="sd">    upscale_tail_batches : bool</span>
+<span class="sd">        Batched VI only. ``True`` (default) scales every batch, including the</span>
+<span class="sd">        short final batch, to a full-data ELBO estimate. ``False`` weights</span>
+<span class="sd">        short batches proportionally to their size, scaling both likelihood</span>
+<span class="sd">        and global KL by actual/configured batch size. Independent of</span>
+<span class="sd">        ``shuffle``; no effect without ``batch_size``. If the configured batch</span>
+<span class="sd">        exceeds the dataset size, the full dataset retains weight one.</span>
 <span class="sd">    guide : type or AutoGuide instance, optional</span>
 <span class="sd">        Variational family.  Pass a **class** (instantiated on the inference model) or</span>
 <span class="sd">        a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.</span>
@@ -955,6 +962,7 @@
             <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span>
             <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
             <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+            <span class="n">upscale_tail_batches</span><span class="o">=</span><span class="n">upscale_tail_batches</span><span class="p">,</span>
             <span class="n">guide</span><span class="o">=</span><span class="n">guide</span><span class="p">,</span>
             <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
             <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
@@ -1064,6 +1072,7 @@
     <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">schedule</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">upscale_tail_batches</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">guide</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="n">AutoGuide</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
@@ -1108,7 +1117,11 @@
     <span class="c1"># ---- Loss ----</span>
     <span class="n">loss</span><span class="p">:</span> <span class="n">Batched_Trace_ELBO</span> <span class="o">|</span> <span class="n">Trace_ELBO</span>
     <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">Batched_Trace_ELBO</span><span class="p">(</span><span class="n">num_obs</span><span class="o">=</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">Batched_Trace_ELBO</span><span class="p">(</span>
+            <span class="n">num_obs</span><span class="o">=</span><span class="n">n_obs</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">reference_batch_size</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">upscale_tail_batches</span> <span class="k">else</span> <span class="n">batch_size</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="n">Trace_ELBO</span><span class="p">()</span>
 
