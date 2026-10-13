@@ -21,7 +21,11 @@ from numpyro.infer.elbo import ELBO
 from numpyro.infer.svi import SVIRunResult, SVIState
 from numpyro.infer.util import compute_log_probs
 
-from blayers._utils import get_dataset_size, get_steps_and_steps_per_epoch
+from blayers._utils import (
+    _epoch_permutations,
+    get_dataset_size,
+    get_steps_and_steps_per_epoch,
+)
 
 
 def _raise_if_has_plate(model_trace: dict[str, dict[str, Any]]) -> None:
@@ -211,14 +215,15 @@ def svi_run_batched(
     """Drive batched VI with compiled minibatch and epoch loops.
 
     Args:
-        shuffle: Re-permute rows each epoch (default). False retains the
-            existing contiguous batch order, including its statistical tradeoff.
-        progress_bar: Report progress once per epoch. Defaults to False so the
-            complete update sequence runs without Python dispatch per epoch.
+        shuffle: Generate fresh row indices on the CPU each epoch (default),
+            then gather batches on device inside a compiled epoch loop. False
+            retains contiguous batches and a compiled multi-epoch loop.
+        progress_bar: Report completed epochs. Defaults to False.
 
     Returns one loss per update. Short final batches retain their actual row
-    count and N/B likelihood scaling; no observations are padded or dropped.
-    Batch order and random-key splitting match the Python batch generator.
+    count; loss scaling is controlled by the supplied ELBO. No observations
+    are padded or dropped. Shuffle order matches the Python batch generator,
+    is reproducible from the key, and differs from earlier JAX permutations.
     """
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
@@ -241,13 +246,9 @@ def svi_run_batched(
         carry: tuple[SVIState, jax.Array],
         arrays: dict[str, jax.Array],
         step_count: int,
+        permutation: jax.Array | None = None,
     ) -> tuple[tuple[SVIState, jax.Array], jax.Array]:
         svi_state, key = carry
-        if shuffle:
-            key, subkey = random.split(key)
-            permutation = random.permutation(subkey, size)
-        else:
-            permutation = None
 
         def full_batch(
             svi_state: SVIState, index: jax.Array
@@ -291,6 +292,38 @@ def svi_run_batched(
 
     carry = (state, batch_key)
     loss_chunks = []
+    if shuffle:
+        # The next CPU permutation/transfer overlaps the previous epoch's
+        # device work. Waiting before dispatch bounds this to one epoch ahead.
+        # Keep host-supplied arrays resident rather than transferring each epoch.
+        data = jax.device_put(data)
+        permutations = _epoch_permutations(size, batch_key)
+        compiled_epoch = jax.jit(epoch, static_argnums=2)
+        count = epochs + bool(extra_steps)
+        progress = tqdm.tqdm(
+            total=count, unit="epoch", disable=not progress_bar
+        )
+        pending = None
+        try:
+            for index in range(count):
+                permutation = jax.device_put(next(permutations))
+                if pending is not None:
+                    jax.block_until_ready(pending)
+                    progress.update(1)
+                step_count = steps_per_epoch if index < epochs else extra_steps
+                carry, pending = compiled_epoch(
+                    carry, data, step_count, permutation
+                )
+                loss_chunks.append(pending)
+            jax.block_until_ready(pending)
+            progress.update(1)
+        finally:
+            progress.close()
+        state, _ = carry
+        return SVIRunResult(
+            svi.get_params(state), state, jnp.concatenate(loss_chunks)
+        )
+
     if epochs:
         if progress_bar:
             compiled_epoch = jax.jit(epoch, static_argnums=2)

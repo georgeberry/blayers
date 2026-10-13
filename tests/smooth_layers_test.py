@@ -395,3 +395,20 @@ def test_ar1_direct_state_density_matches_stationary_markov_density():
     expected += dist.Normal(rho * states[:-1], scale).log_prob(states[1:]).sum()
     np.testing.assert_allclose(prior.log_prob(states), expected, atol=1e-6)
     assert prior.batch_shape == () and prior.event_shape == (3, 2)
+
+
+def test_ar1_rho_support_and_initialization_stay_stationary():
+    layer = AR1Layer()
+    traced = handlers.trace(handlers.seed(layer, 0)).get_trace(
+        "f", jnp.arange(3), 3
+    )
+    support = traced["AR1Layer_f_rho"]["fn"].support
+    assert bool(support.check(jnp.array([-0.9, 0.0, 0.9])).all())
+    assert not bool(support.check(jnp.array([-1.1, 1.1])).any())
+    # Initialization maps unconstrained optimizer coordinates through this
+    # support, so even large proposed coordinates must remain stationary.
+    from numpyro.distributions.transforms import biject_to
+
+    rho = biject_to(support)(jnp.array([-5.0, 0.0, 5.0]))
+    assert bool((jnp.abs(rho) < 1).all())
+    assert bool(jnp.isfinite(1 / jnp.sqrt(1 - rho**2)).all())

@@ -813,3 +813,45 @@ def test_autoreshape_positional_args() -> None:
     model(x, y)
     assert received["x_shape"] == (10, 1)
     assert received["y_shape"] == (10, 1)
+
+
+@pytest.mark.parametrize("shuffle", [False, True])
+@pytest.mark.parametrize(
+    "size,batch_size", [(11, 4), (3, 8), (8, 4), (5, None)]
+)
+def test_fit_tail_batch_weighting(shuffle, size, batch_size):
+    """Public flag scales the entire tail ELBO, independent of row order.
+
+    Freeze parameters so loss differences measure normalization rather than
+    different optimization trajectories. The default must match explicit True.
+    """
+    import numpy as np
+    import optax
+
+    def model(y):
+        location = sample("location", dist.Normal(0.0, 1.0))
+        sample("obs", dist.Normal(location, 1.0), obs=y)
+
+    kwargs = dict(
+        y=jnp.linspace(-2.0, 3.0, size),
+        batch_size=batch_size,
+        num_epochs=2,
+        shuffle=shuffle,
+        optimizer=optax.sgd(0.0),
+        autoreparam_model=False,
+        seed=7,
+    )
+    default = fit(model, **kwargs)
+    upscaled = fit(model, **kwargs, upscale_tail_batches=True)
+    proportional = fit(model, **kwargs, upscale_tail_batches=False)
+    np.testing.assert_array_equal(default.losses, upscaled.losses)
+    factors = np.ones(len(default.losses))
+    if batch_size is not None and size > batch_size and size % batch_size:
+        steps = (size + batch_size - 1) // batch_size
+        factors[steps - 1 :: steps] = (size % batch_size) / batch_size
+    np.testing.assert_allclose(
+        proportional.losses,
+        np.asarray(default.losses) * factors,
+        rtol=2e-6,
+        atol=2e-6,
+    )

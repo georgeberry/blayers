@@ -2,6 +2,8 @@ from typing import Generator
 
 import jax
 import jax.numpy as jnp
+import numpy as np
+from numpy.typing import NDArray
 
 
 def get_dataset_size(data: dict[str, jax.Array]) -> int:
@@ -32,6 +34,23 @@ def get_steps_and_steps_per_epoch(
     return num_steps, steps_per_epoch  # type: ignore
 
 
+def _epoch_permutations(
+    size: int, rng_key: jax.Array
+) -> Generator[NDArray[np.int32 | np.int64], None, None]:
+    """CPU index permutations, reproducibly seeded from either JAX key format.
+
+    This intentionally differs from JAX's sort-based permutation sequence.
+    Each yielded array owns its memory so asynchronous transfers are safe.
+    """
+    seed = np.asarray(jax.device_get(jax.random.key_data(rng_key))).reshape(-1)
+    rng = np.random.Generator(np.random.PCG64(np.random.SeedSequence(seed)))
+    dtype = np.int32 if size <= np.iinfo(np.int32).max else np.int64
+    while True:
+        indices = np.arange(size, dtype=dtype)
+        rng.shuffle(indices)
+        yield indices
+
+
 def yield_batches(
     data: dict[str, jax.Array],
     batch_size: int,
@@ -41,12 +60,9 @@ def yield_batches(
 ) -> Generator[dict[str, jax.Array], None, None]:
     """Yield ``num_batches`` minibatches, cycling over the data as needed.
 
-    Each epoch, the row order is re-permuted when ``rng_key`` is supplied so
-    that minibatch VI sees i.i.d. batches rather than the same fixed slices in
-    the same order every pass (which biases the ELBO gradient, especially on
-    sorted data).  Pass ``rng_key=None`` for the legacy contiguous ordering,
-    which slices the arrays directly (no per-row gather) and is noticeably
-    faster — trading the gradient de-biasing for speed.
+    Each epoch uses a fresh CPU-generated integer permutation when a key is
+    supplied. All arrays share the same row order. With no key, batches are
+    contiguous. The short final batch is retained.
     """
     dataset_size = get_dataset_size(data)
 
@@ -62,16 +78,18 @@ def yield_batches(
                 idx = perm[start:stop]
                 yield {k: v[idx] for k, v in data.items()}
 
-    key = rng_key
+    permutations = (
+        _epoch_permutations(dataset_size, rng_key)
+        if rng_key is not None
+        else None
+    )
     emitted = 0
     while emitted < num_batches:
-        if key is not None:
-            key, subkey = jax.random.split(key)
-            perm: jax.Array | None = jax.random.permutation(
-                subkey, dataset_size
-            )
-        else:
-            perm = None
+        perm = (
+            jax.device_put(next(permutations))
+            if permutations is not None
+            else None
+        )
         for batch in epoch_batches(perm):
             if emitted >= num_batches:
                 break

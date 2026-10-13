@@ -1434,7 +1434,9 @@ class AR1Layer(BLayer):
                 distributions.Beta(
                     self.rho_concentration, self.rho_concentration
                 ),
-                distributions.transforms.AffineTransform(-1.0, 2.0),
+                distributions.transforms.AffineTransform(
+                    -1.0, 2.0, domain=distributions.constraints.unit_interval
+                ),
             ).expand([units]),
         )
         scale = sample(
