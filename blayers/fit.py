@@ -476,6 +476,7 @@ def fit(
     lr: float = 0.01,
     schedule: str = "cosine",
     shuffle: bool = True,
+    upscale_tail_batches: bool = True,
     guide: type | AutoGuide | None = None,
     optimizer: optax.GradientTransformation | None = None,
     # MCMC parameters
@@ -523,12 +524,18 @@ def fit(
         LR schedule name: ``"cosine"`` (default), ``"warmup_cosine"``, or
         ``"constant"``.  Only used for VI.
     shuffle : bool
-        Batched VI only.  When ``True`` (default) the data is re-shuffled every
-        epoch so minibatches are i.i.d. (an unbiased ELBO gradient).  Set
-        ``False`` to iterate fixed contiguous slices instead — this skips the
-        per-epoch permutation and per-row gather and is noticeably faster, at
-        the cost of that de-biasing.  Safe to disable when your rows are already
-        in random order.  No effect without ``batch_size``.
+        Batched VI only. When ``True`` (default), each epoch uses a fresh,
+        seeded CPU permutation of row indices; batch selection and updates
+        run on device in a compiled loop. ``False`` uses fixed contiguous
+        batches. No effect without ``batch_size``. Shuffled batches within an
+        epoch sample without replacement and are not independent.
+    upscale_tail_batches : bool
+        Batched VI only. ``True`` (default) scales every batch, including the
+        short final batch, to a full-data ELBO estimate. ``False`` weights
+        short batches proportionally to their size, scaling both likelihood
+        and global KL by actual/configured batch size. Independent of
+        ``shuffle``; no effect without ``batch_size``. If the configured batch
+        exceeds the dataset size, the full dataset retains weight one.
     guide : type or AutoGuide instance, optional
         Variational family.  Pass a **class** (instantiated on the inference model) or
         a ready-to-use **instance**.  Default: ``AutoDiagonalNormal``.
@@ -623,6 +630,7 @@ def fit(
             lr=lr,
             schedule=schedule,
             shuffle=shuffle,
+            upscale_tail_batches=upscale_tail_batches,
             guide=guide,
             optimizer=optimizer,
             rng_key=rng_key,
@@ -728,6 +736,7 @@ def _fit_vi(
     lr: float,
     schedule: str,
     shuffle: bool,
+    upscale_tail_batches: bool,
     guide: type | AutoGuide | None,
     optimizer: optax.GradientTransformation | None,
     rng_key: jax.Array,
@@ -772,7 +781,11 @@ def _fit_vi(
     # ---- Loss ----
     loss: Batched_Trace_ELBO | Trace_ELBO
     if batch_size is not None:
-        loss = Batched_Trace_ELBO(num_obs=n_obs, batch_size=batch_size)
+        loss = Batched_Trace_ELBO(
+            num_obs=n_obs,
+            batch_size=batch_size,
+            reference_batch_size=None if upscale_tail_batches else batch_size,
+        )
     else:
         loss = Trace_ELBO()
 

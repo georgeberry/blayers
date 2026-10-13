@@ -165,7 +165,7 @@ def test_negative_binomial_symbol_is_consistent():
     """The concentration site and its use in the likelihood share one symbol."""
 
     def model(x, y=None):
-        return negative_binomial_link(AdaptiveLayer()("mu", x), y)
+        return negative_binomial_link(jnp.exp(AdaptiveLayer()("mu", x)), y)
 
     tex = model_to_latex(model, x=X)
     # sigma is the literal site name of the NB2 concentration; it must appear
@@ -296,7 +296,11 @@ def test_off_table_distributions_use_generic_form():
 )
 def test_every_link_is_non_raising(link):
     def model(x, y=None):
-        return link(AdaptiveLayer()("mu", x), y)
+        mu = AdaptiveLayer()("mu", x)
+        # NB2 accepts a positive mean, unlike links accepting a log predictor.
+        if link is negative_binomial_link:
+            mu = jnp.exp(mu)
+        return link(mu, y)
 
     tex = model_to_latex(model, x=X)
     assert tex.startswith(r"\begin{align}")

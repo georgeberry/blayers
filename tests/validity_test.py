@@ -298,3 +298,48 @@ def test_scaled_masked_elbo_and_gradients_match_numpyro(masked, batch_size):
             jax.grad(expected)(params)[name],
             rtol=1e-6,
         )
+
+
+@pytest.mark.parametrize(
+    "n,batch", [(35, 16), (16051, 16000), (4, 8), (32, 16)]
+)
+def test_fixed_partition_elbo_and_gradient_preserve_every_observation(n, batch):
+    x = jnp.linspace(-2.0, 3.0, n)
+    # Deliberately extreme tail makes accidental upweighting readily visible.
+    y = jnp.where(jnp.arange(n) >= n - 1, 50.0, 0.5 * x)
+    loss = Batched_Trace_ELBO(
+        num_obs=n, batch_size=batch, reference_batch_size=batch
+    )
+    key = jax.random.PRNGKey(0)
+
+    def partitioned(beta):
+        return sum(
+            loss.loss(
+                key,
+                {"location": beta},
+                regression_model,
+                point_guide,
+                x=x[start : start + batch],
+                y=y[start : start + batch],
+            )
+            for start in range(0, n, batch)
+        )
+
+    def full(beta):
+        return (
+            n
+            / min(batch, n)
+            * Trace_ELBO().loss(
+                key, {"location": beta}, regression_model, point_guide, x=x, y=y
+            )
+        )
+
+    np.testing.assert_allclose(partitioned(0.3), full(0.3), rtol=2e-6)
+    np.testing.assert_allclose(
+        jax.grad(partitioned)(0.3), jax.grad(full)(0.3), rtol=2e-6
+    )
+
+
+def test_fixed_partition_reference_must_be_positive():
+    with pytest.raises(ValueError, match="reference_batch_size"):
+        Batched_Trace_ELBO(num_obs=10, reference_batch_size=0)

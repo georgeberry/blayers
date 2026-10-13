@@ -91,3 +91,62 @@ def test_equivalent_updates(size, batch, duration, shuffle, progress_bar):
 def test_invalid_sizes(kwargs):
     with pytest.raises(ValueError):
         svi_run_batched(None, jax.random.PRNGKey(0), x=jnp.ones(4), **kwargs)
+
+
+@pytest.mark.parametrize("typed", [False, True])
+def test_host_shuffle_reproducible_coverage(typed, monkeypatch):
+    from blayers._utils import _epoch_permutations
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("device permutation should not be used")
+
+    monkeypatch.setattr(jax.random, "permutation", forbidden)
+    key = jax.random.key(13) if typed else jax.random.PRNGKey(13)
+    first = _epoch_permutations(37, key)
+    replay = _epoch_permutations(37, key)
+    orders = []
+    for _ in range(3):
+        order = next(first)
+        assert order.dtype == np.int32
+        np.testing.assert_array_equal(np.sort(order), np.arange(37))
+        np.testing.assert_array_equal(order, next(replay))
+        orders.append(order.copy())
+    assert not np.array_equal(orders[0], orders[1])
+    other = next(_epoch_permutations(37, jax.random.PRNGKey(14)))
+    assert not np.array_equal(orders[0], other)
+
+
+def test_runner_row_coverage_alignment_and_tail(monkeypatch):
+    """Record actual rows through the compiled runner, independent of ELBO."""
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("device permutation should not be used")
+
+    monkeypatch.setattr(jax.random, "permutation", forbidden)
+
+    class Recorder:
+        def init(self, key, **data):
+            return jnp.zeros(33, dtype=jnp.int32), jnp.int32(0)
+
+        def update(self, state, x, y):
+            rows, offset = state
+            rows = jax.lax.dynamic_update_slice_in_dim(rows, x, offset, axis=0)
+            aligned = jnp.all(y == 10 * x)
+            return (rows, offset + x.size), jnp.where(aligned, x.size, -1)
+
+        def get_params(self, state):
+            return {"rows": state[0]}
+
+    result = svi_run_batched(
+        Recorder(),
+        jax.random.key(9),
+        batch_size=4,
+        num_epochs=3,
+        x=jnp.arange(11),
+        y=10 * jnp.arange(11),
+    )
+    orders = np.asarray(result.params["rows"]).reshape(3, 11)
+    for order in orders:
+        np.testing.assert_array_equal(np.sort(order), np.arange(11))
+    assert not np.array_equal(orders[0], orders[1])
+    np.testing.assert_array_equal(result.losses, [4, 4, 3] * 3)

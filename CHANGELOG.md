@@ -7,6 +7,31 @@ may carry breaking changes).
 
 ## [Unreleased]
 
+### Changed
+
+- Batched VI generates shuffled row indices with NumPy on the CPU and feeds
+  compiled device epoch loops, preparing at most one epoch ahead. The Python
+  batch generator shares this ordering. Seeds remain reproducible, but shuffled
+  runs use a different order than earlier releases. Unshuffled fits and ELBO
+  weighting are unchanged.
+
+### Fixed
+
+- Declare the AR1 Beta-to-correlation transform's unit-interval domain so
+  inference initializes correlation parameters inside (-1, 1), including with
+  NumPyro 0.22. Correct negative-binomial LaTeX fixtures to pass positive means.
+
+### Added
+
+- High-level `fit(upscale_tail_batches=False)` selects proportional tail-batch
+  ELBO weighting independently of shuffling. The default `True` preserves
+  full-data scaling for every batch.
+
+- `Batched_Trace_ELBO(reference_batch_size=...)` supports proportional loss
+  weighting for fixed epoch partitions. Short remainder batches no longer
+  receive full-batch influence; likelihood and global KL are weighted
+  consistently. The default random-minibatch estimator is unchanged.
+
 ## [0.3.6] - 2026-09-07
 
 ### Added
