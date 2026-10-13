@@ -216,7 +216,7 @@ wheels = [
 
 [[package]]
 name = "blayers"
-version = "0.3.2"
+version = "0.3.8"
 source = { editable = "." }
 dependencies = [
     { name = "jax" },
